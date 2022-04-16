@@ -26,6 +26,7 @@
     "@types/dat.gui": "^0.7.7",
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.24",
+    "@types/offscreencanvas": "^2019.6.4",
     "@types/three": "^0.139.0",
     "cannon-es": "^0.19.0",
     "concurrently": "^7.1.0",

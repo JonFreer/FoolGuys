@@ -4,7 +4,7 @@ import Player from './player'
 // import glTF
 import * as THREE from "three";
 import { Document, NodeIO } from '@gltf-transform/core';
-import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
+// import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 
 import { BoxCollider } from './physics/colliders/BoxCollider';
 import { TrimeshCollider } from './physics/colliders/TrimeshCollider';
@@ -105,7 +105,7 @@ export default class Game{
 public loadScene(): void{
     // const ob =new OrbitControls(null);
     // THREE.GLBufferAttribute
-    const io = new NodeIO().registerExtensions(KHRONOS_EXTENSIONS);
+    const io = new NodeIO();
     // Read.
     // let document;
     io.read('dist/client/assets/world.glb').then((val)=>{

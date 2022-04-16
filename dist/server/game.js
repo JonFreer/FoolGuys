@@ -32,7 +32,7 @@ const player_1 = __importDefault(require("./player"));
 // import glTF
 const THREE = __importStar(require("three"));
 const core_1 = require("@gltf-transform/core");
-const extensions_1 = require("@gltf-transform/extensions");
+// import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 const BoxCollider_1 = require("./physics/colliders/BoxCollider");
 const TrimeshCollider_1 = require("./physics/colliders/TrimeshCollider");
 // import { DocumentView } from '@gltf-transform/view';
@@ -110,7 +110,7 @@ class Game {
     loadScene() {
         // const ob =new OrbitControls(null);
         // THREE.GLBufferAttribute
-        const io = new core_1.NodeIO().registerExtensions(extensions_1.KHRONOS_EXTENSIONS);
+        const io = new core_1.NodeIO();
         // Read.
         // let document;
         io.read('dist/client/assets/world.glb').then((val) => {
