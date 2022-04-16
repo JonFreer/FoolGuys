@@ -17,6 +17,7 @@ const camera = new THREE.PerspectiveCamera(
 const gltfLoader = new GLTFLoader()
 const renderer = new THREE.WebGLRenderer()
 renderer.shadowMap.enabled = true;
+// renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 renderer.setClearColor( 0xa8eeff, 1);
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -56,49 +57,97 @@ light.shadow.camera.far = 500; // default
 
 const geometry_2 = new THREE.BufferGeometry();
 
-const indices = new Float32Array([
-           0,  3,  9,  0,  9,  6,  8, 10, 21,
-          8, 21, 19, 20, 23, 17, 20, 17, 14,
-           13, 15,  4, 13,  4,  2,  7, 18, 12,
-           7, 12,  1, 22, 11,  5, 22,  5, 16
-        ].reverse())
-const vertices = new Float32Array( [
-                        -0.5, -0.5,               0.5,
-                        -0.5, -0.5,               0.5,
-                        -0.5, -0.5,               0.5, 
-                        -0.5,  0.5,               0.5,
-                        -0.5,  0.5,               0.5,
-                        -0.5,  0.5,               0.5,              
-                        -0.5, -0.5,             -0.5,
-                        -0.5, -0.5,              -0.5,
-                        -0.5, -0.5,              -0.5,              
-                        -0.5, 2.073551654815674, -0.5,              
-                        -0.5, 2.073551654815674, -0.5, 
-                        -0.5, 2.073551654815674, -0.5,
-                        0.5, -0.5,               0.5,              
-                        0.5, -0.5,  0.5,             
-                        0.5, -0.5, 0.5,  
-                        0.5, 0.5, 0.5,
-                         0.5,  0.5,               0.5,               0.5,
-                         0.5,  0.5,               0.5,              -0.5,
-                        -0.5,  0.5,              -0.5,              -0.5,
-                         0.5, -0.5,              -0.5,               0.5,
-           2.073551654815674, -0.5,               0.5, 2.073551654815674,
-                        -0.5,  0.5, 2.073551654815674,              -0.5
-         ] );
+// const indices_copy = new Uint16Array([
+//     0,  3,  9, 
+//      0,  9,  6, 
+//       8, 10, 21,
+//    8, 21, 19, 
+//    20, 23, 17, 
+//    20, 17, 14,
+//     13, 15,  4, 
+//     13,  4,  2, 
+//      7, 18, 12,
+//     7, 12,  1, 
+//     22, 11,  5, 
+//     22,  5, 16
+//  ])
+
+// const indices = new Uint16Array([
+//            0,  1,  3, 
+//             0,  3,  2, 
+//              2, 3,7,
+//           2, 7, 6, 
+//           6,7, 5, 
+//           6, 5, 4,
+//            4, 5,  1, 
+//            4,  1,  0, 
+//             2, 6, 4,
+//            2, 4,  0, 
+//            7, 3,  1, 
+//            7,  1, 5
+//         ])
+//         const vertices = new Float32Array( [
+//             -0.5, -0.5,               0.5,//0 //0
+//             -0.5,  0.5,               0.5,//3   //1       
+//             -0.5, -0.5,             -0.5,//6    //2         
+//             -0.5, 2.073551654815674, -0.5,//9   //3           
+//             0.5, -0.5,               0.5, //12  //4           
+//             0.5, 0.5, 0.5,//15 //5
+//             0.5,-0.5,-0.5,  //18 //6
+//             0.5, 2.073551654815674, -0.5, //21 //7
+
+// ] );
+
+// const vertices_copy = new Float32Array( [
+//                         -0.5, -0.5,               0.5,//0
+//                         -0.5, -0.5,               0.5,//1
+//                         -0.5, -0.5,               0.5, //2
+//                         -0.5,  0.5,               0.5,//3
+//                         -0.5,  0.5,               0.5,//4
+//                         -0.5,  0.5,               0.5, //5             
+//                         -0.5, -0.5,             -0.5,//6
+//                         -0.5, -0.5,              -0.5,//7
+//                         -0.5, -0.5,              -0.5,//8              
+//                         -0.5, 2.073551654815674, -0.5,//9              
+//                         -0.5, 2.073551654815674, -0.5, //10
+//                         -0.5, 2.073551654815674, -0.5,//11
+//                         0.5, -0.5,               0.5, //12             
+//                         0.5, -0.5,  0.5,          //13   
+//                         0.5, -0.5, 0.5,  //14
+//                         0.5, 0.5, 0.5,//15
+//                          0.5,  0.5,               0.5, //16        
+//                         0.5, 0.5,  0.5,           //17
+//                         0.5,-0.5,-0.5,  //18
+//                         0.5, -0.5, -0.5,//19
+//                         0.5, -0.5, -0.5,//20
+//                         0.5, 2.073551654815674, -0.5, //21
+//                         0.5, 2.073551654815674,-0.5,  //22
+//                         0.5, 2.073551654815674, -0.5//23
+//          ] );
 
 // const vertices = new Float32Array([0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5-0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,2.073551654815674,2.073551654815674,2.073551654815674,-0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,2.073551654815674,2.073551654815674,2.073551654815674,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5])
 
-geometry_2.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-geometry_2.setIndex( new THREE.BufferAttribute(indices, 1 ) )
-const material_2 = new THREE.MeshStandardMaterial( { color: 0x00ff00 ,wireframe:false, side:THREE.BackSide} );
-const mesh = new THREE.Mesh( geometry_2, material_2 );
-// mesh.position.y =  -0.5
-// mesh.position.z =  -17.409343719482422 
-mesh.setRotationFromQuaternion(new THREE.Quaternion(0,  1,  0,  -1.6292068494294654e-7))
-console.log(mesh)
-console.log(floor)
-scene.add( mesh )
+// geometry_2.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+// geometry_2.setIndex( new THREE.BufferAttribute(indices, 1 ) )
+// // geometry_2.computeFaceNormals();
+// const material_2 = new THREE.MeshStandardMaterial( { color: 0x00ffff ,wireframe:false} );
+// const mesh_a = new THREE.Mesh( geometry_2, material_2 );
+// mesh_a.position.y +=  2
+// // mesh.position.z =  -17.409343719482422 
+// // mesh.setRotationFromQuaternion(new THREE.Quaternion(0,  1,  0,  -1.6292068494294654e-7))
+// // console.log(mesh)
+// // console.log(floor)
+// scene.add( mesh_a )
+
+// const vertices_2 = new Float32Array( [
+//     -0.5, -0.5,               0.5,//0
+//     -0.5,  0.5,               0.5,//3           
+//     -0.5, 2.073551654815674, -0.5//9
+// ])    
+// const geometry_3 = new THREE.BufferGeometry();
+// geometry_3.setAttribute( 'position', new THREE.BufferAttribute( vertices_2, 3 ) );
+// const mesh2 = new THREE.Mesh( geometry_3, material_2 );
+// scene.add( mesh2 )
 
 //Create a helper for the shadow camera (optional)
 const helper = new THREE.CameraHelper( light.shadow.camera );
@@ -271,5 +320,12 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
 	}
 
     function loadScene(gltf: any){
+        gltf.scene.traverse( function ( object:any ) {
+            if ( object.isMesh ) {
+                object.castShadow = true;
+                object.receiveShadow = true;
+            }
+        
+        } );
         scene.add(gltf.scene);
     }

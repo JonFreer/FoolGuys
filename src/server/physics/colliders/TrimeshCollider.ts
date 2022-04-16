@@ -33,8 +33,9 @@ export class TrimeshCollider
 
 	
 		let shape = threeToCannon(this.mesh, {type: ShapeType.MESH});
-		
-		  
+		// var bbox = new THREE.Box3().setFromObject(mesh);
+		console.log("SHAPPE")
+		console.log( mesh.position)
 
 		// mat.restitution = 0.7;
 

@@ -34,7 +34,7 @@ const THREE = __importStar(require("three"));
 const core_1 = require("@gltf-transform/core");
 // import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 const BoxCollider_1 = require("./physics/colliders/BoxCollider");
-const TrimeshCollider_1 = require("./physics/colliders/TrimeshCollider");
+const ConvexCollider_1 = require("./physics/colliders/ConvexCollider");
 // import { DocumentView } from '@gltf-transform/view';
 // const io = new NodeIO().registerExtensions(KHRONOS_EXTENSIONS);
 // import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls'
@@ -121,18 +121,24 @@ class Game {
                 .forEach((node) => {
                 // console.log(node.getName()=="Ramp")
                 if (node.getName().includes("Ramp")) {
-                    console.log(node.getMesh().listPrimitives()[0].getIndices());
+                    // console.log(node.getMesh().listPrimitives()[0].getIndices())
                     const geometry = new THREE.BufferGeometry();
-                    const vertices = node.getMesh().listPrimitives()[0].getAttribute("POSITION").getArray();
+                    const vertices = new Float32Array(node.getMesh().listPrimitives()[0].getAttribute("POSITION").getArray());
+                    const indices = new Uint16Array(node.getMesh().listPrimitives()[0].getIndices().getArray());
                     geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                    geometry.setIndex(new THREE.BufferAttribute(node.getMesh().listPrimitives()[0].getIndices().getArray(), 1));
+                    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
                     const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                     const mesh = new THREE.Mesh(geometry, material);
-                    let phys = new TrimeshCollider_1.TrimeshCollider(mesh, {});
+                    // console.log(node.getScale())
+                    let phys = new ConvexCollider_1.ConvexCollider(vertices, indices, node.getScale(), mesh, {});
                     phys.body.position = new CANNON.Vec3(node.getTranslation()[0], node.getTranslation()[1], node.getTranslation()[2]);
                     phys.body.quaternion = new CANNON.Quaternion(node.getRotation()[0], node.getRotation()[1], node.getRotation()[2], node.getRotation()[3]);
-                    console.log(phys.body.shapes[0]);
-                    console.log(phys.body.quaternion);
+                    // console.log(phys.body.shapes[0])
+                    // console.log(phys.body.quaternion)
+                    // console.log(vertices)
+                    // console.log(indices)
+                    // phys.body.s
+                    // phys.body.position.x+=2;
                     this.physics.world.addBody(phys.body);
                 }
                 else {

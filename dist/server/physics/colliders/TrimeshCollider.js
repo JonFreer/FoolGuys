@@ -44,6 +44,9 @@ class TrimeshCollider {
         let mat = new CANNON.Material('triMat');
         mat.friction = options.friction;
         let shape = (0, three_to_cannon_1.threeToCannon)(this.mesh, { type: three_to_cannon_1.ShapeType.MESH });
+        // var bbox = new THREE.Box3().setFromObject(mesh);
+        console.log("SHAPPE");
+        console.log(mesh.position);
         // mat.restitution = 0.7;
         // let shape = Three2Mesh.threeToCannon(this.mesh, {type: Three2Mesh.threeToCannon.Type.MESH});
         // shape['material'] = mat;
