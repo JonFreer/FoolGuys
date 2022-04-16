@@ -39,7 +39,7 @@ export default class Game{
             )
 
             this.players[socket.id].bodyId = this.physics.createPlayer(socket.id)
-
+            this.players[socket.id].body = this.physics.bodies[socket.id]
 
             socket.on('disconnect', () => {
                 console.log('socket disconnected : ' + socket.id)
@@ -68,16 +68,16 @@ export default class Game{
         Object.keys(this.players).forEach((p) => {
 
             if(this.players[p].keyMap['w']){
-                this.players[p].p.z+=0.1
+                this.players[p].body.position.z+=0.1
             }
             if(this.players[p].keyMap['s']){
-                this.players[p].p.z-=0.1
+                this.players[p].body.position.z-=0.1
             }
             if(this.players[p].keyMap['a']){
-                this.players[p].p.x+=0.1
+                this.players[p].body.position.x+=0.1
             }
             if(this.players[p].keyMap['d']){
-                this.players[p].p.x-=0.1
+                this.players[p].body.position.x-=0.1
             }
             if(this.players[p].keyMap[' ']){
                 if (this.players[p].canJump) {
@@ -87,11 +87,19 @@ export default class Game{
             }
         })
         this.physics.world.step(0.025)
+        const player_info = {}
         Object.keys(this.players).forEach((p) => {
-            this.players[p].p = this.physics.bodies[p].position
-            this.players[p].q = this.physics.bodies[p].quaternion
+            // this.players[p].p = this.physics.bodies[p].position
+            // this.players[p].q = this.physics.bodies[p].quaternion
+
+            if(this.players[p].body.position.y<-5){
+                this.players[p].resetPlayer()
+            }
+
+            player_info[p]= this.players[p].getInfo()
+
         })
-        io.emit('players', this.players)
+        io.emit('players', player_info)
     }, 25)
 }
 public loadScene(): void{

@@ -172,17 +172,14 @@ socket.on('players', (players: any) => {
                     )
                     .start()
             }
-            if (players[p].r) {
-                new TWEEN.Tween(clientCubes[p].rotation)
-                    .to(
-                        {
-                            x: players[p].r._x,
-                            y: players[p].r._y,
-                            z: players[p].r._z,
-                        },
-                        50
-                    )
-                    .start()
+            if (players[p].q) {
+                // new TWEEN.Tween(clientCubes[p].rotation)
+                //     .to(
+                //         new THREE.Quaternion(players[p].q.x,players[p].q.y,players[p].q.z,players[p].q.w),
+                //         50
+                //     )
+                //     .start()
+                clientCubes[p].setRotationFromQuaternion(new THREE.Quaternion(players[p].q.x,players[p].q.y,players[p].q.z,players[p].q.w),)
             }
         }
     })
