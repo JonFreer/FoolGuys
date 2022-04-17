@@ -1,9 +1,11 @@
 {
     "compilerOptions": {
         "moduleResolution": "node",
+        "target": "ES6",
         "strict": true, 
          "paths": {
-            "three/examples/jsm/libs/tween.module.min": ["../typings/tween.js"]
+            "three/examples/jsm/libs/tween.module.min": ["../typings/tween.js"],
+            "three-csm": ["../typings/three-csm"]
         }
     },
     "include": ["**/*.ts"]

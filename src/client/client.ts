@@ -5,163 +5,14 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'dat.gui'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { io } from 'socket.io-client'
+import { World } from './World/World'
 
-const scene = new THREE.Scene()
+// const scene = new THREE.Scene()
 
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-)
+const world = new World()
+
 const gltfLoader = new GLTFLoader()
-const renderer = new THREE.WebGLRenderer()
-renderer.shadowMap.enabled = true;
-// renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-renderer.setClearColor( 0xa8eeff, 1);
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.domElement)
 
-const controls = new OrbitControls(camera, renderer.domElement)
-
-const geometry = new THREE.BoxGeometry()
-const material = new THREE.MeshStandardMaterial({
-    color: 0x5555ff,
-    wireframe: false,
-    roughness:0.1
-})
-
-const floor_geometry = new THREE.BoxGeometry( 10, 1, 10 );
-const floor_material = new THREE.MeshStandardMaterial( {color: 0xaaaaaa} );
-const floor = new THREE.Mesh( floor_geometry, floor_material );
-floor.receiveShadow=true;
-scene.add( floor );
-floor.position.y=-1;
-
-//ambient
-const ambient_light = new THREE.AmbientLight( 0x404040,2 ); // soft white light
-scene.add( ambient_light );
-
-const light = new THREE.PointLight(0xffffff, 1)
-// const light = new THREE.DirectionalLight( 0xffffff, 1 );
-light.position.set(10, 10, 10)
-light.castShadow = true
-scene.add(light)
-
-//Set up shadow properties for the light
-light.shadow.mapSize.width = 1024; // default
-light.shadow.mapSize.height = 1024; // default
-light.shadow.camera.near = 0.5; // default
-light.shadow.camera.far = 500; // default
-
-const geometry_2 = new THREE.BufferGeometry();
-
-// const indices_copy = new Uint16Array([
-//     0,  3,  9, 
-//      0,  9,  6, 
-//       8, 10, 21,
-//    8, 21, 19, 
-//    20, 23, 17, 
-//    20, 17, 14,
-//     13, 15,  4, 
-//     13,  4,  2, 
-//      7, 18, 12,
-//     7, 12,  1, 
-//     22, 11,  5, 
-//     22,  5, 16
-//  ])
-
-// const indices = new Uint16Array([
-//            0,  1,  3, 
-//             0,  3,  2, 
-//              2, 3,7,
-//           2, 7, 6, 
-//           6,7, 5, 
-//           6, 5, 4,
-//            4, 5,  1, 
-//            4,  1,  0, 
-//             2, 6, 4,
-//            2, 4,  0, 
-//            7, 3,  1, 
-//            7,  1, 5
-//         ])
-//         const vertices = new Float32Array( [
-//             -0.5, -0.5,               0.5,//0 //0
-//             -0.5,  0.5,               0.5,//3   //1       
-//             -0.5, -0.5,             -0.5,//6    //2         
-//             -0.5, 2.073551654815674, -0.5,//9   //3           
-//             0.5, -0.5,               0.5, //12  //4           
-//             0.5, 0.5, 0.5,//15 //5
-//             0.5,-0.5,-0.5,  //18 //6
-//             0.5, 2.073551654815674, -0.5, //21 //7
-
-// ] );
-
-// const vertices_copy = new Float32Array( [
-//                         -0.5, -0.5,               0.5,//0
-//                         -0.5, -0.5,               0.5,//1
-//                         -0.5, -0.5,               0.5, //2
-//                         -0.5,  0.5,               0.5,//3
-//                         -0.5,  0.5,               0.5,//4
-//                         -0.5,  0.5,               0.5, //5             
-//                         -0.5, -0.5,             -0.5,//6
-//                         -0.5, -0.5,              -0.5,//7
-//                         -0.5, -0.5,              -0.5,//8              
-//                         -0.5, 2.073551654815674, -0.5,//9              
-//                         -0.5, 2.073551654815674, -0.5, //10
-//                         -0.5, 2.073551654815674, -0.5,//11
-//                         0.5, -0.5,               0.5, //12             
-//                         0.5, -0.5,  0.5,          //13   
-//                         0.5, -0.5, 0.5,  //14
-//                         0.5, 0.5, 0.5,//15
-//                          0.5,  0.5,               0.5, //16        
-//                         0.5, 0.5,  0.5,           //17
-//                         0.5,-0.5,-0.5,  //18
-//                         0.5, -0.5, -0.5,//19
-//                         0.5, -0.5, -0.5,//20
-//                         0.5, 2.073551654815674, -0.5, //21
-//                         0.5, 2.073551654815674,-0.5,  //22
-//                         0.5, 2.073551654815674, -0.5//23
-//          ] );
-
-// const vertices = new Float32Array([0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5-0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,2.073551654815674,2.073551654815674,2.073551654815674,-0.5,-0.5,-0.5,0.5,0.5,0.5,-0.5,-0.5,-0.5,2.073551654815674,2.073551654815674,2.073551654815674,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,-0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5])
-
-// geometry_2.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-// geometry_2.setIndex( new THREE.BufferAttribute(indices, 1 ) )
-// // geometry_2.computeFaceNormals();
-// const material_2 = new THREE.MeshStandardMaterial( { color: 0x00ffff ,wireframe:false} );
-// const mesh_a = new THREE.Mesh( geometry_2, material_2 );
-// mesh_a.position.y +=  2
-// // mesh.position.z =  -17.409343719482422 
-// // mesh.setRotationFromQuaternion(new THREE.Quaternion(0,  1,  0,  -1.6292068494294654e-7))
-// // console.log(mesh)
-// // console.log(floor)
-// scene.add( mesh_a )
-
-// const vertices_2 = new Float32Array( [
-//     -0.5, -0.5,               0.5,//0
-//     -0.5,  0.5,               0.5,//3           
-//     -0.5, 2.073551654815674, -0.5//9
-// ])    
-// const geometry_3 = new THREE.BufferGeometry();
-// geometry_3.setAttribute( 'position', new THREE.BufferAttribute( vertices_2, 3 ) );
-// const mesh2 = new THREE.Mesh( geometry_3, material_2 );
-// scene.add( mesh2 )
-
-//Create a helper for the shadow camera (optional)
-const helper = new THREE.CameraHelper( light.shadow.camera );
-scene.add( helper );
-
-const myObject3D = new THREE.Object3D()
-myObject3D.position.x = Math.random() * 4 - 2
-myObject3D.position.z = Math.random() * 4 - 2
-
-const gridHelper = new THREE.GridHelper(15, 15)
-gridHelper.position.y = -0.5
-// scene.add(gridHelper)
-
-camera.position.z = 4
 
 loadGLTF("assets/world.glb", (gltf) =>
             {
@@ -169,17 +20,10 @@ loadGLTF("assets/world.glb", (gltf) =>
                 // console.log(gltf)
             })
 
-window.addEventListener('resize', onWindowResize, false)
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    render()
-}
 
 let myId = ''
 let timestamp = 0
-const clientCubes: { [id: string]: THREE.Mesh } = {}
+
 const socket = io()
 socket.on('connect', function () {
     console.log('connect')
@@ -188,101 +32,50 @@ socket.on('disconnect', function (message: any) {
     console.log('disconnect ' + message)
 })
 socket.on('joined', (id: any,name:string) => {
-    myId = id
+    world.player_id = id
 
 })
 
 socket.on("removePlayer",(id:string)=>{
-    scene.remove(scene.getObjectByName(id) as THREE.Object3D)
+    world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
 })
 socket.on('players', (players: any) => {
     let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
     Object.keys(players).forEach((p) => {
         timestamp = Date.now()
         pingStatsHtml += p + ' ' + (timestamp - players[p].t) + 'ms<br/>'
-        if (!clientCubes[p]) {
-            clientCubes[p] = new THREE.Mesh(geometry, material)
-            clientCubes[p].name = p
-            clientCubes[p].castShadow=true
-            clientCubes[p].receiveShadow=true
-            scene.add(clientCubes[p])
-            
-
-        } else {
-            if (players[p].p) {
-                new TWEEN.Tween(clientCubes[p].position)
-                    .to(
-                        {
-                            x: players[p].p.x,
-                            y: players[p].p.y,
-                            z: players[p].p.z,
-                        },
-                        50
-                    )
-                    .start()
-            }
-            if (players[p].q) {
-                // new TWEEN.Tween(clientCubes[p].rotation)
-                //     .to(
-                //         new THREE.Quaternion(players[p].q.x,players[p].q.y,players[p].q.z,players[p].q.w),
-                //         50
-                //     )
-                //     .start()
-                clientCubes[p].setRotationFromQuaternion(new THREE.Quaternion(players[p].q.x,players[p].q.y,players[p].q.z,players[p].q.w),)
-            }
-        }
+        world.updatePlayer(p,players)
+        
     })
     ;(document.getElementById('pingStats') as HTMLDivElement).innerHTML =
         pingStatsHtml
 })
 socket.on('removeClient', (id: string) => {
-    scene.remove(scene.getObjectByName(id) as THREE.Object3D)
+    world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
 })
 
-const stats = Stats()
-document.body.appendChild(stats.dom)
-
-const gui = new GUI()
-const cubeFolder = gui.addFolder('Cube')
-const cubePositionFolder = cubeFolder.addFolder('Position')
-cubePositionFolder.add(myObject3D.position, 'x', -5, 5)
-cubePositionFolder.add(myObject3D.position, 'z', -5, 5)
-cubePositionFolder.open()
-const cubeRotationFolder = cubeFolder.addFolder('Rotation')
-cubeRotationFolder.add(myObject3D.rotation, 'x', 0, Math.PI * 2, 0.01)
-cubeRotationFolder.add(myObject3D.rotation, 'y', 0, Math.PI * 2, 0.01)
-cubeRotationFolder.add(myObject3D.rotation, 'z', 0, Math.PI * 2, 0.01)
-cubeRotationFolder.open()
-cubeFolder.open()
-
-const animate = function () {
-    requestAnimationFrame(animate)
-
-    controls.update()
-
-    TWEEN.update()
 
 
-    if (clientCubes[myId]) {
-        controls.target.set(clientCubes[myId].position.x,clientCubes[myId].position.y,clientCubes[myId].position.z)
-        // controls.
-        camera.lookAt(clientCubes[myId].position)
-    }
+// const gui = new GUI()
+// const cubeFolder = gui.addFolder('Cube')
+// const cubePositionFolder = cubeFolder.addFolder('Position')
+// cubePositionFolder.add(myObject3D.position, 'x', -5, 5)
+// cubePositionFolder.add(myObject3D.position, 'z', -5, 5)
+// cubePositionFolder.open()
+// const cubeRotationFolder = cubeFolder.addFolder('Rotation')
+// cubeRotationFolder.add(myObject3D.rotation, 'x', 0, Math.PI * 2, 0.01)
+// cubeRotationFolder.add(myObject3D.rotation, 'y', 0, Math.PI * 2, 0.01)
+// cubeRotationFolder.add(myObject3D.rotation, 'z', 0, Math.PI * 2, 0.01)
+// cubeRotationFolder.open()
+// cubeFolder.open()
 
-    render()
 
-    stats.update()
-}
-
-const render = function () {
-    renderer.render(scene, camera)
-}
 
 document.addEventListener('keydown', onDocumentKey, false)
 document.addEventListener('keyup', onDocumentKey, false)
 const keyMap : { [id: string]: boolean } = {}
 
-animate()
+world.animate()
 
 
 function onDocumentKey (e: KeyboardEvent) {
@@ -327,5 +120,5 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
             }
         
         } );
-        scene.add(gltf.scene);
+        world.graphicsWorld.add(gltf.scene);
     }
