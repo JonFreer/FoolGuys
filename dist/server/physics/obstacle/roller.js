@@ -28,7 +28,7 @@ const CANNON = __importStar(require("cannon-es"));
 class Roller {
     constructor(body, rollAxis) {
         this.speed = 1;
-        this.angle = 0.1;
+        this.angle = 0.01;
         this.body = body;
         this.rollAxis = rollAxis;
     }
@@ -38,6 +38,7 @@ class Roller {
         var quatY = new CANNON.Quaternion();
         quatY.setFromAxisAngle(this.rollAxis, this.angle);
         this.body.quaternion = quatY.mult(this.body.quaternion);
+        this.body.angularVelocity.set(this.rollAxis.x, this.rollAxis.y, this.rollAxis.z);
         // console.log(this.body.quaternion)
         // this.angle +=0.1
     }

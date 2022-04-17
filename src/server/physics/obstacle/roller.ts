@@ -5,7 +5,7 @@ export class Roller
     public body: CANNON.Body
     public rollAxis:CANNON.Vec3
     public speed:number= 1;
-    public angle:number= 0.1
+    public angle:number= 0.01
 
     constructor(body:CANNON.Body,rollAxis:CANNON.Vec3){
         this.body=body
@@ -15,9 +15,13 @@ export class Roller
     public update(timestep:number){
         // console.log(this.angle)
         // console.log(this.body.quaternion)
+
         var quatY = new CANNON.Quaternion();
         quatY.setFromAxisAngle(this.rollAxis,this.angle)
         this.body.quaternion = quatY.mult(this.body.quaternion)
+
+        this.body.angularVelocity.set(this.rollAxis.x,this.rollAxis.y,this.rollAxis.z);
+        
         // console.log(this.body.quaternion)
         // this.angle +=0.1
     }
