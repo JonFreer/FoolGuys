@@ -113,11 +113,17 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
 	}
 
     function loadScene(gltf: any){
+        const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
         gltf.scene.traverse( function ( object:any ) {
             if ( object.isMesh ) {
                 object.castShadow = true;
                 object.receiveShadow = true;
-            }
+                // object.geometry.computeVertexNormals(true)
+                // object.material.flatShading = true;
+                object.geometry.computeVertexNormals(true)
+                // object.material = floor_material
+                console.log(object.material.flatShading)
+            }   
         
         } );
         world.graphicsWorld.add(gltf.scene);

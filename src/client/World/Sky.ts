@@ -10,8 +10,8 @@ export class Sky extends THREE.Object3D
 	public updateOrder: number = 5;
 
 	public sunPosition: THREE.Vector3 = new THREE.Vector3();
-	public csm: CSM;
-	public csmHelper: CSMHelper;
+	// public csm: CSM;
+	// public csmHelper: CSMHelper;
 	set theta(value: number) {
 		this._theta = value;
 		this.refreshSunPosition();
@@ -66,8 +66,29 @@ export class Sky extends THREE.Object3D
 		this.hemiLight.color.setHSL( 0.59, 0.4, 0.6 );
 		this.hemiLight.groundColor.setHSL( 0.095, 0.2, 0.75 );
 		this.hemiLight.position.set( 0, 50, 0 );
+		
 		this.world.graphicsWorld.add( this.hemiLight );
 
+		const light = new THREE.DirectionalLight( 0xffffff, 1 );
+		light.position.set( 10, 10, 10 ); //default; light shining from top
+		light.castShadow = true; // default false
+		this.world.graphicsWorld.add( light );
+
+		//Set up shadow properties for the light
+		light.shadow.mapSize.width = 4096; // default
+		light.shadow.mapSize.height = 4096; // default
+		light.shadow.camera.near = 0.05; // default
+		light.shadow.camera.far = 100; // default
+		light.shadow.camera.visible = true;
+		light.shadow.camera.bottom=50
+		light.shadow.camera.left=50
+		light.shadow.camera.right=-50
+		light.shadow.camera.top = -50
+		// light.shadow.camera
+		light.shadow.bias= -0.0005
+
+		const helper = new THREE.CameraHelper( light.shadow.camera );
+		this.world.graphicsWorld.add( helper );
 		// CSM
 		// New version
 		let splitsCallback = (amount:any, near:any, far:any, target:any) =>
@@ -91,20 +112,22 @@ export class Sky extends THREE.Object3D
 		// 	return arr;
 		// };
 
-		this.csm = new CSM({
-			// fade: true,
-			maxFar: 50,
-			cascades: 4,
-			shadowMapSize: 4096,
-			lightDirection: new THREE.Vector3(-1, -1, 0),
-			camera: this.world.camera,
-			parent: this.world.graphicsWorld,
-			lightIntensity: 0.3
-		})
-		this.csm.fade = true;
-		console.log(this.csm)
+		// this.csm = new CSM({
+		// 	// fade: true,
+		// 	maxFar: 400,
+		// 	lightNear:1,
+		// 	cascades: 4,
+		// 	shadowMapSize: 4096,
+		// 	shadowBias:-0.0001,
+		// 	lightDirection: new THREE.Vector3(-1, -1, -1),
+		// 	camera: this.world.camera,
+		// 	parent: this.world.graphicsWorld,
+		// 	lightIntensity: 0.3
+		// })
+		// this.csm.fade = true;
+		// console.log(this.csm)  
 
-		this.csmHelper = new CSMHelper(this.csm)
+		// this.csmHelper = new CSMHelper(this.csm)
 		// this.csmHelper.displayFrustum = true
 		// this.csmHelper.displayPlanes = true
 		// this.csmHelper.displayShadowBounds = true
@@ -121,8 +144,8 @@ export class Sky extends THREE.Object3D
 		// console.log("update")
 		this.position.copy(this.world.camera.position);
 		this.refreshSunPosition();
-		this.csm.update()
-    	this.csmHelper.update()
+		// this.csm.update()
+    	// this.csmHelper.update()
 
 		// this.csm.update(this.world.camera.matrix);
 		// this.csm.lightDirection = new THREE.Vector3(-this.sunPosition.x, -this.sunPosition.y, -this.sunPosition.z).normalize();

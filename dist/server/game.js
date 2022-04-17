@@ -147,6 +147,9 @@ class Game {
                     phys.body.quaternion = new CANNON.Quaternion(node.getRotation()[0], node.getRotation()[1], node.getRotation()[2], node.getRotation()[3]);
                     this.physics.world.addBody(phys.body);
                 }
+                if (node.getName().includes("Hull")) {
+                    console.log(node);
+                }
                 // console.log(node.getTranslation);
             });
         }); // → Document
