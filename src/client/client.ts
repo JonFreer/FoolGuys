@@ -39,16 +39,22 @@ socket.on('joined', (id: any,name:string) => {
 socket.on("removePlayer",(id:string)=>{
     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
 })
-socket.on('players', (players: any) => {
+socket.on('players', (data: any) => {
+    // console.log(data)
     let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
-    Object.keys(players).forEach((p) => {
+    Object.keys(data.players).forEach((p) => {
         timestamp = Date.now()
-        pingStatsHtml += p + ' ' + (timestamp - players[p].t) + 'ms<br/>'
-        world.updatePlayer(p,players)
+        pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
+        world.updatePlayer(p,data.players)
         
-    })
-    ;(document.getElementById('pingStats') as HTMLDivElement).innerHTML =
-        pingStatsHtml
+    });
+
+    Object.keys(data.rollers).forEach((r) => {
+        world.updateObstacle(r,data.rollers);
+    });
+
+
+    (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
 })
 socket.on('removeClient', (id: string) => {
     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
@@ -113,7 +119,8 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
 	}
 
     function loadScene(gltf: any){
-        const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+        
+        // const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
         gltf.scene.traverse( function ( object:any ) {
             if ( object.isMesh ) {
                 object.castShadow = true;
@@ -124,6 +131,9 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
                 // object.material = floor_material
                 console.log(object.material.flatShading)
             }   
+            if(object.userData.hasOwnProperty('spin')){
+                world.obstacles[object.name] = object
+            }
         
         } );
         world.graphicsWorld.add(gltf.scene);

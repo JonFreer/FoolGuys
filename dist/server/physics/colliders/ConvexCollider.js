@@ -36,7 +36,7 @@ class ConvexCollider {
         let defaults = {
             mass: 0,
             // position: mesh.position,
-            friction: 0.3
+            friction: 0.7
         };
         options = Utils.setDefaults(options, defaults);
         this.options = options;

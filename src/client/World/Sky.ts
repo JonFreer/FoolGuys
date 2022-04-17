@@ -79,7 +79,7 @@ export class Sky extends THREE.Object3D
 		light.shadow.mapSize.height = 4096; // default
 		light.shadow.camera.near = 0.05; // default
 		light.shadow.camera.far = 100; // default
-		light.shadow.camera.visible = true;
+		// light.shadow.camera.visible = true;
 		light.shadow.camera.bottom=50
 		light.shadow.camera.left=50
 		light.shadow.camera.right=-50
@@ -88,7 +88,7 @@ export class Sky extends THREE.Object3D
 		light.shadow.bias= -0.0005
 
 		const helper = new THREE.CameraHelper( light.shadow.camera );
-		this.world.graphicsWorld.add( helper );
+		// this.world.graphicsWorld.add( helper );
 		// CSM
 		// New version
 		let splitsCallback = (amount:any, near:any, far:any, target:any) =>

@@ -8,6 +8,7 @@ export class World {
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
+    public obstacles: { [id: string]: THREE.Mesh } = {}
     public player_id:string='';
     public controls: OrbitControls;
     private stats
@@ -127,6 +128,13 @@ export class World {
                 //     .start()
                 this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.x, players[client_id].q.y, players[client_id].q.z, players[client_id].q.w),)
             }
+        }
+    }
+
+    public updateObstacle(id:string,obstacles:any){
+        if (this.obstacles[id]!=undefined) {
+            console.log("updating")
+            this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.x, obstacles[id].q.y, obstacles[id].q.z, obstacles[id].q.w),)
         }
     }
 

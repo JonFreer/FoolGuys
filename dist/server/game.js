@@ -35,6 +35,7 @@ const core_1 = require("@gltf-transform/core");
 // import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 const BoxCollider_1 = require("./physics/colliders/BoxCollider");
 const ConvexCollider_1 = require("./physics/colliders/ConvexCollider");
+const roller_1 = require("./physics/obstacle/roller");
 // import { DocumentView } from '@gltf-transform/view';
 // const io = new NodeIO().registerExtensions(KHRONOS_EXTENSIONS);
 // import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls'
@@ -45,6 +46,7 @@ const ConvexCollider_1 = require("./physics/colliders/ConvexCollider");
 class Game {
     constructor(io) {
         this.players = {};
+        this.rollers = {};
         this.playerCount = 0;
         this.physics = new physics_1.default(this, io);
         this.loadScene();
@@ -74,6 +76,9 @@ class Game {
             });
         });
         setInterval(() => {
+            Object.keys(this.rollers).forEach((r) => {
+                this.rollers[r].update(0.025);
+            });
             Object.keys(this.players).forEach((p) => {
                 if (this.players[p].keyMap['w']) {
                     this.players[p].body.position.z += 0.1;
@@ -96,15 +101,17 @@ class Game {
             });
             this.physics.world.step(0.025);
             const player_info = {};
+            const roller_info = {};
             Object.keys(this.players).forEach((p) => {
-                // this.players[p].p = this.physics.bodies[p].position
-                // this.players[p].q = this.physics.bodies[p].quaternion
                 if (this.players[p].body.position.y < -5) {
                     this.players[p].resetPlayer();
                 }
                 player_info[p] = this.players[p].getInfo();
             });
-            io.emit('players', player_info);
+            Object.keys(this.rollers).forEach((r) => {
+                roller_info[r] = this.rollers[r].getInfo();
+            });
+            io.emit('players', { players: player_info, rollers: roller_info });
         }, 25);
     }
     loadScene() {
@@ -120,7 +127,8 @@ class Game {
                 .listNodes()
                 .forEach((node) => {
                 // console.log(node.getName()=="Ramp")
-                if (node.getName().includes("Ramp")) {
+                let phys;
+                if (node.getExtras()['physics'] == 'hull') {
                     // console.log(node.getMesh().listPrimitives()[0].getIndices())
                     const geometry = new THREE.BufferGeometry();
                     const vertices = new Float32Array(node.getMesh().listPrimitives()[0].getAttribute("POSITION").getArray());
@@ -130,25 +138,38 @@ class Game {
                     const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                     const mesh = new THREE.Mesh(geometry, material);
                     // console.log(node.getScale())
-                    let phys = new ConvexCollider_1.ConvexCollider(vertices, indices, node.getScale(), mesh, {});
+                    if (node.getName().includes("Hull")) {
+                        console.log(indices);
+                    }
+                    phys = new ConvexCollider_1.ConvexCollider(vertices, indices, node.getScale(), mesh, {});
                     phys.body.position = new CANNON.Vec3(node.getTranslation()[0], node.getTranslation()[1], node.getTranslation()[2]);
                     phys.body.quaternion = new CANNON.Quaternion(node.getRotation()[0], node.getRotation()[1], node.getRotation()[2], node.getRotation()[3]);
-                    // console.log(phys.body.shapes[0])
-                    // console.log(phys.body.quaternion)
-                    // console.log(vertices)
-                    // console.log(indices)
-                    // phys.body.s
-                    // phys.body.position.x+=2;
                     this.physics.world.addBody(phys.body);
                 }
                 else {
-                    let phys = new BoxCollider_1.BoxCollider({ size: new THREE.Vector3(node.getScale()[0] / 2, node.getScale()[1] / 2, node.getScale()[2] / 2) });
+                    phys = new BoxCollider_1.BoxCollider({ size: new THREE.Vector3(node.getScale()[0] / 2, node.getScale()[1] / 2, node.getScale()[2] / 2) });
                     phys.body.position = new CANNON.Vec3(node.getTranslation()[0], node.getTranslation()[1], node.getTranslation()[2]);
                     phys.body.quaternion = new CANNON.Quaternion(node.getRotation()[0], node.getRotation()[1], node.getRotation()[2], node.getRotation()[3]);
                     this.physics.world.addBody(phys.body);
                 }
                 if (node.getName().includes("Hull")) {
-                    console.log(node);
+                    console.log(node.getExtras()['physics']);
+                    // this.
+                }
+                if (node.getExtras()['spin'] != undefined) {
+                    let rollAxis;
+                    if (node.getExtras()['spin'] == 'x') {
+                        rollAxis = new CANNON.Vec3(1, 0, 0);
+                    }
+                    else if (node.getExtras()['spin'] == 'y') {
+                        rollAxis = new CANNON.Vec3(0, 1, 0);
+                    }
+                    else if (node.getExtras()['spin'] == 'z') {
+                        rollAxis = new CANNON.Vec3(0, 0, 1);
+                    }
+                    this.rollers[node.getName()] = new roller_1.Roller(phys.body, rollAxis);
+                    // const roller = 
+                    console.log('spin');
                 }
                 // console.log(node.getTranslation);
             });
