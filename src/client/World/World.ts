@@ -19,6 +19,7 @@ export class World {
     public cameraOperator:CameraOperator;
     public inputManager: InputManager;
     public socket:Socket;
+    public labels:any={}
     constructor(socket:Socket) {
         const scope = this;
         this.socket=socket;
@@ -28,6 +29,7 @@ export class World {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
+        
 
         window.addEventListener('resize', onWindowResize, false)
         function onWindowResize() {
@@ -98,7 +100,7 @@ export class World {
 
     public updatePlayer(client_id: string, players: any) {
         if (!this.clientCubes[client_id]) {
-
+            let labelsDiv = document.querySelector('#labels');
             const geometry = new THREE.BoxGeometry()
             const material = new THREE.MeshStandardMaterial({
                 color: 0x5555ff,
@@ -111,6 +113,14 @@ export class World {
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             this.graphicsWorld.add(this.clientCubes[client_id])
+            
+            const elem = document.createElement('div');
+            elem.textContent = client_id;
+            if(labelsDiv != null){
+                labelsDiv.appendChild(elem);
+            }
+            
+            this.labels[client_id]=elem
 
 
         } else {
@@ -171,6 +181,24 @@ export class World {
     }
     
     public render() {
+        const canvas = this.renderer.domElement
+        this.camera.updateProjectionMatrix();
+        Object.keys(this.clientCubes).forEach((c)=>{
+            let tempV = new THREE.Vector3()
+            this.clientCubes[c].updateWorldMatrix(true, false);
+            this.clientCubes[c].getWorldPosition(tempV)
+        
+            // convert the normalized position to CSS coordinates
+            tempV.project(this.camera);
+            const x = (tempV.x *  .5 + .5) *canvas.clientWidth;
+            const y = (tempV.y * -.5 + .5) * canvas.clientHeight-100;
+            
+            // move the elem to that position
+            this.labels[c].style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
+
+
+        })
+
         this.renderer.render(this.graphicsWorld, this.camera)
     }
 
