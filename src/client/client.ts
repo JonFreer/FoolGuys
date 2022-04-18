@@ -90,7 +90,11 @@ function onDocumentKey (e: KeyboardEvent) {
     console.log("keymap")
     keyMap[e.key] = e.type === 'keydown'
     sendUpdate()
-    
+
+    if (e.key === 'Tab'){
+        world.labels.setEnabled(e.type === 'keydown')
+        e.preventDefault()
+    }
 
 }
 

@@ -6,6 +6,7 @@ import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { CameraOperator } from './CameraOperator';
 import { InputManager } from './InputManager';
 import {Sky} from './Sky'
+import {Labels} from './Labels'
 export class World {
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
@@ -19,7 +20,7 @@ export class World {
     public cameraOperator:CameraOperator;
     public inputManager: InputManager;
     public socket:Socket;
-    public labels:any={}
+    public labels:Labels;
     constructor(socket:Socket) {
         const scope = this;
         this.socket=socket;
@@ -36,8 +37,13 @@ export class World {
             scope.camera.aspect = window.innerWidth / window.innerHeight
             scope.camera.updateProjectionMatrix()
             scope.renderer.setSize(window.innerWidth, window.innerHeight)
+            scope.labels.setSize(window.innerWidth, window.innerHeight)
             // render()
         }
+
+        this.labels = new Labels(this)
+        document.body.append(this.labels.dom)
+        this.labels.setSize(window.innerWidth, window.innerHeight)
 
         this.stats = Stats()
         document.body.appendChild(this.stats.dom)
@@ -113,15 +119,6 @@ export class World {
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             this.graphicsWorld.add(this.clientCubes[client_id])
-            
-            const elem = document.createElement('div');
-            elem.textContent = client_id;
-            if(labelsDiv != null){
-                labelsDiv.appendChild(elem);
-            }
-            
-            this.labels[client_id]=elem
-
 
         } else {
             if (players[client_id].p) {
@@ -176,29 +173,11 @@ export class World {
             this.cameraOperator.update(0.1);
         }
         this.render()
-    
+        this.labels.update()
         this.stats.update()
     }
     
     public render() {
-        const canvas = this.renderer.domElement
-        this.camera.updateProjectionMatrix();
-        Object.keys(this.clientCubes).forEach((c)=>{
-            let tempV = new THREE.Vector3()
-            this.clientCubes[c].updateWorldMatrix(true, false);
-            this.clientCubes[c].getWorldPosition(tempV)
-        
-            // convert the normalized position to CSS coordinates
-            tempV.project(this.camera);
-            const x = (tempV.x *  .5 + .5) *canvas.clientWidth;
-            const y = (tempV.y * -.5 + .5) * canvas.clientHeight-100;
-            
-            // move the elem to that position
-            this.labels[c].style.transform = `translate(-50%, -50%) translate(${x}px,${y}px)`;
-
-
-        })
-
         this.renderer.render(this.graphicsWorld, this.camera)
     }
 
