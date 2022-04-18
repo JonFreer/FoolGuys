@@ -58,6 +58,13 @@ export default class Game{
             socket.on('update', (message: any) => {
                 if (this.players[socket.id]) {
                     this.players[socket.id].keyMap = message.keyMap
+                    this.players[socket.id].viewVector = message.viewVector
+                }
+            })
+            socket.on('update_view', (message: any) => {
+                if (this.players[socket.id]) {
+                    // this.players[socket.id].keyMap = message.keyMap
+                    this.players[socket.id].viewVector = message.viewVector
                 }
             })
 
@@ -72,18 +79,34 @@ export default class Game{
     
         Object.keys(this.players).forEach((p) => {
 
-            if(this.players[p].keyMap['w']){
-                this.players[p].body.position.z+=0.1
-            }
-            if(this.players[p].keyMap['s']){
-                this.players[p].body.position.z-=0.1
-            }
-            if(this.players[p].keyMap['a']){
-                this.players[p].body.position.x+=0.1
-            }
-            if(this.players[p].keyMap['d']){
-                this.players[p].body.position.x-=0.1
-            }
+            
+        const positiveX = (this.players[p].keyMap['d']) ? -1 : 0;
+		const negativeX = (this.players[p].keyMap['a'])? 1 : 0;
+		const positiveZ = (this.players[p].keyMap['w']) ? 1 : 0;
+		const negativeZ = (this.players[p].keyMap['s'])? -1 : 0;
+
+		const relDirection = new THREE.Vector3(positiveX + negativeX, 0, positiveZ + negativeZ).normalize();
+
+
+        const relCameraMovement = this.appplyVectorMatrixXZ( this.players[p].viewVector, relDirection)
+        
+        
+
+        this.players[p].body.position.x += relCameraMovement.x * this.players[p].speed
+        this.players[p].body.position.y += relCameraMovement.y * this.players[p].speed
+        this.players[p].body.position.z += relCameraMovement.z * this.players[p].speed
+            // if(this.players[p].keyMap['w']){
+            //     this.players[p].body.position.z+=0.1
+            // }
+            // if(this.players[p].keyMap['s']){
+            //     this.players[p].body.position.z-=0.1
+            // }
+            // if(this.players[p].keyMap['a']){
+            //     this.players[p].body.position.x+=0.1
+            // }
+            // if(this.players[p].keyMap['d']){
+            //     this.players[p].body.position.x-=0.1
+            // }
             if(this.players[p].keyMap[' ']){
                 if (this.players[p].canJump) {
                     this.players[p].canJump = false
@@ -108,6 +131,16 @@ export default class Game{
         io.emit('players', {players:player_info,rollers:roller_info})
     }, 25)
 }
+
+private appplyVectorMatrixXZ(a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3
+{
+	return new THREE.Vector3(
+		(a.x * b.z + a.z * b.x),
+		b.y,
+		(a.z * b.z + -a.x * b.x)
+	);
+}
+
 public loadScene(): void{
     // const ob =new OrbitControls(null);
     // THREE.GLBufferAttribute

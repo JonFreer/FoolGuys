@@ -72,6 +72,13 @@ class Game {
             socket.on('update', (message) => {
                 if (this.players[socket.id]) {
                     this.players[socket.id].keyMap = message.keyMap;
+                    this.players[socket.id].viewVector = message.viewVector;
+                }
+            });
+            socket.on('update_view', (message) => {
+                if (this.players[socket.id]) {
+                    // this.players[socket.id].keyMap = message.keyMap
+                    this.players[socket.id].viewVector = message.viewVector;
                 }
             });
         });
@@ -80,18 +87,27 @@ class Game {
                 this.rollers[r].update(0.025);
             });
             Object.keys(this.players).forEach((p) => {
-                if (this.players[p].keyMap['w']) {
-                    this.players[p].body.position.z += 0.1;
-                }
-                if (this.players[p].keyMap['s']) {
-                    this.players[p].body.position.z -= 0.1;
-                }
-                if (this.players[p].keyMap['a']) {
-                    this.players[p].body.position.x += 0.1;
-                }
-                if (this.players[p].keyMap['d']) {
-                    this.players[p].body.position.x -= 0.1;
-                }
+                const positiveX = (this.players[p].keyMap['d']) ? -1 : 0;
+                const negativeX = (this.players[p].keyMap['a']) ? 1 : 0;
+                const positiveZ = (this.players[p].keyMap['w']) ? 1 : 0;
+                const negativeZ = (this.players[p].keyMap['s']) ? -1 : 0;
+                const relDirection = new THREE.Vector3(positiveX + negativeX, 0, positiveZ + negativeZ).normalize();
+                const relCameraMovement = this.appplyVectorMatrixXZ(this.players[p].viewVector, relDirection);
+                this.players[p].body.position.x += relCameraMovement.x * this.players[p].speed;
+                this.players[p].body.position.y += relCameraMovement.y * this.players[p].speed;
+                this.players[p].body.position.z += relCameraMovement.z * this.players[p].speed;
+                // if(this.players[p].keyMap['w']){
+                //     this.players[p].body.position.z+=0.1
+                // }
+                // if(this.players[p].keyMap['s']){
+                //     this.players[p].body.position.z-=0.1
+                // }
+                // if(this.players[p].keyMap['a']){
+                //     this.players[p].body.position.x+=0.1
+                // }
+                // if(this.players[p].keyMap['d']){
+                //     this.players[p].body.position.x-=0.1
+                // }
                 if (this.players[p].keyMap[' ']) {
                     if (this.players[p].canJump) {
                         this.players[p].canJump = false;
@@ -113,6 +129,9 @@ class Game {
             });
             io.emit('players', { players: player_info, rollers: roller_info });
         }, 25);
+    }
+    appplyVectorMatrixXZ(a, b) {
+        return new THREE.Vector3((a.x * b.z + a.z * b.x), b.y, (a.z * b.z + -a.x * b.x));
     }
     loadScene() {
         // const ob =new OrbitControls(null);

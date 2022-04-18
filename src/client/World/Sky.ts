@@ -85,7 +85,7 @@ export class Sky extends THREE.Object3D
 		light.shadow.camera.right=-50
 		light.shadow.camera.top = -50
 		// light.shadow.camera
-		light.shadow.bias= -0.0005
+		// light.shadow.bias= -0.0005
 
 		const helper = new THREE.CameraHelper( light.shadow.camera );
 		// this.world.graphicsWorld.add( helper );

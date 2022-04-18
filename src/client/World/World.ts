@@ -1,7 +1,10 @@
+import { Socket } from 'socket.io-client';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
+import { CameraOperator } from './CameraOperator';
+import { InputManager } from './InputManager';
 import {Sky} from './Sky'
 export class World {
     public renderer: THREE.WebGLRenderer;
@@ -10,12 +13,15 @@ export class World {
     public clientCubes: { [id: string]: THREE.Mesh } = {}
     public obstacles: { [id: string]: THREE.Mesh } = {}
     public player_id:string='';
-    public controls: OrbitControls;
-    private stats
-    public sky: Sky
-    constructor() {
+    // public controls: OrbitControls;
+    private stats;
+    public sky: Sky;
+    public cameraOperator:CameraOperator;
+    public inputManager: InputManager;
+    public socket:Socket;
+    constructor(socket:Socket) {
         const scope = this;
-
+        this.socket=socket;
         this.renderer = new THREE.WebGLRenderer()
         this.renderer.shadowMap.enabled = true;
         // renderer.shadowMap.enabled = true;
@@ -42,10 +48,11 @@ export class World {
             0.1,
             2000000
         )
-
+        this.inputManager = new InputManager(this, this.renderer.domElement);
+        this.cameraOperator = new CameraOperator(this, this.camera,this.socket, 0.3);
         document.body.appendChild(this.renderer.domElement)
 
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+        // this.controls = new OrbitControls(this.camera, this.renderer.domElement)
         this.sky = new Sky(this);
 
 
@@ -86,7 +93,7 @@ export class World {
         gridHelper.position.y = -0.5
         // scene.add(gridHelper)
 
-        this.graphicsWorld.position.z = 4
+        // this.graphicsWorld.position.z = 0
     }
 
     public updatePlayer(client_id: string, players: any) {
@@ -133,7 +140,6 @@ export class World {
 
     public updateObstacle(id:string,obstacles:any){
         if (this.obstacles[id]!=undefined) {
-            console.log("updating")
             this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.x, obstacles[id].q.y, obstacles[id].q.z, obstacles[id].q.w),)
         }
     }
@@ -144,17 +150,21 @@ export class World {
 			this.animate();
 		});
     
-        this.controls.update()
+        // this.controls.update()
         this.sky.update()
         TWEEN.update()
     
     
-        if (this.clientCubes[this.player_id]) {
-            this.controls.target.set(this.clientCubes[this.player_id].position.x,this.clientCubes[this.player_id].position.y,this.clientCubes[this.player_id].position.z)
-            // controls.
-            this.camera.lookAt(this.clientCubes[this.player_id].position)
+        // if (this.clientCubes[this.player_id]) {
+        //     // this.controls.target.set(this.clientCubes[this.player_id].position.x,this.clientCubes[this.player_id].position.y,this.clientCubes[this.player_id].position.z)
+        //     // controls.
+        //     // this.camera.lookAt(this.clientCubes[this.player_id].position)
+        // }
+        this.inputManager.update(0.1,0.1)
+        if(this.clientCubes[this.player_id]!=undefined){
+            this.cameraOperator.setTarget(this.clientCubes[this.player_id].position)
+            this.cameraOperator.update(0.1);
         }
-    
         this.render()
     
         this.stats.update()

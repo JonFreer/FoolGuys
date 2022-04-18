@@ -9,7 +9,7 @@ import { World } from './World/World'
 
 // const scene = new THREE.Scene()
 
-const world = new World()
+
 
 const gltfLoader = new GLTFLoader()
 
@@ -25,6 +25,8 @@ let myId = ''
 let timestamp = 0
 
 const socket = io()
+const world = new World(socket)
+
 socket.on('connect', function () {
     console.log('connect')
 })
@@ -87,12 +89,17 @@ world.animate()
 function onDocumentKey (e: KeyboardEvent) {
     console.log("keymap")
     keyMap[e.key] = e.type === 'keydown'
+    sendUpdate()
+    
 
+}
+
+function sendUpdate(){
     socket.emit('update', {
         t: Date.now(),
-        keyMap:keyMap
+        keyMap:keyMap,
+        viewVector:world.cameraOperator.viewVector
     })
-
 }
 
 function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
@@ -126,10 +133,10 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
                 object.castShadow = true;
                 object.receiveShadow = true;
                 // object.geometry.computeVertexNormals(true)
-                // object.material.flatShading = true;
+                object.material.side = THREE.FrontSide;
                 object.geometry.computeVertexNormals(true)
                 // object.material = floor_material
-                console.log(object.material.flatShading)
+                console.log(object.material.side)
             }   
             if(object.userData.hasOwnProperty('spin')){
                 world.obstacles[object.name] = object
