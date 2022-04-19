@@ -41,7 +41,7 @@ export class Labels {
                     // convert the normalized position to CSS coordinates
                     tempV.project(this.world.camera);
                     const x = (tempV.x * .5 + .5) * this.dom.clientWidth;
-                    const y = (tempV.y * -.5 + .5) * this.dom.clientHeight - 50;
+                    const y = (tempV.y * -.5 + .5) * this.dom.clientHeight - 60;
 
 
                     // move the elem to that position
@@ -49,12 +49,12 @@ export class Labels {
                     if (this.ctx) {
                         this.ctx.textAlign = "center";
                         this.ctx.fillStyle = "#ffffff";
-                        this.ctx.font = "20px Arial";
+                        this.ctx.font = "20px Titan One";
                         this.ctx.strokeStyle = 'black';
                         this.ctx.lineWidth = 3;
                         // this.ctx.shadowColor="black";
                         // this.ctx.shadowBlur=7;  
-                        this.ctx.strokeText(this.world.clientCubes[c].name, x, y);
+                        this.ctx.strokeText(this.world.clientCubes[c].name, x+1, y+1    );
                         this.ctx.fillText(this.world.clientCubes[c].name, x, y);
 
                     }

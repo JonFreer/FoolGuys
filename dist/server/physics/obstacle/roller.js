@@ -27,19 +27,20 @@ exports.Roller = void 0;
 const CANNON = __importStar(require("cannon-es"));
 class Roller {
     constructor(body, rollAxis) {
-        this.speed = 0.5;
+        this.speed = 1;
         this.angle = 0.01;
         this.body = body;
         this.rollAxis = rollAxis;
+        this.body.angularVelocity.set(this.rollAxis.x * this.speed, this.rollAxis.y * this.speed, this.rollAxis.z * this.speed);
     }
     update(timestep) {
         // console.log(this.angle)
         // console.log(this.body.quaternion)
         var quatY = new CANNON.Quaternion();
         quatY.setFromAxisAngle(this.rollAxis, this.angle);
-        this.body.quaternion = quatY.mult(this.body.quaternion);
-        this.body.interpolatedQuaternion = quatY.mult(this.body.quaternion);
-        this.body.angularVelocity.set(this.rollAxis.x * this.speed, this.rollAxis.y * this.speed, this.rollAxis.z * this.speed);
+        // this.body.quaternion = quatY.mult(this.body.quaternion)
+        // this.body.interpolatedQuaternion= quatY.mult(this.body.quaternion)
+        // this.body.angularVelocity.set(this.rollAxis.x*this.speed,this.rollAxis.y*this.speed,this.rollAxis.z*this.speed);
         // console.log(this.body.quaternion)
         // this.angle +=0.1
     }

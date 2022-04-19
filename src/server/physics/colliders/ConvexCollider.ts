@@ -20,14 +20,15 @@ export class ConvexCollider
 		let defaults = {
 			mass: 0,
 			// position: mesh.position,
-			friction: 0.7
+			friction: 1
 		};
 		options = Utils.setDefaults(options, defaults);
 		this.options = options;
 
 		let mat = new CANNON.Material('convMat');
 		mat.friction = options.friction;
-		// mat.restitution = 0.7;
+
+		mat.restitution = 0;
 
 		// if (this.mesh.geometry.isBufferGeometry)
 		// {
@@ -71,9 +72,9 @@ export class ConvexCollider
   
 		// Add phys sphere
 		let physBox = new CANNON.Body({
-			mass: options.mass,
+			// mass: options.mass,
 			// position: options.position,
-			
+			type:CANNON.BODY_TYPES.KINEMATIC,
 			shape:shape.shape
 		});
 

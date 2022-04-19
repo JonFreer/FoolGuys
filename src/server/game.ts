@@ -55,6 +55,12 @@ export default class Game{
                 }
             })
 
+            socket.on('name',(name:string)=>{
+                if (this.players[socket.id]) {
+                    this.players[socket.id].screenName = name
+                }
+            })
+
             socket.on('update', (message: any) => {
                 if (this.players[socket.id]) {
                     this.players[socket.id].keyMap = message.keyMap

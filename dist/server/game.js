@@ -69,6 +69,11 @@ class Game {
                     io.emit('removePlayer', socket.id);
                 }
             });
+            socket.on('name', (name) => {
+                if (this.players[socket.id]) {
+                    this.players[socket.id].screenName = name;
+                }
+            });
             socket.on('update', (message) => {
                 if (this.players[socket.id]) {
                     this.players[socket.id].keyMap = message.keyMap;

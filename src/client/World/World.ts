@@ -115,12 +115,14 @@ export class World {
             })
 
             this.clientCubes[client_id] = new THREE.Mesh(geometry, material)
-            this.clientCubes[client_id].name = client_id
+            this.clientCubes[client_id].name = players[client_id].screenName
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             this.graphicsWorld.add(this.clientCubes[client_id])
 
+
         } else {
+            this.clientCubes[client_id].name = players[client_id].screenName
             if (players[client_id].p) {
                 new TWEEN.Tween(this.clientCubes[client_id].position)
                     .to(

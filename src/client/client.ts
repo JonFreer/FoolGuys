@@ -21,8 +21,9 @@ loadGLTF("assets/world.glb", (gltf) =>
             })
 
 
-let myId = ''
+let titleScreen = true;
 let timestamp = 0
+
 
 const socket = io()
 const world = new World(socket)
@@ -81,6 +82,26 @@ socket.on('removeClient', (id: string) => {
 
 document.addEventListener('keydown', onDocumentKey, false)
 document.addEventListener('keyup', onDocumentKey, false)
+
+let join_button = document.getElementById("join");
+if(join_button){
+    join_button.onclick=join
+}
+
+function join(){
+    //get the name inputed 
+    let name_input = document.getElementById("settings_input") as HTMLInputElement;
+    if(name_input){
+        socket.emit("name",name_input.value)
+    }
+    titleScreen = false
+    let settings_holder = document.getElementById("settings_holder") as HTMLDivElement;
+    if(settings_holder){
+        settings_holder.style.display="none";
+    }
+
+}
+
 const keyMap : { [id: string]: boolean } = {}
 
 world.animate()
@@ -99,12 +120,16 @@ function onDocumentKey (e: KeyboardEvent) {
 }
 
 function sendUpdate(){
+    if(!titleScreen){
     socket.emit('update', {
         t: Date.now(),
         keyMap:keyMap,
         viewVector:world.cameraOperator.viewVector
     })
 }
+}
+
+
 
 function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
 	{
