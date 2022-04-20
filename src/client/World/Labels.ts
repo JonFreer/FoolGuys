@@ -22,10 +22,19 @@ export class Labels {
     public setEnabled(enabled: boolean) {
         this.enabled = enabled;
         if (!enabled) {
+            document.getElementById("button_labels")?.classList.add("off");
             if (this.ctx) {
                 this.ctx.clearRect(0, 0, this.dom.width, this.dom.height);
             }
+        }else{
+            document.getElementById("button_labels")?.classList.remove("off");
         }
+    }
+
+    public toggle(that: Labels){
+
+        that.setEnabled(!that.enabled);
+       
     }
 
     public update() {

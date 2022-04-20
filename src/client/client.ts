@@ -105,7 +105,7 @@ function join() {
         settings_holder.style.display = "none";
 
     }
-    world.renderer.domElement.requestFullscreen({ navigationUI: 'hide' }).then(()=>{screen.orientation.lock('landscape')})
+    document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(()=>{screen.orientation.lock('landscape')})
     world.mobileControls.enable()
 
 

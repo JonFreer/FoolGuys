@@ -180,11 +180,70 @@
         #join:hover{
             background-color: #cd1d81;
         }
+
+        #mobile_button_holder{
+            position: absolute;
+            right:15px;
+            top:15px;
+            display: grid;
+            grid-template-rows: auto auto;
+            row-gap: 15px;
+            z-index: 10000;
+            visibility: hidden;
+        }
+
+        .mobile_button{
+            font-family: 'Titan One', cursive;
+            border-radius: 7px;
+            color: white;
+            background-color: #e42191;
+            box-shadow: 5px 5px 2px 2px rgba(0, 0, 0, 0.75);
+            border-width: 3px;
+            border-color: #c21370;
+            border-style: solid;
+            outline: 3px solid white;
+            text-shadow: 2.5px 2.5px 1px #892159;
+            user-select: none;
+            height: 24px;
+            width:24px;
+            padding:3px;
+            cursor: pointer;
+            -webkit-tap-highlight-color:  rgba(255, 255, 255, 0); 
+            /* line-height: 24px; */
+        }
+
+        .mobile_button:hover{
+            background-color: #d01d83;
+            border-color: #a91062;
+        }
+
+        .mobile_button:active{
+            background-color: #b2196f;
+            border-color: #810c4a;
+        }
+
+        .mobile_button.off{
+            background-color: #686868;
+            border-color: #2e2e2e;
+        }
         
     </style>
 </head>
 
 <body>
+
+    <div id="mobile_button_holder">
+        <div class="mobile_button" id="button_fullscreen">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#ffffff"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </div>
+        <div class="mobile_button">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" width="24px" viewBox="0 0 24 24" width="24px" fill="#ffffff"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15 4v7H5.17l-.59.59-.58.58V4h11m1-2H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm5 4h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1z"/></svg>
+        </div>
+        <div class="mobile_button off" id="button_labels">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#ffffff"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM13 20.01L4 11V4h7v-.01l9 9-7 7.02z"/><circle cx="6.5" cy="6.5" r="1.5"/></svg>
+        </div>
+       
+    </div>
 
     <div id="settings_holder">
         <div id ="settings_holder_innner">

@@ -54,7 +54,6 @@ class Player {
         });
     }
     setMoveVec(moveVec) {
-        console.log(moveVec);
         this.clientMoveVec = moveVec;
         this.clientMoveVec.x = Math.min(Math.max(this.clientMoveVec.x, -1), 1);
         this.clientMoveVec.y = Math.min(Math.max(this.clientMoveVec.y, -1), 1);

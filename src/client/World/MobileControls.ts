@@ -16,6 +16,23 @@ export class MobileControls {
     constructor(world: World) {
         this.world = world;
         this.supported = "ontouchstart" in document.documentElement
+        
+        let label_button = document.getElementById("button_labels");
+        if(label_button!=null){
+            label_button.onclick =((ev: MouseEvent) =>this.world.labels.toggle(this.world.labels))
+        }
+
+        let fullscreen_button = document.getElementById("button_fullscreen");
+        if(fullscreen_button!=null){
+            fullscreen_button.onclick =((ev: MouseEvent) =>{
+                if(document.fullscreenElement){
+                    document.exitFullscreen();
+                }else{
+                    document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(()=>{screen.orientation.lock('landscape')})
+                }
+
+            })
+        }
         // this.dom = <HTMLCanvasElement>document.createElement("canvas");
         // this.ctx = this.dom.getContext("2d");
         // this.dom.setAttribute("id", "mobile_controls");
@@ -29,6 +46,10 @@ export class MobileControls {
         document.ontouchstart = ((ev: TouchEvent) => this.touchStart(this, ev))
         document.ontouchmove = ((ev: TouchEvent) => this.touchMove(this, ev))
         document.ontouchend = ((ev: TouchEvent) => this.touchEnd(this, ev))
+        let dom = document.getElementById("mobile_button_holder");
+        if(dom!=null){
+            dom.style.visibility='visible';
+        }
     }
 
     private touchStart(that: MobileControls, ev: TouchEvent) {
