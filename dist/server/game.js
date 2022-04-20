@@ -77,6 +77,7 @@ class Game {
             socket.on('update', (message) => {
                 if (this.players[socket.id]) {
                     this.players[socket.id].keyMap = message.keyMap;
+                    this.players[socket.id].setMoveVec(message.moveVector);
                     this.players[socket.id].viewVector = message.viewVector;
                 }
             });
@@ -86,17 +87,31 @@ class Game {
                     this.players[socket.id].viewVector = message.viewVector;
                 }
             });
+            socket.on('update_move', (message) => {
+                if (this.players[socket.id]) {
+                    // this.players[socket.id].keyMap = message.keyMap
+                    this.players[socket.id].clientMoveVec = message.moveVector;
+                }
+            });
+            socket.on('update_jump', (message) => {
+                if (this.players[socket.id]) {
+                    if (this.players[socket.id].canJump) {
+                        this.players[socket.id].canJump = false;
+                        this.physics.bodies[socket.id].velocity.y += 10;
+                    }
+                }
+            });
         });
         setInterval(() => {
             Object.keys(this.rollers).forEach((r) => {
                 this.rollers[r].update(0.025);
             });
             Object.keys(this.players).forEach((p) => {
-                const positiveX = (this.players[p].keyMap['d']) ? -1 : 0;
-                const negativeX = (this.players[p].keyMap['a']) ? 1 : 0;
-                const positiveZ = (this.players[p].keyMap['w']) ? 1 : 0;
-                const negativeZ = (this.players[p].keyMap['s']) ? -1 : 0;
-                const relDirection = new THREE.Vector3(positiveX + negativeX, 0, positiveZ + negativeZ).normalize();
+                // const positiveX = (this.players[p].keyMap['d']) ? -1 : 0;
+                // const negativeX = (this.players[p].keyMap['a'])? 1 : 0;
+                // const positiveZ = (this.players[p].keyMap['w']) ? 1 : 0;
+                // const negativeZ = (this.players[p].keyMap['s'])? -1 : 0;
+                const relDirection = new THREE.Vector3(this.players[p].clientMoveVec.x, 0, this.players[p].clientMoveVec.y).normalize();
                 const relCameraMovement = this.appplyVectorMatrixXZ(this.players[p].viewVector, relDirection);
                 this.players[p].body.position.x += relCameraMovement.x * this.players[p].speed;
                 this.players[p].body.position.y += relCameraMovement.y * this.players[p].speed;

@@ -119,7 +119,7 @@ export class InputManager
 	}
 
 	public onMouseMove(event: MouseEvent): void
-	{
+	{	
 		if (this.inputReceiver !== undefined)
 		{
 			this.inputReceiver.handleMouseMove(event, event.movementX, event.movementY);

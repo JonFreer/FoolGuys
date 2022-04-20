@@ -7,6 +7,7 @@ import { CameraOperator } from './CameraOperator';
 import { InputManager } from './InputManager';
 import {Sky} from './Sky'
 import {Labels} from './Labels'
+import { MobileControls } from './MobileControls';
 export class World {
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
@@ -21,6 +22,7 @@ export class World {
     public inputManager: InputManager;
     public socket:Socket;
     public labels:Labels;
+    public mobileControls:MobileControls;
     constructor(socket:Socket) {
         const scope = this;
         this.socket=socket;
@@ -30,6 +32,7 @@ export class World {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
+        
         
 
         window.addEventListener('resize', onWindowResize, false)
@@ -44,6 +47,9 @@ export class World {
         this.labels = new Labels(this)
         document.body.append(this.labels.dom)
         this.labels.setSize(window.innerWidth, window.innerHeight)
+
+        this.mobileControls = new MobileControls(this);
+        
 
         this.stats = Stats()
         document.body.appendChild(this.stats.dom)
@@ -152,6 +158,8 @@ export class World {
             this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.x, obstacles[id].q.y, obstacles[id].q.z, obstacles[id].q.w),)
         }
     }
+
+    
 
     public animate(){
         requestAnimationFrame(() =>

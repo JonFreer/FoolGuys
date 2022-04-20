@@ -36,6 +36,7 @@ class Player {
         this.speed = 0.1;
         this.t = -1; //ping timestamp
         this.viewVector = new THREE.Vector3(0, 0, 0);
+        this.clientMoveVec = new THREE.Vector2(0, 0);
     }
     resetPlayer() {
         this.body.position.x = Math.random() * 10 - 5;
@@ -51,6 +52,12 @@ class Player {
             p: this.body.position,
             q: this.body.quaternion
         });
+    }
+    setMoveVec(moveVec) {
+        console.log(moveVec);
+        this.clientMoveVec = moveVec;
+        this.clientMoveVec.x = Math.min(Math.max(this.clientMoveVec.x, -1), 1);
+        this.clientMoveVec.y = Math.min(Math.max(this.clientMoveVec.y, -1), 1);
     }
 }
 exports.default = Player;

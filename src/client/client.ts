@@ -6,6 +6,7 @@ import { GUI } from 'dat.gui'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { io } from 'socket.io-client'
 import { World } from './World/World'
+import { Vector2 } from 'three'
 
 // const scene = new THREE.Scene()
 
@@ -14,11 +15,10 @@ import { World } from './World/World'
 const gltfLoader = new GLTFLoader()
 
 
-loadGLTF("assets/world.glb", (gltf) =>
-            {
-                loadScene(gltf);
-                // console.log(gltf)
-            })
+loadGLTF("assets/world.glb", (gltf) => {
+    loadScene(gltf);
+    // console.log(gltf)
+})
 
 
 let titleScreen = true;
@@ -34,12 +34,12 @@ socket.on('connect', function () {
 socket.on('disconnect', function (message: any) {
     console.log('disconnect ' + message)
 })
-socket.on('joined', (id: any,name:string) => {
+socket.on('joined', (id: any, name: string) => {
     world.player_id = id
 
 })
 
-socket.on("removePlayer",(id:string)=>{
+socket.on("removePlayer", (id: string) => {
     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
 })
 socket.on('players', (data: any) => {
@@ -48,12 +48,12 @@ socket.on('players', (data: any) => {
     Object.keys(data.players).forEach((p) => {
         timestamp = Date.now()
         pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
-        world.updatePlayer(p,data.players)
-        
+        world.updatePlayer(p, data.players)
+
     });
 
     Object.keys(data.rollers).forEach((r) => {
-        world.updateObstacle(r,data.rollers);
+        world.updateObstacle(r, data.rollers);
     });
 
 
@@ -84,93 +84,112 @@ document.addEventListener('keydown', onDocumentKey, false)
 document.addEventListener('keyup', onDocumentKey, false)
 
 let join_button = document.getElementById("join");
-if(join_button){
-    join_button.onclick=join
+if (join_button) {
+    join_button.onclick = join
 }
+// document.querySelector("#join")?.addEventListener("click", async function (){
+//     // await world.renderer.domElement.requestFullscreen({ navigationUI: 'hide' })
+//     // screen.orientation.lock('landscape')
+// })
 
-function join(){
+function join() {
     //get the name inputed 
     let name_input = document.getElementById("settings_input") as HTMLInputElement;
-    if(name_input){
-        socket.emit("name",name_input.value)
+    if (name_input) {
+        socket.emit("name", name_input.value)
     }
     titleScreen = false
     let settings_holder = document.getElementById("settings_holder") as HTMLDivElement;
-    if(settings_holder){
-        settings_holder.style.display="none";
+    if (settings_holder) {
+
+        settings_holder.style.display = "none";
+
     }
+    world.renderer.domElement.requestFullscreen({ navigationUI: 'hide' }).then(()=>{screen.orientation.lock('landscape')})
+    world.mobileControls.enable()
+
 
 }
 
-const keyMap : { [id: string]: boolean } = {}
+const keyMap: { [id: string]: boolean } = {}
 
 world.animate()
 
 
-function onDocumentKey (e: KeyboardEvent) {
+function onDocumentKey(e: KeyboardEvent) {
     console.log("keymap")
     keyMap[e.key] = e.type === 'keydown'
-    sendUpdate()
+    let movement = new Vector2(0,0)
+    if(keyMap['w'] || keyMap["W"]){
+        movement.y+=1
+    }
+    if(keyMap['s'] || keyMap["S"]){
+        movement.y-=1
+    }
+    if(keyMap['a'] || keyMap["A"]){
+        movement.x+=1
+    }
+    if(keyMap['d'] || keyMap["D"]){
+        movement.x-=1
+    }
 
-    if (e.key === 'Tab'){
+    sendUpdate(movement)
+
+    if (e.key === 'Tab') {
         world.labels.setEnabled(e.type === 'keydown')
         e.preventDefault()
     }
 
 }
 
-function sendUpdate(){
-    if(!titleScreen){
-    socket.emit('update', {
-        t: Date.now(),
-        keyMap:keyMap,
-        viewVector:world.cameraOperator.viewVector
-    })
-}
-}
-
-
-
-function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void
-	{
-		// let trackerEntry = this.addLoadingEntry(path);
-
-		gltfLoader.load(path,
-		(gltf)  =>
-		{
-			onLoadingFinished(gltf);
-			// this.doneLoading(trackerEntry);
-		},
-		(xhr) =>
-		{
-			if ( xhr.lengthComputable )
-			{
-				// trackerEntry.progress = xhr.loaded / xhr.total;
-			}
-		},
-		(error)  =>
-		{
-			console.error(error);
-		});
-	}
-
-    function loadScene(gltf: any){
-        
-        // const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-        gltf.scene.traverse( function ( object:any ) {
-            if ( object.isMesh ) {
-                object.castShadow = true;
-                object.receiveShadow = true;
-                // object.geometry.computeVertexNormals(true)
-                object.material.side = THREE.FrontSide;
-                object.geometry.computeVertexNormals(true)
-                // object.material = floor_material
-                console.log(object.material.side)
-            }   
-            if(object.userData.hasOwnProperty('spin')){
-                world.obstacles[object.name] = object
-            }
-        
-        } );
-        world.graphicsWorld.add(gltf.scene);
+function sendUpdate(movement:THREE.Vector2) {
+    if (!titleScreen) {
+        socket.emit('update', {
+            t: Date.now(),
+            moveVector: movement,
+            keyMap:keyMap,
+            viewVector: world.cameraOperator.viewVector
+        })
     }
+}
+
+
+
+function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void {
+    // let trackerEntry = this.addLoadingEntry(path);
+
+    gltfLoader.load(path,
+        (gltf) => {
+            onLoadingFinished(gltf);
+            // this.doneLoading(trackerEntry);
+        },
+        (xhr) => {
+            if (xhr.lengthComputable) {
+                // trackerEntry.progress = xhr.loaded / xhr.total;
+            }
+        },
+        (error) => {
+            console.error(error);
+        });
+}
+
+function loadScene(gltf: any) {
+
+    // const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+    gltf.scene.traverse(function (object: any) {
+        if (object.isMesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+            // object.geometry.computeVertexNormals(true)
+            object.material.side = THREE.FrontSide;
+            object.geometry.computeVertexNormals(true)
+            // object.material = floor_material
+            console.log(object.material.side)
+        }
+        if (object.userData.hasOwnProperty('spin')) {
+            world.obstacles[object.name] = object
+        }
+
+    });
+    world.graphicsWorld.add(gltf.scene);
+}

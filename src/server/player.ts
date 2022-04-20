@@ -6,6 +6,7 @@ export default class Player {
     public screenName = ''
     public canJump = true
     public viewVector:THREE.Vector3;
+    public clientMoveVec:THREE.Vector2;
     public keyMap:{ [id: string]: boolean } = {};
     public p = { x: 0, y: 0, z: 0 } //position
     public q = { x: 0, y: 0, z: 0, w: 0 } //quaternion
@@ -14,7 +15,8 @@ export default class Player {
     public t = -1 //ping timestamp
 
     constructor() {
-        this.viewVector=new THREE.Vector3(0,0,0)
+        this.viewVector=new THREE.Vector3(0,0,0);
+        this.clientMoveVec=new THREE.Vector2(0,0);
     }
 
     public resetPlayer(){
@@ -32,5 +34,12 @@ export default class Player {
             p:this.body.position,
             q:this.body.quaternion
         })
+    }
+
+    public setMoveVec(moveVec:THREE.Vector2){
+        console.log(moveVec)
+        this.clientMoveVec=moveVec;
+        this.clientMoveVec.x = Math.min(Math.max(this.clientMoveVec.x,-1),1)
+        this.clientMoveVec.y = Math.min(Math.max(this.clientMoveVec.y,-1),1)
     }
 }
