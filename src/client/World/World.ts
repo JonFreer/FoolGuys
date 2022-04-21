@@ -8,6 +8,7 @@ import { InputManager } from './InputManager';
 import {Sky} from './Sky'
 import {Labels} from './Labels'
 import { MobileControls } from './MobileControls';
+import { ChatManager } from './Chat';
 export class World {
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
@@ -23,6 +24,7 @@ export class World {
     public socket:Socket;
     public labels:Labels;
     public mobileControls:MobileControls;
+    public chatManager:ChatManager;
     constructor(socket:Socket) {
         const scope = this;
         this.socket=socket;
@@ -49,10 +51,10 @@ export class World {
         this.labels.setSize(window.innerWidth, window.innerHeight)
 
         this.mobileControls = new MobileControls(this);
-        
+        this.chatManager = new ChatManager(this.socket);
 
         this.stats = Stats()
-        document.body.appendChild(this.stats.dom)
+        // document.body.appendChild(this.stats.dom)
 
         this.graphicsWorld = new THREE.Scene();
 

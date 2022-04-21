@@ -101,6 +101,9 @@ class Game {
                     }
                 }
             });
+            socket.on('chat', (message) => {
+                io.emit('chat', { message: message, name: this.players[socket.id].screenName });
+            });
         });
         setInterval(() => {
             Object.keys(this.rollers).forEach((r) => {

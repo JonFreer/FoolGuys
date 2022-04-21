@@ -22,6 +22,11 @@ export class MobileControls {
             label_button.onclick =((ev: MouseEvent) =>this.world.labels.toggle(this.world.labels))
         }
 
+        let chat_button = document.getElementById("button_chat");
+        if(chat_button!=null){
+            chat_button.onclick =((ev: MouseEvent) =>this.world.chatManager.focusInput())
+        }
+
         let fullscreen_button = document.getElementById("button_fullscreen");
         if(fullscreen_button!=null){
             fullscreen_button.onclick =((ev: MouseEvent) =>{

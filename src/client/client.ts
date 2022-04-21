@@ -63,6 +63,9 @@ socket.on('removeClient', (id: string) => {
     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
 })
 
+socket.on('chat',(msg:any)=>{
+    world.chatManager.newMessage(msg.name,msg.message)
+})
 
 
 // const gui = new GUI()

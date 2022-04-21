@@ -91,6 +91,10 @@ export default class Game{
                 }
             })
 
+            socket.on('chat',(message: any)=>{
+                io.emit('chat',{message:message,name:this.players[socket.id].screenName})
+            })
+
           
 
 

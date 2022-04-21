@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500;700&family=Titan+One&display=swap" rel="stylesheet"> 
     <title>
         FoolGuys
     </title>
@@ -226,17 +227,69 @@
             background-color: #686868;
             border-color: #2e2e2e;
         }
+
+        #chat_holder{
+            position: absolute;
+            top:40px;
+            font-family: 'Roboto', sans-serif;
+            color:white;
+            /* background:rgba(105, 105, 105, 0.29);
+            border-bottom-right-radius: 7px; */
+            /* border-top-right-radius: 7px; */
+            
+            display: grid;
+            row-gap: 5px;
+            /* transition:  2s; */
+            
+        }
+
+        #chat_items{
+            background:rgba(105, 105, 105, 0.29);
+            border-bottom-right-radius: 7px;
+            border-top-right-radius: 7px;
+            padding:5px;
+            width:max-content;
+            pointer-events: none;
+        }
+
+        #chat_input{
+            background: none;
+            color:white;
+            font-family: 'Roboto', sans-serif;
+            border:none;
+            width:max-content;
+            background:rgba(57, 57, 57, 0.29);
+            border-bottom-right-radius: 7px;
+            border-top-right-radius: 7px;
+            padding:5px;
+            font-size: 17px;
+            max-width: 400px;
+            min-width: calc(100% - 10px);
+        }
+
+        
         
     </style>
 </head>
 
 <body>
+    
+    <div id="chat_holder">
+        <div id ="chat_items">
+        <!-- <div class="chat_item">Jon: heloooo</div>
+        <div class="chat_item">Jon: how is it going</div>
+        <div class="chat_item">Jon: hello</div>
+        <div class="chat_item">Jon: heloooo</div> -->
+    </div>
+        <input id="chat_input" maxlength="80">
+        
+    </div>
 
     <div id="mobile_button_holder">
         <div class="mobile_button" id="button_fullscreen">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#ffffff"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
         </div>
-        <div class="mobile_button">
+        <div class="mobile_button" id="button_chat">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" width="24px" viewBox="0 0 24 24" width="24px" fill="#ffffff"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M15 4v7H5.17l-.59.59-.58.58V4h11m1-2H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm5 4h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1z"/></svg>
         </div>
         <div class="mobile_button off" id="button_labels">
