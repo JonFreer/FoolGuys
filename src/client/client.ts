@@ -25,47 +25,104 @@ let titleScreen = true;
 let timestamp = 0
 
 
-const socket = io()
+// const socket = io()
+var socket = new WebSocket("ws://127.0.0.1:2794", "rust-websocket");
+
 const world = new World(socket)
 
-socket.on('connect', function () {
-    console.log('connect')
-})
-socket.on('disconnect', function (message: any) {
-    console.log('disconnect ' + message)
-})
-socket.on('joined', (id: any, name: string) => {
-    world.player_id = id
+socket.onmessage = function (event) {
+    console.log(event.data)
+    let msg = JSON.parse(event.data)
+    console.log(msg)
+    let data = msg[1]
+    let type = msg[0]
 
-})
+    if(type == 'connect'){
+        console.log('connect')
+    }
 
-socket.on("removePlayer", (id: string) => {
-    world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
-})
-socket.on('players', (data: any) => {
-    // console.log(data)
-    let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
-    Object.keys(data.players).forEach((p) => {
-        timestamp = Date.now()
-        pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
-        world.updatePlayer(p, data.players)
+    if(type == 'disconnect'){
+        console.log('disconnect ' + msg)
+    }
 
-    });
+    if(type == 'joined'){
+        world.player_id = data.id
+    }
 
-    Object.keys(data.rollers).forEach((r) => {
-        world.updateObstacle(r, data.rollers);
-    });
+    if(type == 'removePlayer'){
+        world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(data.id) as THREE.Object3D)
+    }
+
+    if(type == 'players'){
+        let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
+        Object.keys(data.players).forEach((p) => {
+            timestamp = Date.now()
+            pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
+            world.updatePlayer(p, data.players)
+    
+        });
+    
+        Object.keys(data.rollers).forEach((r) => {
+            world.updateObstacle(r, data.rollers);
+        });
+    
+    
+        (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
+    
+    }
+
+    if(type == 'removeClient'){ //NOTE::THIS IS REPEATED?
+        world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(data.id) as THREE.Object3D)
+    }
 
 
-    (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
-})
-socket.on('removeClient', (id: string) => {
-    world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
-})
+    if(type == 'chat'){ //NOTE::THIS IS REPEATED?
+        world.chatManager.newMessage(data.name,data.message)
+    }
 
-socket.on('chat',(msg:any)=>{
-    world.chatManager.newMessage(msg.name,msg.message)
-})
+    
+
+
+}
+
+// socket.on('connect', function () {
+//     console.log('connect')
+// })
+// socket.on('disconnect', function (message: any) {
+//     console.log('disconnect ' + message)
+// })
+// socket.on('joined', (id: any, name: string) => {
+//     world.player_id = id
+
+// })
+
+// socket.on("removePlayer", (id: string) => {
+//     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
+// })
+// socket.on('players', (data: any) => {
+//     // console.log(data)
+//     let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
+//     Object.keys(data.players).forEach((p) => {
+//         timestamp = Date.now()
+//         pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
+//         world.updatePlayer(p, data.players)
+
+//     });
+
+//     Object.keys(data.rollers).forEach((r) => {
+//         world.updateObstacle(r, data.rollers);
+//     });
+
+
+//     (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
+// })
+// socket.on('removeClient', (id: string) => {
+//     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
+// })
+
+// socket.on('chat',(msg:any)=>{
+//     world.chatManager.newMessage(msg.name,msg.message)
+// })
 
 
 // const gui = new GUI()
@@ -99,7 +156,7 @@ function join() {
     //get the name inputed 
     let name_input = document.getElementById("settings_input") as HTMLInputElement;
     if (name_input) {
-        socket.emit("name", name_input.value)
+        socket.send(JSON.stringify(["name", name_input.value]))
     }
     titleScreen = false
     let settings_holder = document.getElementById("settings_holder") as HTMLDivElement;
@@ -147,12 +204,12 @@ function onDocumentKey(e: KeyboardEvent) {
 
 function sendUpdate(movement:THREE.Vector2) {
     if (!titleScreen) {
-        socket.emit('update', {
+        socket.send(JSON.stringify(['update', {
             t: Date.now(),
             moveVector: movement,
             keyMap:keyMap,
             viewVector: world.cameraOperator.viewVector
-        })
+        }]))
     }
 }
 

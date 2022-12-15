@@ -1,4 +1,5 @@
-import { World } from '../world/World';
+// import { World } from '../world/World';
+import {World} from './World'
 import { IInputReceiver } from '../interfaces/IInputReceiver';
 // import { EntityType } from '../enums/EntityType';
 // import { IUpdatable } from '../interfaces/IUpdatable';

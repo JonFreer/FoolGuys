@@ -2,11 +2,11 @@ import { Socket } from "socket.io-client";
 
 export class ChatManager {
 
-    private socket: Socket;
+    private socket: WebSocket;
     private messageCount = 0;
     private timeOut:NodeJS.Timeout | null = null;
     private input:HTMLInputElement;
-    constructor(socket:Socket) {
+    constructor(socket:WebSocket) {
         
         this.socket = socket;
 
@@ -51,9 +51,9 @@ export class ChatManager {
         },20000)
     }
 
-    private chatEnter(socket:Socket,e:KeyboardEvent,input:HTMLInputElement){
+    private chatEnter(socket:WebSocket,e:KeyboardEvent,input:HTMLInputElement){
         if (e.key === 'Enter' ) {
-            socket.emit("chat",input.value)
+            socket.send(JSON.stringify(["chat",input.value]))
             input.value="";
             input.style.width = input.value.length + "ch";
         }

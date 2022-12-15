@@ -21,11 +21,11 @@ export class World {
     public sky: Sky;
     public cameraOperator:CameraOperator;
     public inputManager: InputManager;
-    public socket:Socket;
+    public socket:WebSocket;
     public labels:Labels;
     public mobileControls:MobileControls;
     public chatManager:ChatManager;
-    constructor(socket:Socket) {
+    constructor(socket:WebSocket) {
         const scope = this;
         this.socket=socket;
         this.renderer = new THREE.WebGLRenderer()

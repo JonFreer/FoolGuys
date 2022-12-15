@@ -74,7 +74,7 @@ export class MobileControls {
                     setTimeout( function() { that.tapedTwice = false; }, 300 );
                     return false;
                 }
-                that.world.socket.emit("update_jump")
+                that.world.socket.send(JSON.stringify(["update_jump"]))
                 ev.preventDefault();
         }
         }
@@ -89,9 +89,9 @@ export class MobileControls {
                 let diff_x = that.tpMove.clientX - ev.targetTouches[i].clientX;
                 let diff_y = that.tpMove.clientY - ev.targetTouches[i].clientY;
                 console.log(diff_x, diff_y, this.tpMove?.identifier)
-                that.world.socket.emit('update_move', {
+                that.world.socket.send(JSON.stringify(['update_move', {
                     moveVector: new Vector2(diff_x / 50, diff_y / 50)
-                })
+                }]))
             }
             if (ev.targetTouches[i].identifier === that.tpLook?.identifier) {
                 let diff_x = -(that.tpLook.clientX - ev.targetTouches[i].clientX) * that.sensitivity;
@@ -120,9 +120,9 @@ export class MobileControls {
         if (!contains_move) {
             console.log("removing move")
             that.tpMove = undefined;
-            that.world.socket.emit('update_move', {
+            that.world.socket.send(JSON.stringify(['update_move', {
                 moveVector: new Vector2(0, 0)
-            })
+            }]))
         }
         if (!contains_look) {
             console.log("removing move")

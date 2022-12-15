@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 // import * as Utils from './FunctionLibrary';
-import { World } from '../world/World';
+import { World } from './World';
 import { IInputReceiver } from '../interfaces/IInputReceiver';
 import { Vector3 } from 'three';
 import { Socket } from 'socket.io-client';
@@ -37,10 +37,10 @@ export class CameraOperator implements IInputReceiver
 	public rightVelocity: number = 0;
 
 	public followMode: boolean = false;
-	private socket:Socket;
+	private socket:WebSocket;
 	// public characterCaller: Character;
 
-	constructor(world: World, camera: THREE.Camera,socket:Socket, sensitivityX: number = 1, sensitivityY: number = sensitivityX * 0.8)
+	constructor(world: World, camera: THREE.Camera,socket:WebSocket, sensitivityX: number = 1, sensitivityY: number = sensitivityX * 0.8)
 	{
 		this.socket=socket;
 		this.world = world;
@@ -122,9 +122,9 @@ export class CameraOperator implements IInputReceiver
 			this.viewVector = new THREE.Vector3().subVectors(this.target, this.world.camera.position);
 			this.viewVector = new THREE.Vector3(this.viewVector.x, 0, this.viewVector.z).normalize()
 			if(old_view!==this.viewVector){
-				this.socket.emit('update_view', {
-					viewVector:this.viewVector
-				})
+				this.socket.send(JSON.stringify(['update_view', {
+					viewVector:this.viewVector}
+				]))
 			}
 		
 		}
