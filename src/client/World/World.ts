@@ -123,14 +123,14 @@ export class World {
             })
 
             this.clientCubes[client_id] = new THREE.Mesh(geometry, material)
-            this.clientCubes[client_id].name = players[client_id].screenName
+            this.clientCubes[client_id].name = players[client_id].name
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             this.graphicsWorld.add(this.clientCubes[client_id])
 
 
         } else {
-            this.clientCubes[client_id].name = players[client_id].screenName
+            this.clientCubes[client_id].name = players[client_id].name
             if (players[client_id].p) {
                 new TWEEN.Tween(this.clientCubes[client_id].position)
                     .to(
@@ -150,14 +150,17 @@ export class World {
                 //         50
                 //     )
                 //     .start()
-                this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.x, players[client_id].q.y, players[client_id].q.z, players[client_id].q.w),)
+                this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.i, players[client_id].q.j, players[client_id].q.k, players[client_id].q.w),)
             }
         }
     }
 
     public updateObstacle(id:string,obstacles:any){
         if (this.obstacles[id]!=undefined) {
-            this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.x, obstacles[id].q.y, obstacles[id].q.z, obstacles[id].q.w),)
+            // console.log()
+            this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w),)
+        }else{
+            console.log("Cannot find obstacle",id)
         }
     }
 

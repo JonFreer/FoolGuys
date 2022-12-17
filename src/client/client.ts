@@ -36,6 +36,8 @@ socket.onmessage = function (event) {
     console.log(msg)
     let data = msg[1]
     let type = msg[0]
+    console.log("ytest")
+    console.log(msg["Join"])
 
     if(type == 'connect'){
         console.log('connect')
@@ -45,12 +47,31 @@ socket.onmessage = function (event) {
         console.log('disconnect ' + msg)
     }
 
-    if(type == 'joined'){
-        world.player_id = data.id
+    if(msg["Join"]){
+        world.player_id = msg["Join"].id
     }
 
     if(type == 'removePlayer'){
         world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(data.id) as THREE.Object3D)
+    }
+
+    if(msg["WorldUpdate"]){
+        let data = msg["WorldUpdate"]
+        let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
+        console.log("a",data.players)
+        Object.keys(data.players).forEach((p) => {
+            console.log("b",data.players[p])
+            timestamp = Date.now()
+            // pingStatsHtml += p + ' ' + (timestamp - data[p].t) + 'ms<br/>'
+            world.updatePlayer(p, data.players)
+    
+        });
+
+        // /dynamic_objects
+    
+        Object.keys(data.dynamic_objects).forEach((r) => {
+            world.updateObstacle(r, data.dynamic_objects);
+        });
     }
 
     if(type == 'players'){
@@ -76,8 +97,8 @@ socket.onmessage = function (event) {
     }
 
 
-    if(type == 'chat'){ //NOTE::THIS IS REPEATED?
-        world.chatManager.newMessage(data.name,data.message)
+    if(msg["Chat"]){ 
+        world.chatManager.newMessage(msg["Chat"].name,msg["Chat"].message)
     }
 
     

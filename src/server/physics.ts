@@ -41,7 +41,7 @@ export default class Physics{
         sphereBody.addShape(sphereShape)
         sphereBody.addEventListener('collide', (e: any) => {
             // console.log("collide",e.contact.ni.dot(new CANNON.Vec3(0, 1, 0)))
-
+            
             if (e.contact.ni.dot(new CANNON.Vec3(0, 1, 0)) < -0.5 || e.contact.ni.dot(new CANNON.Vec3(0, 1, 0))>0.99) {
                 // console.log("collide")
                 this.game.players[id].canJump = true
@@ -53,7 +53,6 @@ export default class Physics{
         this.world.addBody(sphereBody)
 
         this.bodies[id] = sphereBody
-
         return sphereBody.id
     }
 
