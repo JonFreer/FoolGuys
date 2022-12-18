@@ -241,7 +241,7 @@ fn main() {
             // let info  = players[i].get_info(&mut rigid_body_set);
             dynamic_objects_info.insert(
                 world.dynamic_objects[i].name.clone(),
-                world.dynamic_objects[i].get_info(&mut world.rigid_body_set),
+                world.dynamic_objects[i].get_info(&mut world.rigid_body_set, &mut world.collider_set),
             );
         }
 

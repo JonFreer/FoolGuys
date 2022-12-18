@@ -72,14 +72,14 @@ export class World {
         this.sky = new Sky(this);
 
 
-        const floor_geometry = new THREE.BoxGeometry(10, 1, 10);
-        const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-        const floor = new THREE.Mesh(floor_geometry, floor_material);
+        // const floor_geometry = new THREE.BoxGeometry(10, 1, 10);
+        // const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+        // const floor = new THREE.Mesh(floor_geometry, floor_material);
 
 
-        floor.receiveShadow = true;
-        this.graphicsWorld.add(floor);
-        floor.position.y = -1;
+        // floor.receiveShadow = true;
+        // this.graphicsWorld.add(floor);
+        // floor.position.y = -1;
 
         //ambient
         // const ambient_light = new THREE.AmbientLight(0x404040, 2); // soft white light
@@ -150,6 +150,8 @@ export class World {
                 //         50
                 //     )
                 //     .start()
+
+                
                 this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.i, players[client_id].q.j, players[client_id].q.k, players[client_id].q.w),)
             }
         }
@@ -158,6 +160,21 @@ export class World {
     public updateObstacle(id:string,obstacles:any){
         if (this.obstacles[id]!=undefined) {
             // console.log()
+            if(id == "Hull"){
+                console.log(obstacles[id])
+            }
+            new TWEEN.Tween(this.obstacles[id].position)
+            .to(
+                {
+                    x: obstacles[id].p.x,
+                    y: obstacles[id].p.y,
+                    z: obstacles[id].p.z,
+                },
+                50
+            )
+            .start()
+            // this.obstacles[id].set
+            // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
             this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w),)
         }else{
             console.log("Cannot find obstacle",id)

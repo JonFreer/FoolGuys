@@ -59,7 +59,7 @@ impl World {
                             let rot =  node.transform().decomposed().1;
                             let mut collider =
                                 ColliderBuilder::convex_hull(&points_vec).unwrap().build();
-                            collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
+                            // collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
                             let rotation = UnitQuaternion::from_quaternion(Quaternion::new(rot[3],rot[0],rot[1],rot[2]));
                             collider.set_mass(0.0);
 
@@ -75,20 +75,45 @@ impl World {
                                     roll_axis = Vector3::new(0.0,0.0,1.0);
                                 }
 
-                                let platform_body = RigidBodyBuilder::kinematic_velocity_based().angvel(roll_axis);
+                                let mut platform_body = RigidBodyBuilder::kinematic_velocity_based().angvel(roll_axis).build();
+                                platform_body.set_translation(Vector3::new(pos[0], pos[1], pos[2]), true);
                                 
-                                // .se(roll_axis);
                                 let rigid_body_handle = rigid_body_set.insert(platform_body);
                                 let collider_handle = collider_set.insert_with_parent(collider, rigid_body_handle, &mut rigid_body_set);
 
                                 let obj = DynamicObject::new(node.name().unwrap().to_string(),rigid_body_handle,collider_handle,rotation);
                                 
-                                // dynamic_objects.append(obj);
                                 dynamic_objects.push(obj);
+                            }else if extras["pivot"] != Value::Null{
 
+                                println!("Pivot!!!");
+                                let mut locked_axis = LockedAxes::TRANSLATION_LOCKED ;
 
+                                if extras["pivot"] == "x"{
+                                    locked_axis |= LockedAxes::ROTATION_LOCKED_Y | LockedAxes::ROTATION_LOCKED_Z;
+                                }else if extras["pivot"] == "y"{
+                                    locked_axis |=LockedAxes::ROTATION_LOCKED_Z| LockedAxes::ROTATION_LOCKED_X;
+                                }else if extras["pivot"] == "z"{
+                                    locked_axis |= LockedAxes::ROTATION_LOCKED_Y| LockedAxes::ROTATION_LOCKED_X;
+                                }
+
+                                let mut platform_body = RigidBodyBuilder::dynamic().locked_axes(locked_axis).build();
+                                // collider.set_restitution(0.7);
+                                platform_body.set_translation(Vector3::new(pos[0], pos[1], pos[2]), true);
+                                // platform_body.lock_rotations(locked, wake_up)
+                                
+                                collider.set_mass(10.0);
+                                // collider.
+                                let rigid_body_handle = rigid_body_set.insert(platform_body);
+                                let collider_handle = collider_set.insert_with_parent(collider, rigid_body_handle, &mut rigid_body_set);
+
+                                let obj = DynamicObject::new(node.name().unwrap().to_string(),rigid_body_handle,collider_handle,rotation);
+                                
+                                dynamic_objects.push(obj);
                             }else{
+                                collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
                                 let collider_handler = collider_set.insert(collider);
+                                
                             }
 
                             

@@ -31,13 +31,13 @@ var socket = new WebSocket("ws://127.0.0.1:2794", "rust-websocket");
 const world = new World(socket)
 
 socket.onmessage = function (event) {
-    console.log(event.data)
+    // console.log(event.data)
     let msg = JSON.parse(event.data)
-    console.log(msg)
+    // console.log(msg)
     let data = msg[1]
     let type = msg[0]
-    console.log("ytest")
-    console.log(msg["Join"])
+    // console.log("ytest")
+    // console.log(msg["Join"])
 
     if(type == 'connect'){
         console.log('connect')
@@ -58,9 +58,9 @@ socket.onmessage = function (event) {
     if(msg["WorldUpdate"]){
         let data = msg["WorldUpdate"]
         let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
-        console.log("a",data.players)
+        // console.log("a",data.players)
         Object.keys(data.players).forEach((p) => {
-            console.log("b",data.players[p])
+            // console.log("b",data.players[p])
             timestamp = Date.now()
             // pingStatsHtml += p + ' ' + (timestamp - data[p].t) + 'ms<br/>'
             world.updatePlayer(p, data.players)
@@ -71,6 +71,10 @@ socket.onmessage = function (event) {
     
         Object.keys(data.dynamic_objects).forEach((r) => {
             world.updateObstacle(r, data.dynamic_objects);
+            console.log(r)
+            if(r=="rotation"){
+                console.log(data.dynamic_objects[r])
+            }
         });
     }
 
@@ -198,7 +202,6 @@ world.animate()
 
 
 function onDocumentKey(e: KeyboardEvent) {
-    console.log("keymap")
     keyMap[e.key] = e.type === 'keydown'
     let movement = new Vector2(0,0)
     if(keyMap['w'] || keyMap["W"]){
@@ -269,6 +272,9 @@ function loadScene(gltf: any) {
         }
         if (object.userData.hasOwnProperty('spin')) {
             world.obstacles[object.name] = object
+        }else if (object.userData.hasOwnProperty('pivot')) {
+            world.obstacles[object.name] = object
+            console.log("pivot name ",object.name)
         }
 
     });

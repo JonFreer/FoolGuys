@@ -70,7 +70,7 @@ impl Player {
             rotation: Quaternion::new(0.0, 0.0, 0.0, 0.0),
             view_vector: Vector3::new(0.0, 0.0, 0.0),
             client_move_vec: Vector2::new(0.0, 0.0),
-            speed: 0.3,
+            speed: 0.1,
             rigid_body_handle,
             collider_handle,
             id,
@@ -132,13 +132,13 @@ impl Player {
             let mut rigid_body = &mut rigid_body_set[self.rigid_body_handle];
             // rigid_body.set_linvel(corrected_movement.translation/integration_parameters.dt, true);
 
-            // rigid_body.set_translation(corrected_movement.translation, true);
+            rigid_body.set_translation(rigid_body.translation()+ corrected_movement.translation, true);
 
-            rigid_body.set_linvel(rigid_body.linvel()+corrected_movement.translation, true);
+            // rigid_body.set_linvel(rigid_body.linvel()+corrected_movement.translation, true);
 
             // if(rigid_body.linvel().x>1)
 
-            println!("Corrected movement {:?}",corrected_movement.translation);
+            // println!("Corrected movement {:?}",corrected_movement.translation);
 
          }
          let mut rigid_body = &mut rigid_body_set[self.rigid_body_handle];
