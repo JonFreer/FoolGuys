@@ -5,6 +5,13 @@ const path = require('path');
 module.exports = merge(common, {
     mode: 'development',
     devtool: 'eval-source-map',
+    output: {
+        // devtoolLineToLine: true,
+        sourceMapFilename: "./bundle.js.map",
+        pathinfo: true,
+        path: __dirname,
+        filename: "bundle.js"
+    },
     devServer: {
         static: {
             directory: path.join(__dirname, '../../dist/client'),
