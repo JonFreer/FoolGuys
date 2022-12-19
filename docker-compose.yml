@@ -2,18 +2,18 @@ version: '2'
 networks:
   bookstack-front:
     external: true
-  traefik_web:
-    external:
-            true
+  # traefik_web:
+  #   external:
+  #           true
 services:
   web:
-    build: .
-    command: npm run start
+    build: ./client
+    command: npm run build_dev
     volumes:
       - .:/app/
       - /app/node_modules
     ports:
-      - "3000:3000"    
+      - "3001:3000"    
     networks:
       - bookstack-front
     labels:
@@ -22,18 +22,18 @@ services:
       - traefik.http.routers.web_foolguys.tls.certresolver=letsEncrypt #references our certificatesResolvers in traefik.yml
   server:
     build: ./server
-    command: ./target/release/server
-    # volumes:
-    #   - .:/app/
-    #   - /app/node_modules
+    # command: ./target/release/server
+    volumes:
+      - ./client/dist/client/assets:/assets/
+      # - /app/node_modules
     ports:
-      - "80:80"    
+      - "2865:2865"    
     networks:
       - bookstack-front
     labels:
       - traefik.http.routers.server_foolguys.tls=true #sets the service to use TLS
       - traefik.http.routers.server_foolguys.tls.certresolver=letsEncrypt #references our certificatesResolvers in traefik.yml
-      - "traefik.http.routers.server_foolguys.rule=Host(`game.server.douvk.co.uk`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.server_foolguys.rule=Host(`foolguys.douvk.co.uk`) && PathPrefix(`/ws`)"
       - "traefik.http.middlewares.strip_ws.stripprefix.prefixes=/ws"
       - "traefik.http.routers.server_foolguys.middlewares=strip_ws"
       

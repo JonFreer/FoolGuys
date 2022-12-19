@@ -1,0 +1,23 @@
+version: '2'
+networks:
+  bookstack-front:
+    external: true
+  traefik_web:
+    external:
+            true
+services:
+  web:
+    build: .
+    command: npm run start
+    volumes:
+      - .:/app/
+      - /app/node_modules
+    ports:
+      - "3000:3000"    
+    networks:
+      - bookstack-front
+    labels:
+      - traefik.http.routers.whoami.rule=Host(`game.server.douvk.co.uk`) #sets the rule for the router
+      - traefik.http.routers.whoami.tls=true #sets the service to use TLS
+      - traefik.http.routers.whoami.tls.certresolver=letsEncrypt #references our certificatesResolvers in traefik.yml
+      

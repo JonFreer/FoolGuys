@@ -47,7 +47,7 @@ fn main() {
     let (contact_force_send, contact_force_recv) = crossbeam::channel::unbounded();
     let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
-    let mut server = Server::bind("127.0.0.1").unwrap();
+    let mut server = Server::bind("127.0.0.1:2865").unwrap();
     server.set_nonblocking(true);
 
     // let mut players: Arc<RwLock<Vec<Player>>> = Arc::new(RwLock::new(Vec::new()));

@@ -22,7 +22,7 @@ impl World {
         let mut dynamic_objects = Vec::new();
         println!("Created world");
         // let gltf = Gltf::open("../dist/client/assets/world.glb").unwrap();
-        let (gltf, buffers, _) = gltf::import("../dist/client/assets/world.glb").unwrap();
+        let (gltf, buffers, _) = gltf::import("/assets/world.glb").unwrap();
         // println!("{:#?}", gltf);
         for scene in gltf.scenes() {
             // let extras = scene.extras().as_ref().unwrap();
