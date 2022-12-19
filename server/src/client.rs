@@ -1,16 +1,9 @@
 use crate::player::Player;
 use crate::structs::MessageType;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use serde_json::Result;
-use serde_json::Value;
 use std::net::TcpStream;
 use std::sync::mpsc::channel;
-use std::sync::Arc;
-use std::sync::RwLock;
 use std::thread;
-use websocket::message;
-use websocket::receiver::Receiver;
 use websocket::sync::Writer;
 use websocket::OwnedMessage;
 
@@ -37,7 +30,7 @@ impl Client {
 
         // client.send_message(&message).unwrap();
 
-        let (mut receiver, mut sender) = client.split().unwrap();
+        let (mut receiver, sender) = client.split().unwrap();
 
         println!("Connection from {}", ip.to_string());
 
@@ -45,7 +38,7 @@ impl Client {
             for message in receiver.incoming_messages() {
                 // let message = message.unwrap();
                 // sender_thread.send(message);
-                match (message) {
+                match message {
                     Ok(m) => {
                         sender_thread.send(m);
                     }

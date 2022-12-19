@@ -7,6 +7,7 @@ import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { io } from 'socket.io-client'
 import { World } from './World/World'
 import { Vector2 } from 'three'
+import { win32 } from 'path'
 
 // const scene = new THREE.Scene()
 
@@ -26,7 +27,9 @@ let timestamp = 0
 
 
 // const socket = io()
-var socket = new WebSocket("ws://127.0.0.1:2794", "rust-websocket");
+var hostname =location.hostname 
+
+var socket = new WebSocket("ws://"+hostname+"/ws", "rust-websocket");
 
 const world = new World(socket)
 

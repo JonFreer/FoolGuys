@@ -24,7 +24,7 @@ class App {
 
         this.io = new Server(this.server)
 
-        new Game(this.io)
+        // new Game(this.io)
 
     }
 
