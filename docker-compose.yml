@@ -8,7 +8,7 @@ networks:
 services:
   web:
     build: ./client
-    command: npm run build_dev
+    command: npm run start
     volumes:
       - .:/app/
       - /app/node_modules
