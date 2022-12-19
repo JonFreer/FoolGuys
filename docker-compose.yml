@@ -36,5 +36,6 @@ services:
       - "traefik.http.routers.server_foolguys.rule=Host(`foolguys.douvk.co.uk`) && PathPrefix(`/ws`)"
       - "traefik.http.middlewares.strip_ws.stripprefix.prefixes=/ws"
       - "traefik.http.routers.server_foolguys.middlewares=strip_ws"
+      - "traefik.http.services.server_foolguys.loadbalancer.server.port=80"
       
 

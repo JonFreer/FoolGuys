@@ -79,6 +79,9 @@ fn main() {
     loop {
         let result = match server.accept() {
             Ok(wsupgrade) => {
+
+                println!("packet");
+
                 if !wsupgrade
                     .protocols()
                     .contains(&"rust-websocket".to_string())
@@ -104,6 +107,7 @@ fn main() {
                 players.push(player);
             }
             _ => {
+                // println!("blahh");
                 // Nobody tried to connect, move on.
             }
         };
