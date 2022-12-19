@@ -29,7 +29,7 @@ let timestamp = 0
 // const socket = io()
 var hostname =location.hostname 
 
-var socket = new WebSocket("ws://"+hostname+"/ws", "rust-websocket");
+var socket = new WebSocket("wss://"+hostname+"/ws", "rust-websocket");
 
 const world = new World(socket)
 
