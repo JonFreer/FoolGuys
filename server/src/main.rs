@@ -20,8 +20,21 @@ use std::process::Command;
 use std::sync::RwLock;
 
 fn main() {
+    
+    let path;
+    let ip;
+    if cfg!(debug_assertions) {
+        println!("Running debug server");
+        path = "../client/dist/client/assets/world.glb";
+        ip = "127.0.0.1:2865";
+    }else{
+        println!("Running Prod Server");
+        path = "/assets/world.glb";
+        ip = "0.0.0.0:2865"
+    }
+
     //RAPIER BOILERPLATE
-    let mut world = World::new();
+    let mut world = World::new(path);
  
     // return;
     // let mut rigid_body_set = RigidBodySet::new();
@@ -46,34 +59,13 @@ fn main() {
     let (collision_send, collision_recv) = crossbeam::channel::unbounded();
     let (contact_force_send, contact_force_recv) = crossbeam::channel::unbounded();
     let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
-
-    let mut server = Server::bind("0.0.0.0:2865").unwrap();
+  
+    // let mut server = Server::bind(ip).unwrap();
+    let mut server = Server::bind(ip).unwrap();
     server.set_nonblocking(true);
 
     // let mut players: Arc<RwLock<Vec<Player>>> = Arc::new(RwLock::new(Vec::new()));
     let mut players: Vec<Player> = Vec::new();
-
-    // let mut chat_queue: Vec<ChatMessage> = Vec::new();
-    // let clients_c = clients.clone();
-
-    // println!("{}", clients.read().unwrap().len());
-    // thread::spawn(move ||{
-    // for request in server.filter_map(Result::ok) {
-
-    //     if !request.protocols().contains(&"rust-websocket".to_string()) {
-    //         request.reject().unwrap();
-    //         return;
-    //     }
-
-    //     let mut client = request.use_protocol("rust-websocket").accept().unwrap();
-
-    //     let mut client2 = client::Client::new(client);
-
-    //         println!("creating client");
-
-    //     clients_c.write().unwrap().push(client2);
-    // }
-    // });
 
     println!("HIIII");
     loop {
@@ -169,7 +161,7 @@ fn main() {
 
         while let Ok(collision_event) = collision_recv.try_recv() {
             // Handle the collision event.
-            println!("Received collision event: {:?}", collision_event);
+            // println!("Received collision event: {:?}", collision_event);
             // collision_event.collider1()
 
             if collision_event.started() {
@@ -180,17 +172,14 @@ fn main() {
                     narrow_phase.contact_pair(collider_handle1, collider_handle2)
                 {
                     if contact_pair.has_any_active_contact {
-                        println!("Active contacts");
                         for manifold in &contact_pair.manifolds {
                             if manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)) > 0.9 {
                                 for i in 0..players.len() {
                                     if players[i].collider_handle == collider_handle2 {
                                         players[i].can_jump = true;
-                                        println!("reset jump");
                                     }
                                 }
 
-                                println!("reset jump");
                             }else{
 
                             }
@@ -199,7 +188,6 @@ fn main() {
                             // println!("World-space contact normal: {}", manifold.data.normal);
                         }
                     }else{
-                        println!("No active contanct");
                     }
                 }
             }

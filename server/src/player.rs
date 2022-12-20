@@ -5,9 +5,9 @@ use rapier3d::control::KinematicCharacterController;
 // use serde::{Deserialize, Serialize};
 // use serde_json::{Result, Number};
 use crate::client::Client;
-use crate::structs::{self, ChatMessage, MessageType, PlayerUpdate, Quat, Vec3};
+use crate::structs::{MessageType, PlayerUpdate, Quat, Vec3};
 use rand::Rng;
-use serde_json::{json, Value};
+use serde_json::{ Value};
 use websocket::OwnedMessage;
 
 use rapier3d::prelude::*;
@@ -26,6 +26,7 @@ pub struct Player {
     pub collider_handle: ColliderHandle,
     pub id: String,
     pub key_map: HashMap<String, bool>,
+    pub to_jump: bool,
 }
 
 impl Player {
@@ -54,12 +55,9 @@ impl Player {
             .restitution(0.7)
             .build();
 
-        
-        // let collider = ColliderBuilder::(0.5).restitution(0.7).build();
         let rigid_body_handle = rigid_body_set.insert(rigid_body);
         let collider_handle =
             collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
-
 
         Self {
             name,
@@ -75,6 +73,7 @@ impl Player {
             collider_handle,
             id,
             key_map: HashMap::new(),
+            to_jump: false,
         }
     }
 
@@ -90,13 +89,18 @@ impl Player {
     //     );
     // }
 
-    fn appplyVectorMatrixX(a: Vector3<f32>, b: Vector3<f32>) -> Vector3<f32> {
+    fn appply_vector_matrix_x(a: Vector3<f32>, b: Vector3<f32>) -> Vector3<f32> {
         // let x =
         Vector3::new(a.x * b.z + a.z * b.x, b.y, a.z * b.z + -a.x * b.x)
     }
 
-    pub fn update_physics(&mut self, rigid_body_set: &mut RigidBodySet, collider_set: &mut ColliderSet, integration_parameters: IntegrationParameters) {
-        let mut rigid_body = &mut rigid_body_set[self.rigid_body_handle];
+    pub fn update_physics(
+        &mut self,
+        rigid_body_set: &mut RigidBodySet,
+        collider_set: &mut ColliderSet,
+        integration_parameters: IntegrationParameters,
+    ) {
+        let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
 
         if !(self.client_move_vec.x == 0.0 && self.client_move_vec.y == 0.0) {
             let mut rel_direction =
@@ -104,62 +108,63 @@ impl Player {
                                                                                    // if(self.)
             rel_direction = rel_direction.normalize();
             let rel_camera_movement =
-                Player::appplyVectorMatrixX(self.view_vector, rel_direction) * self.speed;
+                Player::appply_vector_matrix_x(self.view_vector, rel_direction) * self.speed;
 
             // let pos = rigid_body.translation() + rel_camera_movement;
             // println!("{}",rel_direction.x);
             // rigid_body.set_translation(pos, true);
-            let pos = rel_camera_movement;//
-
+            let pos = rel_camera_movement; //
 
             let character_controller = KinematicCharacterController::default();
             let collider_shape = collider_set[self.collider_handle].shape();
             let query_pipeline = QueryPipeline::new();
             let current_position = rigid_body.position().clone();
             let corrected_movement = character_controller.move_shape(
-                integration_parameters.dt,              // The timestep length (can be set to SimulationSettings::dt).
-                &rigid_body_set,         // The RigidBodySet.
-                &collider_set,      // The ColliderSet.
-                &query_pipeline,        // The QueryPipeline.
-                collider_shape, // The character’s shape.
-                &current_position,   // The character’s initial position.
+                integration_parameters.dt, // The timestep length (can be set to SimulationSettings::dt).
+                &rigid_body_set,           // The RigidBodySet.
+                &collider_set,             // The ColliderSet.
+                &query_pipeline,           // The QueryPipeline.
+                collider_shape,            // The character’s shape.
+                &current_position,         // The character’s initial position.
                 pos,
                 QueryFilter::default()
                     // Make sure the the character we are trying to move isn’t considered an obstacle.
                     .exclude_rigid_body(self.rigid_body_handle),
-                |_| {} // We don’t care about events in this example.
+                |_| {}, // We don’t care about events in this example.
             );
-            let mut rigid_body = &mut rigid_body_set[self.rigid_body_handle];
+            let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
             // rigid_body.set_linvel(corrected_movement.translation/integration_parameters.dt, true);
 
-            rigid_body.set_translation(rigid_body.translation()+ corrected_movement.translation, true);
+            rigid_body.set_translation(
+                rigid_body.translation() + corrected_movement.translation,
+                true,
+            );
 
             // rigid_body.set_linvel(rigid_body.linvel()+corrected_movement.translation, true);
 
             // if(rigid_body.linvel().x>1)
 
             // println!("Corrected movement {:?}",corrected_movement.translation);
-
-         }
-         let mut rigid_body = &mut rigid_body_set[self.rigid_body_handle];
+        }
+        let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
         // println!("{}",self.key_map);
-        if self.key_map.contains_key(" ") {
-            if self.key_map[" "]&&self.can_jump {
-                println!("Jump");
+        if self.key_map.contains_key(" ") || self.to_jump {
+            if self.key_map[" "] && self.can_jump {
                 self.can_jump = false;
-                // let vel_y = rigid_body.linvel()+ Vector3::new(0.0,10.0,0.0);
                 rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 10.0, 0.0), true);
             }
+
+            self.to_jump = false;
         }
 
-        if (rigid_body.translation().y < (-5.0)) {
+        if rigid_body.translation().y < (-5.0) {
             let mut rng = rand::thread_rng();
             rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
             rigid_body.set_translation(
                 Vector3::new(rng.gen_range(-5.0..5.0), 6.0, rng.gen_range(-5.0..5.0)),
                 true,
             );
-            rigid_body.set_angvel(Vector3::new(0.0,0.0,0.0), true);
+            rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
         }
     }
 
@@ -205,7 +210,7 @@ impl Player {
                         // sender.send_message(&message).unwrap();
                     }
                     OwnedMessage::Text(msg) => {
-                        self.handleMessage(msg);
+                        self.handle_message(msg);
                     }
                     _ => self.client.sender.send_message(&message).unwrap(),
                 }
@@ -215,7 +220,7 @@ impl Player {
         }
     }
 
-    fn handleMessage(&mut self, msg: String) {
+    fn handle_message(&mut self, msg: String) {
         let v: Value = serde_json::from_str(&msg).unwrap();
 
         // println!("{} {}", msg, v[0]);
@@ -262,6 +267,21 @@ impl Player {
                 self.key_map
                     .insert(key.to_string(), value.as_bool().unwrap());
             }
+        }
+
+        if v[0] == "update_move" {
+            let move_vec = v[1]["moveVector"].clone();
+            self.client_move_vec = Vector2::new(
+                move_vec["x"].as_f64().unwrap() as f32,
+                move_vec["y"].as_f64().unwrap() as f32,
+            );
+
+            self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+            self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+        }
+
+        if v[0] == "update_jump" {
+            self.to_jump = true;
         }
     }
 }

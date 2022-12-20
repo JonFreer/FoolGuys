@@ -8,6 +8,7 @@ import { io } from 'socket.io-client'
 import { World } from './World/World'
 import { Vector2 } from 'three'
 import { win32 } from 'path'
+import * as e from 'express'
 
 // const scene = new THREE.Scene()
 
@@ -28,8 +29,14 @@ let timestamp = 0
 
 // const socket = io()
 var hostname =location.hostname 
-
-var socket = new WebSocket("wss://"+hostname+"/ws", "rust-websocket");
+// var socket
+let socket: WebSocket;
+console.log(hostname)
+if(hostname!= 'localhost'){
+    socket = new WebSocket("wss://"+hostname+"/ws", "rust-websocket");
+}else{
+    socket = new WebSocket("ws://"+hostname+":2865", "rust-websocket");
+}
 
 const world = new World(socket)
 

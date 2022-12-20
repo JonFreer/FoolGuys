@@ -16,13 +16,13 @@ pub struct World {
 }
 
 impl World {
-    pub fn new() -> Self {
+    pub fn new(path:&str) -> Self {
         let mut rigid_body_set = RigidBodySet::new();
         let mut collider_set = ColliderSet::new();
         let mut dynamic_objects = Vec::new();
         println!("Created world");
         // let gltf = Gltf::open("../dist/client/assets/world.glb").unwrap();
-        let (gltf, buffers, _) = gltf::import("/assets/world.glb").unwrap();
+        let (gltf, buffers, _) = gltf::import(path).unwrap();
         // println!("{:#?}", gltf);
         for scene in gltf.scenes() {
             // let extras = scene.extras().as_ref().unwrap();
