@@ -39,7 +39,7 @@ if(hostname!= 'localhost'){
 }
 
 const world = new World(socket)
-
+let time= Date.now()
 socket.onmessage = function (event) {
     // console.log(event.data)
     let msg = JSON.parse(event.data)
@@ -81,11 +81,11 @@ socket.onmessage = function (event) {
     
         Object.keys(data.dynamic_objects).forEach((r) => {
             world.updateObstacle(r, data.dynamic_objects);
-            console.log(r)
-            if(r=="rotation"){
-                console.log(data.dynamic_objects[r])
-            }
+       
         });
+
+        console.log(Date.now()-time);
+        time = Date.now()
     }
 
     if(type == 'players'){
@@ -278,13 +278,11 @@ function loadScene(gltf: any) {
             object.material.side = THREE.FrontSide;
             object.geometry.computeVertexNormals(true)
             // object.material = floor_material
-            console.log(object.material.side)
         }
         if (object.userData.hasOwnProperty('spin')) {
             world.obstacles[object.name] = object
         }else if (object.userData.hasOwnProperty('pivot')) {
             world.obstacles[object.name] = object
-            console.log("pivot name ",object.name)
         }
 
     });

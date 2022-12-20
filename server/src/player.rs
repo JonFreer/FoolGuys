@@ -148,14 +148,19 @@ impl Player {
         }
         let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
         // println!("{}",self.key_map);
-        if self.key_map.contains_key(" ") || self.to_jump {
+        if self.key_map.contains_key(" "){
             if self.key_map[" "] && self.can_jump {
                 self.can_jump = false;
                 rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 10.0, 0.0), true);
             }
-
-            self.to_jump = false;
         }
+
+        if self.to_jump && self.can_jump{
+            rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 10.0, 0.0), true);
+            self.can_jump = false;
+        }
+
+        self.to_jump = false;
 
         if rigid_body.translation().y < (-5.0) {
             let mut rng = rand::thread_rng();
@@ -200,19 +205,19 @@ impl Player {
                 match message {
                     OwnedMessage::Close(_) => {
                         let message = OwnedMessage::Close(None);
-                        self.client.sender.send_message(&message).unwrap();
+                        self.client.sender_thread.send(message).unwrap();
                         println!("Client disconnected");
                         break; //TODO::THIS WAS RETURN
                     }
                     OwnedMessage::Ping(ping) => {
                         let message = OwnedMessage::Pong(ping);
-                        self.client.sender.send_message(&message).unwrap();
+                        self.client.sender_thread.send(message).unwrap();
                         // sender.send_message(&message).unwrap();
                     }
                     OwnedMessage::Text(msg) => {
                         self.handle_message(msg);
                     }
-                    _ => self.client.sender.send_message(&message).unwrap(),
+                    _ => self.client.sender_thread.send(message).unwrap(),
                 }
             } else {
                 break;

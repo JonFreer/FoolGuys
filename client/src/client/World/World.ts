@@ -28,7 +28,7 @@ export class World {
     constructor(socket:WebSocket) {
         const scope = this;
         this.socket=socket;
-        this.renderer = new THREE.WebGLRenderer()
+        this.renderer = new THREE.WebGLRenderer({antialias:true})
         this.renderer.shadowMap.enabled = true;
         // renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
@@ -159,10 +159,7 @@ export class World {
 
     public updateObstacle(id:string,obstacles:any){
         if (this.obstacles[id]!=undefined) {
-            // console.log()
-            if(id == "Hull"){
-                console.log(obstacles[id])
-            }
+        
             new TWEEN.Tween(this.obstacles[id].position)
             .to(
                 {
