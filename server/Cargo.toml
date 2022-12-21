@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-websocket = "0.26.5"
 serde_json = "1.0"
 serde = {version = "1.0.150", features = ["derive"]}
 nalgebra = "0.31.4"
