@@ -139,9 +139,11 @@ export class World {
                             y: players[client_id].p.y,
                             z: players[client_id].p.z,
                         },
-                        50
+                        0//50
                     )
                     .start()
+
+                // this.clientCubes[client_id].set
             }
             if (players[client_id].q) {
                 // new TWEEN.Tween(clientCubes[p].rotation)
@@ -167,12 +169,12 @@ export class World {
                     y: obstacles[id].p.y,
                     z: obstacles[id].p.z,
                 },
-                50
+                0
             )
             .start()
             // this.obstacles[id].set
             // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
-            this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w),)
+            this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
         }else{
             console.log("Cannot find obstacle",id)
         }
