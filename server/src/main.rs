@@ -1,9 +1,17 @@
 extern crate websocket;
-
+use std::{
+    collections::HashMap,
+    env,
+    io::Error as IoError,
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+    thread, process::Command,
+};
 use nalgebra::Vector3;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::thread;
+use structs::{Client, MessageType};
+// use std::collections::HashMap;
+// use std::sync::Arc;
+// use std::thread;
 use std::time::Instant;
 use websocket::sync::Server;
 use websocket::OwnedMessage;
@@ -17,10 +25,78 @@ use rapier3d::{crossbeam, prelude::*};
 use crate::player::Player;
 use crate::structs::PlayerUpdate;
 use crate::world::World;
-use std::process::Command;
+// use std::process::Command;
 use std::sync::RwLock;
 
-fn main() {
+use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
+use futures_util::{
+    future, pin_mut,
+    stream::{Collect, TryStreamExt},
+    StreamExt,
+};
+
+use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::tungstenite;
+use tungstenite::protocol::Message;
+
+type PeerMap = Arc<Mutex<HashMap<SocketAddr, Client>>>;
+
+
+
+async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
+    println!("Incoming TCP connection from: {}", addr);
+
+    let ws_stream = tokio_tungstenite::accept_async(raw_stream)
+        .await
+        .expect("Error during the websocket handshake occurred");
+    println!("WebSocket connection established: {}", addr);
+
+    // Insert the write part of this peer to the peer map.
+    let (tx, rx) = unbounded();
+    let (tx_receive, rx_receive) = unbounded();
+
+    peer_map.lock().unwrap().insert(
+        addr,
+        Client {
+            tx: tx,
+            rx: rx_receive,
+        },
+    );
+
+    let (outgoing, incoming) = ws_stream.split();
+
+    let broadcast_incoming = incoming.try_for_each(|msg| {
+        // println!(
+        //     "Received a message from {}: {}",
+        //     addr,
+        //     msg.to_text().unwrap()
+        // );
+
+        tx_receive.unbounded_send(msg.clone()).unwrap();
+
+        future::ok(())
+    });
+
+    let receive_from_others = rx.map(Ok).forward(outgoing);
+
+    pin_mut!(broadcast_incoming, receive_from_others);
+    future::select(broadcast_incoming, receive_from_others).await;
+
+    println!("{} disconnected", &addr);
+    peer_map.lock().unwrap().remove(&addr);
+}
+
+async fn sokcer_handler(peer_map: PeerMap, listener: TcpListener) {
+    while let Ok((stream, addr)) = listener.accept().await {
+        // println!("connection")
+        tokio::spawn(handle_connection(peer_map.clone(), stream, addr));
+    }
+}
+
+
+#[tokio::main]
+async fn main() -> Result<(), IoError> {
+
     let path;
     let ip;
     if cfg!(debug_assertions) {
@@ -32,6 +108,23 @@ fn main() {
         path = "/assets/world.glb";
         ip = "0.0.0.0:2865"
     }
+
+    let addr = env::args()
+    .nth(1)
+    .unwrap_or_else(|| ip.to_string());
+
+    let mut state = PeerMap::new(Mutex::new(HashMap::new()));
+
+    let try_socket = TcpListener::bind(&addr).await;
+    let listener = try_socket.expect("Failed to bind");
+    println!("Listening on: {}", addr);
+    // sokcer_handler(state.clone(),listener).await;
+    tokio::spawn(sokcer_handler(state.clone(), listener));
+
+
+
+
+
 
     //RAPIER BOILERPLATE
     let mut world = World::new(path);
@@ -63,65 +156,74 @@ fn main() {
 
     let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
+    // // let mut server = Server::bind(ip).unwrap();
     // let mut server = Server::bind(ip).unwrap();
-    let mut server = Server::bind(ip).unwrap();
-    server.set_nonblocking(true);
+    // server.set_nonblocking(true);
 
     // let mut players: Arc<RwLock<Vec<Player>>> = Arc::new(RwLock::new(Vec::new()));
-    let mut players: Vec<Player> = Vec::new();
+    let mut players: HashMap<SocketAddr,Player> = HashMap::new();
 
     println!("HIIII");
     loop {
 
-        if((Instant::now()-time_since_last).as_millis()>wait_time){
-
+        if (Instant::now()-time_since_last).as_millis()>wait_time {
+            
         let start_time = Instant::now();
 
-        let result = match server.accept() {
-            Ok(wsupgrade) => {
-                println!("packet");
+        //Check for new clients
 
-                if !wsupgrade
-                    .protocols()
-                    .contains(&"rust-websocket".to_string())
-                {
-                    wsupgrade.reject().unwrap();
-                    return;
-                }
+        let mut peers = state.lock().unwrap();
 
-                let mut client = wsupgrade.use_protocol("rust-websocket").accept().unwrap();
-                // let id = client.
-                let mut client2 = client::Client::new(client);
-
-                println!("creating client");
-
+        for (key, value) in &*peers {
+            if !players.contains_key(key){
                 let player = Player::new(
-                    client2,
+                    // client2,
                     players.len(),
                     &mut world.rigid_body_set,
                     &mut world.collider_set,
                 );
 
-                // players.write().unwrap().push(player);
-                players.push(player);
+                value.tx.unbounded_send(MessagePrep(MessageType::Join {
+                    name: player.name.to_string(),
+                    id: key.to_string(),
+                })).unwrap();
+
+                players.insert(key.clone(), player);
             }
-            _ => {
-                // println!("blahh");
-                // Nobody tried to connect, move on.
+        }
+
+        //Check for clients which no longer exist
+        let mut players_to_remove = Vec::new();
+        for p in players.iter_mut() {
+            if !peers.contains_key(p.0){
+                // world.collider_set.remove(value.collider_handle, &mut island_manager, &mut world.rigid_body_set, true);
+                world.rigid_body_set.remove(p.1.rigid_body_handle,&mut island_manager,&mut world.collider_set,
+                &mut impulse_joint_set,&mut multibody_joint_set,true);
+                players_to_remove.push(p.0.clone());
+                // players.remove(p.0);
             }
-        };
+        }
+
+        //Remove clients which no longer exist
+        for p in players_to_remove{
+            players.remove(&p);
+            println!("Removed player");
+        }
 
         let d_a  = Instant::now()-start_time;
         let b_start = Instant::now();
         // let mut players_unlocked = players.write().unwrap();
 
-        for player in players.iter_mut() {
-            //parse socket messages
-            player.read_messages();
+        for p in players.iter_mut() {
+            let c =peers.get_mut(&p.0).unwrap();
+            p.1.read_messages(c);
+
+
         }
 
-        for i in 0..players.len() {
-            players[i].update_physics(
+       
+        for p in players.iter_mut() {
+            p.1.update_physics(
                 &mut world.rigid_body_set,
                 &mut world.collider_set,
                 integration_parameters,
@@ -133,29 +235,34 @@ fn main() {
         // for player in players.iter_mut() {
         //     //send chat messages
         //     loop {
-        //         if (player.chat_queue.len() == 0) {
+        //         if (player.1.chat_queue.len() == 0) {
         //             break;
         //         }
 
-        //         let msg = player.chat_queue.pop();
+        //         let msg = player.1.chat_queue.pop();
 
-        //         for p in players.iter() {}
+        //         for p in players.iter() {
+
+
+        //         }
         //     }
         // }
 
-        for i in 0..players.len() {
+        for player in players.iter_mut() {
             loop {
-                if players[i].chat_queue.len() == 0 {
+                if player.1.chat_queue.len() == 0 {
                     break;
                 }
 
-                let msg = players[i].chat_queue.pop().unwrap();
-                let name = players[i].name.clone();
-                for p in players.iter_mut() {
-                    p.client.send(structs::MessageType::Chat {
+                let msg = player.1.chat_queue.pop().unwrap();
+                let name = player.1.name.clone();
+                for (_, p) in &*peers {
+
+                    p.tx.unbounded_send(MessagePrep(structs::MessageType::Chat {
                         name: name.clone(),
                         message: msg.clone(),
-                    })
+                    })).unwrap();
+
                 }
             }
         }
@@ -163,29 +270,26 @@ fn main() {
         let d_c  = Instant::now()-c_start;
         let d_start = Instant::now();
 
-        // physics_pipeline.step(
-        //     &gravity,
-        //     &integration_parameters,
-        //     &mut island_manager,
-        //     &mut broad_phase,
-        //     &mut narrow_phase,
-        //     &mut world.rigid_body_set,
-        //     &mut world.collider_set,
-        //     &mut impulse_joint_set,
-        //     &mut multibody_joint_set,
-        //     &mut ccd_solver,
-        //     &physics_hooks,
-        //     &event_handler,
-        // );
+        physics_pipeline.step(
+            &gravity,
+            &integration_parameters,
+            &mut island_manager,
+            &mut broad_phase,
+            &mut narrow_phase,
+            &mut world.rigid_body_set,
+            &mut world.collider_set,
+            &mut impulse_joint_set,
+            &mut multibody_joint_set,
+            &mut ccd_solver,
+            &physics_hooks,
+            &event_handler,
+        );
 
         let d_d  = Instant::now()-d_start;
         let e_start = Instant::now();
 
         while let Ok(collision_event) = collision_recv.try_recv() {
-            // Handle the collision event.
-            // println!("Received collision event: {:?}", collision_event);
-            // collision_event.collider1()
-
+  
             if collision_event.started() {
                 let collider_handle1 = collision_event.collider1();
                 let collider_handle2 = collision_event.collider2();
@@ -196,9 +300,10 @@ fn main() {
                     if contact_pair.has_any_active_contact {
                         for manifold in &contact_pair.manifolds {
                             if manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)) > 0.9 {
-                                for i in 0..players.len() {
-                                    if players[i].collider_handle == collider_handle2 {
-                                        players[i].can_jump = true;
+                                for player in players.iter_mut() {
+                                // for (key, value) in &players {
+                                    if player.1.collider_handle == collider_handle2 {
+                                        player.1.can_jump = true;
                                     }
                                 }
                             } else {
@@ -216,53 +321,32 @@ fn main() {
         let d_e  = Instant::now()-e_start;
         let f_start = Instant::now();
 
-        // while let Ok(contact_force_event) = contact_force_recv.try_recv() {
-        //     // Handle the contact force event.
-        //     println!("Received contact force event: {:?}", contact_force_event);
-        // }
 
-        // if players.len() != 0 {
-        //     let ball_body = &rigid_body_set[players[0].rigid_body_handle];
-        //     // println!("Ball altitude: {}", ball_body.translation().y);
-        // }
 
         // Sewnd players_info
 
         let mut players_info = HashMap::new();
-        // for i in 0..players.len() {
-        //     // let info  = players[i].get_info(&mut rigid_body_set);
-        //     players_info.insert(
-        //         players[i].id.clone(),
-        //         players[i].get_info(&mut world.rigid_body_set),
-        //     );
-        // }
-        if(players.len()>0){
+
+
+        for player in players.iter_mut() {
+            // let info  = players[i].get_info(&mut rigid_body_set);
             players_info.insert(
-                players[0].id.clone(),
-                players[0].get_info(&mut world.rigid_body_set),
+                player.0.to_string(),
+                player.1.get_info(&mut world.rigid_body_set),
             );
         }
-       
 
 
 
         let mut dynamic_objects_info = HashMap::new();
-        // for i in 0..world.dynamic_objects.len() {
-        //     // let info  = players[i].get_info(&mut rigid_body_set);
-        //     dynamic_objects_info.insert(
-        //         world.dynamic_objects[i].name.clone(),
-        //         world.dynamic_objects[i]
-        //             .get_info(&mut world.rigid_body_set, &mut world.collider_set),
-        //     );
-        // }
-
-        dynamic_objects_info.insert(
-            world.dynamic_objects[0].name.clone(),
-            world.dynamic_objects[0]
-                .get_info(&mut world.rigid_body_set, &mut world.collider_set),
-        );
-
-   
+        for i in 0..world.dynamic_objects.len() {
+            // let info  = players[i].get_info(&mut rigid_body_set);
+            dynamic_objects_info.insert(
+                world.dynamic_objects[i].name.clone(),
+                world.dynamic_objects[i]
+                    .get_info(&mut world.rigid_body_set, &mut world.collider_set),
+            );
+        }
 
         let player_update_message = structs::MessageType::WorldUpdate {
             players: players_info,
@@ -273,8 +357,8 @@ fn main() {
         let g_start = Instant::now();
 
         //send player_update to all players
-        for i in 0..players.len() {
-            players[i].client.send(player_update_message.clone());
+        for (key, value) in &*peers {
+            value.tx.unbounded_send(MessagePrep(player_update_message.clone())).unwrap();
         }
 
         let d_g  = Instant::now()-g_start;
@@ -290,16 +374,24 @@ fn main() {
             //     "Update time {:?} {:?} {:?}",
             //     duration, wait_time, wait_string
             // );
-            // println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
+            println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
             // let mut child = Command::new("sleep").arg(wait_string).spawn().unwrap();
             // let _result = child.wait().unwrap();
         }else{
             // println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
         }
         time_since_last = Instant::now();
-        wait_time = (15 - duration.as_millis().min(15));
+        wait_time = 15 - duration.as_millis().min(15);
+        println!("{} {}",wait_time,duration.as_millis());
     }else{
         
     }
+    
     }
+
+    Ok(())
+}
+
+fn MessagePrep(msg: MessageType)->Message{
+   Message::Text(serde_json::to_string(&msg).unwrap())
 }

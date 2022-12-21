@@ -1,9 +1,21 @@
 use std::collections::HashMap;
 
+use futures_channel::mpsc::UnboundedSender;
 use nalgebra::{Quaternion, Vector3};
 use serde::{Deserialize, Serialize};
 
 use crate::dynamic::DynamicObject;
+
+use futures_channel::mpsc::{unbounded, UnboundedReceiver};
+use futures_util::{
+    future, pin_mut,
+    stream::{Collect, TryStreamExt},
+    StreamExt,
+};
+
+use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::tungstenite;
+use tungstenite::protocol::Message;
 
 pub struct ChatMessage{
     name:String,
@@ -53,3 +65,8 @@ pub struct Quat{
 // pub struct UpdateView {
 //     pub viewVector: Vec3
 // }
+
+pub struct Client {
+    pub tx: UnboundedSender<Message>,
+    pub rx: UnboundedReceiver<Message>,
+}

@@ -13,6 +13,10 @@ nalgebra = "0.31.4"
 rapier3d = "0.16.1"
 rand = "0.8.5"
 #gltf = "1.0.0"
+tokio-tungstenite = "*"
+tokio = { version = "1.23.0", features = ["full"] }
+futures-util = "0.3.25"
+futures-channel = "0.3.25"
 
 [dependencies.gltf]
 version = "1.0"

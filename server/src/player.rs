@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
+use futures_channel::mpsc::UnboundedReceiver;
 use nalgebra::{Quaternion, Vector2, Vector3};
 use rapier3d::control::KinematicCharacterController;
+use tokio_tungstenite::tungstenite::Message;
 // use serde::{Deserialize, Serialize};
 // use serde_json::{Result, Number};
-use crate::client::Client;
-use crate::structs::{MessageType, PlayerUpdate, Quat, Vec3};
+
+use crate::structs::{MessageType, PlayerUpdate, Quat, Vec3, Client};
 use rand::Rng;
 use serde_json::{ Value};
 use websocket::OwnedMessage;
@@ -14,7 +16,7 @@ use rapier3d::prelude::*;
 
 pub struct Player {
     pub name: String,
-    pub client: Client,
+    // pub client: Client,
     pub can_jump: bool,
     pub chat_queue: Vec<String>,
     pub position: Vector3<f32>,
@@ -24,26 +26,26 @@ pub struct Player {
     pub speed: f32,
     pub rigid_body_handle: RigidBodyHandle,
     pub collider_handle: ColliderHandle,
-    pub id: String,
+    // pub id: String,
     pub key_map: HashMap<String, bool>,
     pub to_jump: bool,
 }
 
 impl Player {
     pub fn new(
-        mut client: Client,
+        // mut client: Client,
         num_players: usize,
         rigid_body_set: &mut RigidBodySet,
         collider_set: &mut ColliderSet,
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
-        let id = client.id.clone();
+        // let id = client.id.clone();
         // let data = json!(&Join { name: name.clone(),id:id.clone() });
         // client.send("join",data);
-        client.send(MessageType::Join {
-            name: name.to_string(),
-            id: id.clone(),
-        });
+        // client.send(MessageType::Join {
+        //     name: name.to_string(),
+        //     id: id.clone(),
+        // });
         // client.send(serde_json::to_string(Join{name:name.clone()}).unwrap());
 
         /* Create the bounding ball. */
@@ -61,7 +63,7 @@ impl Player {
 
         Self {
             name,
-            client,
+            // client,
             can_jump: true,
             chat_queue: Vec::new(),
             position: Vector3::new(0.0, 0.0, 0.0),
@@ -71,7 +73,7 @@ impl Player {
             speed: 0.1,
             rigid_body_handle,
             collider_handle,
-            id,
+            // id,
             key_map: HashMap::new(),
             to_jump: false,
         }
@@ -134,6 +136,11 @@ impl Player {
             );
             let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
             // rigid_body.set_linvel(corrected_movement.translation/integration_parameters.dt, true);
+            
+            // if(corrected_movement.grounded){
+            //     self.can_jump = true;
+            // }
+            
 
             rigid_body.set_translation(
                 rigid_body.translation() + corrected_movement.translation,
@@ -197,96 +204,173 @@ impl Player {
         }
     }
 
-    pub fn read_messages(&mut self) {
+    pub fn read_messages(&mut self,c:&mut Client) {
         // let mut client = self.client;
 
+        // loop {
+        //     if let Ok(message) = self.client.receiver_thread.try_recv() {
+
         loop {
-            if let Ok(message) = self.client.receiver_thread.try_recv() {
-                match message {
-                    OwnedMessage::Close(_) => {
-                        let message = OwnedMessage::Close(None);
-                        self.client.sender_thread.send(message).unwrap();
-                        println!("Client disconnected");
-                        break; //TODO::THIS WAS RETURN
-                    }
-                    OwnedMessage::Ping(ping) => {
-                        let message = OwnedMessage::Pong(ping);
-                        self.client.sender_thread.send(message).unwrap();
-                        // sender.send_message(&message).unwrap();
-                    }
-                    OwnedMessage::Text(msg) => {
-                        self.handle_message(msg);
-                    }
-                    _ => self.client.sender_thread.send(message).unwrap(),
+        
+            if let Ok(message) = c.rx.try_next() {
+                let m = message.unwrap();
+                // println!("{}", m.to_string());
+
+                let v: Value = serde_json::from_str(&m.to_string()).unwrap();
+
+                // println!("{} {}", msg, v[0]);
+        
+                if v[0] == "name" {
+                    self.name = v[1].to_string();
                 }
+        
+                if v[0] == "chat" {
+                    self.chat_queue.push(v[1].to_string());
+                }
+
+                if v[0] == "update_view" {
+                    let vec = v[1]["viewVector"].clone();
+                    self.view_vector = Vector3::new(
+                        vec["x"].as_f64().unwrap() as f32,
+                        vec["y"].as_f64().unwrap() as f32,
+                        vec["z"].as_f64().unwrap() as f32,
+                    );
+                }
+        
+                if v[0] == "update" {
+                    let vec = v[1]["viewVector"].clone();
+                    self.view_vector = Vector3::new(
+                        vec["x"].as_f64().unwrap() as f32,
+                        vec["y"].as_f64().unwrap() as f32,
+                        vec["z"].as_f64().unwrap() as f32,
+                    );
+        
+                    let move_vec = v[1]["moveVector"].clone();
+                    self.client_move_vec = Vector2::new(
+                        move_vec["x"].as_f64().unwrap() as f32,
+                        move_vec["y"].as_f64().unwrap() as f32,
+                    );
+        
+                    self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+                    self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+        
+                    let key_map = v[1]["keyMap"].clone();
+                    self.key_map = HashMap::new();
+        
+                    for (key, value) in key_map.as_object().unwrap() {
+                        // println!("{}",key);
+                        self.key_map
+                            .insert(key.to_string(), value.as_bool().unwrap());
+                    }
+                }
+        
+                if v[0] == "update_move" {
+                    let move_vec = v[1]["moveVector"].clone();
+                    self.client_move_vec = Vector2::new(
+                        move_vec["x"].as_f64().unwrap() as f32,
+                        move_vec["y"].as_f64().unwrap() as f32,
+                    );
+        
+                    self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+                    self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+                }
+        
+                if v[0] == "update_jump" {
+                    self.to_jump = true;
+                }
+
+                // p.tx.unbounded_send(m);
             } else {
                 break;
             }
         }
+
+
+                // match message {
+                //     OwnedMessage::Close(_) => {
+                //         let message = OwnedMessage::Close(None);
+                //         self.client.sender_thread.send(message).unwrap();
+                //         println!("Client disconnected");
+                //         break; //TODO::THIS WAS RETURN
+                //     }
+                //     OwnedMessage::Ping(ping) => {
+                //         let message = OwnedMessage::Pong(ping);
+                //         self.client.sender_thread.send(message).unwrap();
+                //         // sender.send_message(&message).unwrap();
+                //     }
+                //     OwnedMessage::Text(msg) => {
+                //         self.handle_message(msg);
+                //     }
+                //     _ => self.client.sender_thread.send(message).unwrap(),
+                // }
+            // } else {
+            //     break;
+            // }
+        // }
     }
 
-    fn handle_message(&mut self, msg: String) {
-        let v: Value = serde_json::from_str(&msg).unwrap();
+    // fn handle_message(&mut self, msg: String) {
+    //     let v: Value = serde_json::from_str(&msg).unwrap();
 
-        // println!("{} {}", msg, v[0]);
+    //     // println!("{} {}", msg, v[0]);
 
-        if v[0] == "name" {
-            self.name = v[1].to_string();
-        }
+    //     if v[0] == "name" {
+    //         self.name = v[1].to_string();
+    //     }
 
-        if v[0] == "chat" {
-            self.chat_queue.push(v[1].to_string());
-        }
+    //     if v[0] == "chat" {
+    //         self.chat_queue.push(v[1].to_string());
+    //     }
 
-        if v[0] == "update_view" {
-            let vec = v[1]["viewVector"].clone();
-            self.view_vector = Vector3::new(
-                vec["x"].as_f64().unwrap() as f32,
-                vec["y"].as_f64().unwrap() as f32,
-                vec["z"].as_f64().unwrap() as f32,
-            );
-        }
+    //     if v[0] == "update_view" {
+    //         let vec = v[1]["viewVector"].clone();
+    //         self.view_vector = Vector3::new(
+    //             vec["x"].as_f64().unwrap() as f32,
+    //             vec["y"].as_f64().unwrap() as f32,
+    //             vec["z"].as_f64().unwrap() as f32,
+    //         );
+    //     }
 
-        if v[0] == "update" {
-            let vec = v[1]["viewVector"].clone();
-            self.view_vector = Vector3::new(
-                vec["x"].as_f64().unwrap() as f32,
-                vec["y"].as_f64().unwrap() as f32,
-                vec["z"].as_f64().unwrap() as f32,
-            );
+    //     if v[0] == "update" {
+    //         let vec = v[1]["viewVector"].clone();
+    //         self.view_vector = Vector3::new(
+    //             vec["x"].as_f64().unwrap() as f32,
+    //             vec["y"].as_f64().unwrap() as f32,
+    //             vec["z"].as_f64().unwrap() as f32,
+    //         );
 
-            let move_vec = v[1]["moveVector"].clone();
-            self.client_move_vec = Vector2::new(
-                move_vec["x"].as_f64().unwrap() as f32,
-                move_vec["y"].as_f64().unwrap() as f32,
-            );
+    //         let move_vec = v[1]["moveVector"].clone();
+    //         self.client_move_vec = Vector2::new(
+    //             move_vec["x"].as_f64().unwrap() as f32,
+    //             move_vec["y"].as_f64().unwrap() as f32,
+    //         );
 
-            self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
-            self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+    //         self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+    //         self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
 
-            let key_map = v[1]["keyMap"].clone();
-            self.key_map = HashMap::new();
+    //         let key_map = v[1]["keyMap"].clone();
+    //         self.key_map = HashMap::new();
 
-            for (key, value) in key_map.as_object().unwrap() {
-                // println!("{}",key);
-                self.key_map
-                    .insert(key.to_string(), value.as_bool().unwrap());
-            }
-        }
+    //         for (key, value) in key_map.as_object().unwrap() {
+    //             // println!("{}",key);
+    //             self.key_map
+    //                 .insert(key.to_string(), value.as_bool().unwrap());
+    //         }
+    //     }
 
-        if v[0] == "update_move" {
-            let move_vec = v[1]["moveVector"].clone();
-            self.client_move_vec = Vector2::new(
-                move_vec["x"].as_f64().unwrap() as f32,
-                move_vec["y"].as_f64().unwrap() as f32,
-            );
+    //     if v[0] == "update_move" {
+    //         let move_vec = v[1]["moveVector"].clone();
+    //         self.client_move_vec = Vector2::new(
+    //             move_vec["x"].as_f64().unwrap() as f32,
+    //             move_vec["y"].as_f64().unwrap() as f32,
+    //         );
 
-            self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
-            self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
-        }
+    //         self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+    //         self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+    //     }
 
-        if v[0] == "update_jump" {
-            self.to_jump = true;
-        }
-    }
+    //     if v[0] == "update_jump" {
+    //         self.to_jump = true;
+    //     }
+    // }
 }
