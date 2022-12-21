@@ -5,7 +5,6 @@ use std::{
     io::Error as IoError,
     net::SocketAddr,
     sync::{Arc, Mutex},
-
 };
 use structs::{Client, MessageType};
 
@@ -17,18 +16,12 @@ mod player;
 mod structs;
 mod world;
 use rapier3d::{crossbeam, prelude::*};
-// use std::sync::Arc;
+
 use crate::player::Player;
 use crate::world::World;
-// use std::process::Command;
-// use std::sync::RwLock;
 
-use futures_channel::mpsc::{unbounded};
-use futures_util::{
-    future, pin_mut,
-    stream::{Collect, TryStreamExt},
-    StreamExt,
-};
+use futures_channel::mpsc::unbounded;
+use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite;
@@ -102,7 +95,7 @@ async fn main() -> Result<(), IoError> {
 
     let addr = env::args().nth(1).unwrap_or_else(|| ip.to_string());
 
-    let mut state = PeerMap::new(Mutex::new(HashMap::new()));
+    let state = PeerMap::new(Mutex::new(HashMap::new()));
 
     let try_socket = TcpListener::bind(&addr).await;
     let listener = try_socket.expect("Failed to bind");
@@ -134,7 +127,7 @@ async fn main() -> Result<(), IoError> {
     // let event_handler = ();
 
     let (collision_send, collision_recv) = crossbeam::channel::unbounded();
-    let (contact_force_send, contact_force_recv) = crossbeam::channel::unbounded();
+    let (contact_force_send, _contact_force_recv) = crossbeam::channel::unbounded();
 
     let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
@@ -165,7 +158,7 @@ async fn main() -> Result<(), IoError> {
 
                     value
                         .tx
-                        .unbounded_send(MessagePrep(MessageType::Join {
+                        .unbounded_send(message_prep(MessageType::Join {
                             name: player.name.to_string(),
                             id: key.to_string(),
                         }))
@@ -199,10 +192,6 @@ async fn main() -> Result<(), IoError> {
                 println!("Removed player");
             }
 
-            let d_a = Instant::now() - start_time;
-            let b_start = Instant::now();
-            // let mut players_unlocked = players.write().unwrap();
-
             for p in players.iter_mut() {
                 let c = peers.get_mut(&p.0).unwrap();
                 p.1.read_messages(c);
@@ -216,23 +205,7 @@ async fn main() -> Result<(), IoError> {
                 );
             }
 
-            let d_b = Instant::now() - b_start;
-            let c_start = Instant::now();
-            // for player in players.iter_mut() {
-            //     //send chat messages
-            //     loop {
-            //         if (player.1.chat_queue.len() == 0) {
-            //             break;
-            //         }
-
-            //         let msg = player.1.chat_queue.pop();
-
-            //         for p in players.iter() {
-
-            //         }
-            //     }
-            // }
-
+            //Send chat messages
             for player in players.iter_mut() {
                 loop {
                     if player.1.chat_queue.len() == 0 {
@@ -242,7 +215,7 @@ async fn main() -> Result<(), IoError> {
                     let msg = player.1.chat_queue.pop().unwrap();
                     let name = player.1.name.clone();
                     for (_, p) in &*peers {
-                        p.tx.unbounded_send(MessagePrep(structs::MessageType::Chat {
+                        p.tx.unbounded_send(message_prep(structs::MessageType::Chat {
                             name: name.clone(),
                             message: msg.clone(),
                         }))
@@ -250,9 +223,6 @@ async fn main() -> Result<(), IoError> {
                     }
                 }
             }
-
-            let d_c = Instant::now() - c_start;
-            let d_start = Instant::now();
 
             physics_pipeline.step(
                 &gravity,
@@ -268,9 +238,6 @@ async fn main() -> Result<(), IoError> {
                 &physics_hooks,
                 &event_handler,
             );
-
-            let d_d = Instant::now() - d_start;
-            let e_start = Instant::now();
 
             while let Ok(collision_event) = collision_recv.try_recv() {
                 if collision_event.started() {
@@ -289,27 +256,18 @@ async fn main() -> Result<(), IoError> {
                                             player.1.can_jump = true;
                                         }
                                     }
-                                } else {
-                                }
-                                // println!("Local-space contact normal: {}", manifold.local_n1);
-                                // println!("Local-space contact normal: {}", manifold.local_n2);
-                                // println!("World-space contact normal: {}", manifold.data.normal);
+                                } 
                             }
-                        } else {
-                        }
+                        } 
                     }
                 }
             }
 
-            let d_e = Instant::now() - e_start;
-            let f_start = Instant::now();
-
-            // Sewnd players_info
+            // Send players_info
 
             let mut players_info = HashMap::new();
 
             for player in players.iter_mut() {
-                // let info  = players[i].get_info(&mut rigid_body_set);
                 players_info.insert(
                     player.0.to_string(),
                     player.1.get_info(&mut world.rigid_body_set),
@@ -318,11 +276,10 @@ async fn main() -> Result<(), IoError> {
 
             let mut dynamic_objects_info = HashMap::new();
             for i in 0..world.dynamic_objects.len() {
-                // let info  = players[i].get_info(&mut rigid_body_set);
                 dynamic_objects_info.insert(
                     world.dynamic_objects[i].name.clone(),
                     world.dynamic_objects[i]
-                        .get_info(&mut world.rigid_body_set, &mut world.collider_set),
+                        .get_info(&mut world.rigid_body_set),
                 );
             }
 
@@ -331,49 +288,24 @@ async fn main() -> Result<(), IoError> {
                 dynamic_objects: dynamic_objects_info,
             };
 
-            let d_f = Instant::now() - f_start;
-            let g_start = Instant::now();
-
             //send player_update to all players
-            for (key, value) in &*peers {
+            for (_, value) in &*peers {
                 value
                     .tx
-                    .unbounded_send(MessagePrep(player_update_message.clone()))
+                    .unbounded_send(message_prep(player_update_message.clone()))
                     .unwrap();
             }
 
-            let d_g = Instant::now() - g_start;
-            let h_start = Instant::now();
-
             let duration = Instant::now() - start_time;
 
-            if duration.as_millis() < 16 {
-                let wait_time = 16 - duration.as_millis();
-                // println!("Update time {:?} {:?}",duration,wait_time);
-                let wait_string = (wait_time as f64 / 1000.00).to_string();
-                // println!(
-                //     "Update time {:?} {:?} {:?}",
-                //     duration, wait_time, wait_string
-                // );
-                // println!(
-                //     "T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",
-                //     duration, d_a, d_b, d_c, d_d, d_e, d_f, d_g
-                // );
-                // let mut child = Command::new("sleep").arg(wait_string).spawn().unwrap();
-                // let _result = child.wait().unwrap();
-            } else {
-                // println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
-            }
             time_since_last = Instant::now();
             wait_time = 15 - duration.as_millis().min(15);
-            // println!("{} {}", wait_time, duration.as_millis());
-        } else {
-        }
+        } 
     }
 
-    Ok(())
+    // Ok(())
 }
 
-fn MessagePrep(msg: MessageType) -> Message {
+fn message_prep(msg: MessageType) -> Message {
     Message::Text(serde_json::to_string(&msg).unwrap())
 }

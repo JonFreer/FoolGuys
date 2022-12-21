@@ -39,15 +39,13 @@ if(hostname!= 'localhost'){
 }
 
 const world = new World(socket)
-let time= Date.now()
+// let time= Date.now()
 socket.onmessage = function (event) {
     // console.log(event.data)
     let msg = JSON.parse(event.data)
     // console.log(msg)
     let data = msg[1]
     let type = msg[0]
-    // console.log("ytest")
-    // console.log(msg["Join"])
 
     if(type == 'connect'){
         console.log('connect')
@@ -84,8 +82,7 @@ socket.onmessage = function (event) {
        
         });
 
-        console.log(Date.now()-time);
-        time = Date.now()
+
     }
 
     if(type == 'players'){
@@ -112,7 +109,9 @@ socket.onmessage = function (event) {
 
 
     if(msg["Chat"]){ 
-        world.chatManager.newMessage(msg["Chat"].name,msg["Chat"].message)
+        console.log(msg)
+        world.chatManager.newMessage(msg["Chat"].name.slice(1, -1),msg["Chat"].message.slice(1, -1))
+
     }
 
     

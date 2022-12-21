@@ -1,4 +1,3 @@
-use gltf::json::scene::UnitQuaternion;
 use nalgebra::{Unit, Quaternion};
 use rapier3d::prelude::*;
 
@@ -19,16 +18,13 @@ impl DynamicObject {
         Self {name,rigid_body_handle,collider_handle,original_rotation}
     }
 
-    pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet, collider_set : &mut ColliderSet) -> PlayerUpdate {
+    pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> PlayerUpdate {
 
 
         let rigid_body = &rigid_body_set[self.rigid_body_handle];
 
-        let collider_body = &collider_set[self.collider_handle];
         let pos = rigid_body.translation();
-        let p2 = collider_body.translation();
-        // rigid_body.
-
+    
         let pos_vec = Vec3 {
             x: pos.x,
             y: pos.y,

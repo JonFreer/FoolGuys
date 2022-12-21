@@ -123,14 +123,14 @@ export class World {
             })
 
             this.clientCubes[client_id] = new THREE.Mesh(geometry, material)
-            this.clientCubes[client_id].name = players[client_id].name
+            this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             this.graphicsWorld.add(this.clientCubes[client_id])
 
 
         } else {
-            this.clientCubes[client_id].name = players[client_id].name
+            this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
             if (players[client_id].p) {
                 new TWEEN.Tween(this.clientCubes[client_id].position)
                     .to(
