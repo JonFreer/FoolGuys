@@ -4,7 +4,7 @@ use std::{
     io::Error as IoError,
     net::SocketAddr,
     sync::{Arc, Mutex},
-    thread,
+    thread, process::Command,
 };
 
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
@@ -92,7 +92,7 @@ async fn sokcer_handler(peer_map: PeerMap, listener: TcpListener) {
 async fn main() -> Result<(), IoError> {
     let addr = env::args()
         .nth(1)
-        .unwrap_or_else(|| "0.0.0.0:8080".to_string());
+        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
 
     let mut state = PeerMap::new(Mutex::new(HashMap::new()));
 
@@ -117,8 +117,9 @@ async fn main() -> Result<(), IoError> {
         }
 
         for addr in addresses {
+            let p =peers.get_mut(&addr).unwrap();
             loop {
-                let p =peers.get_mut(&addr).unwrap();
+                
                 if let Ok(message) = p.rx.try_next() {
                     let m = message.unwrap();
                     println!("{}", m.to_string());
@@ -127,7 +128,12 @@ async fn main() -> Result<(), IoError> {
                     break;
                 }
             }
+
+            p.tx.unbounded_send(Message::Text("hiiiiiiiiiiii".to_string()));
+       
         }
+        // let mut child = Command::new("sleep").arg("0.02").spawn().unwrap();
+        // let _result = child.wait().unwrap();
     }
 
     Ok(())

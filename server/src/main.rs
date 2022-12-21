@@ -35,7 +35,8 @@ fn main() {
 
     //RAPIER BOILERPLATE
     let mut world = World::new(path);
-
+    let mut time_since_last = Instant::now();
+    let mut wait_time = 0;
     // return;
     // let mut rigid_body_set = RigidBodySet::new();
     // let mut collider_set = ColliderSet::new();
@@ -71,6 +72,9 @@ fn main() {
 
     println!("HIIII");
     loop {
+
+        if((Instant::now()-time_since_last).as_millis()>wait_time){
+
         let start_time = Instant::now();
 
         let result = match server.accept() {
@@ -159,20 +163,20 @@ fn main() {
         let d_c  = Instant::now()-c_start;
         let d_start = Instant::now();
 
-        physics_pipeline.step(
-            &gravity,
-            &integration_parameters,
-            &mut island_manager,
-            &mut broad_phase,
-            &mut narrow_phase,
-            &mut world.rigid_body_set,
-            &mut world.collider_set,
-            &mut impulse_joint_set,
-            &mut multibody_joint_set,
-            &mut ccd_solver,
-            &physics_hooks,
-            &event_handler,
-        );
+        // physics_pipeline.step(
+        //     &gravity,
+        //     &integration_parameters,
+        //     &mut island_manager,
+        //     &mut broad_phase,
+        //     &mut narrow_phase,
+        //     &mut world.rigid_body_set,
+        //     &mut world.collider_set,
+        //     &mut impulse_joint_set,
+        //     &mut multibody_joint_set,
+        //     &mut ccd_solver,
+        //     &physics_hooks,
+        //     &event_handler,
+        // );
 
         let d_d  = Instant::now()-d_start;
         let e_start = Instant::now();
@@ -225,23 +229,38 @@ fn main() {
         // Sewnd players_info
 
         let mut players_info = HashMap::new();
-        for i in 0..players.len() {
-            // let info  = players[i].get_info(&mut rigid_body_set);
+        // for i in 0..players.len() {
+        //     // let info  = players[i].get_info(&mut rigid_body_set);
+        //     players_info.insert(
+        //         players[i].id.clone(),
+        //         players[i].get_info(&mut world.rigid_body_set),
+        //     );
+        // }
+        if(players.len()>0){
             players_info.insert(
-                players[i].id.clone(),
-                players[i].get_info(&mut world.rigid_body_set),
+                players[0].id.clone(),
+                players[0].get_info(&mut world.rigid_body_set),
             );
         }
+       
+
+
 
         let mut dynamic_objects_info = HashMap::new();
-        for i in 0..world.dynamic_objects.len() {
-            // let info  = players[i].get_info(&mut rigid_body_set);
-            dynamic_objects_info.insert(
-                world.dynamic_objects[i].name.clone(),
-                world.dynamic_objects[i]
-                    .get_info(&mut world.rigid_body_set, &mut world.collider_set),
-            );
-        }
+        // for i in 0..world.dynamic_objects.len() {
+        //     // let info  = players[i].get_info(&mut rigid_body_set);
+        //     dynamic_objects_info.insert(
+        //         world.dynamic_objects[i].name.clone(),
+        //         world.dynamic_objects[i]
+        //             .get_info(&mut world.rigid_body_set, &mut world.collider_set),
+        //     );
+        // }
+
+        dynamic_objects_info.insert(
+            world.dynamic_objects[0].name.clone(),
+            world.dynamic_objects[0]
+                .get_info(&mut world.rigid_body_set, &mut world.collider_set),
+        );
 
    
 
@@ -267,15 +286,20 @@ fn main() {
             let wait_time = 16 - duration.as_millis();
             // println!("Update time {:?} {:?}",duration,wait_time);
             let wait_string = (wait_time as f64 / 1000.00).to_string();
-            println!(
-                "Update time {:?} {:?} {:?}",
-                duration, wait_time, wait_string
-            );
-            println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
-            let mut child = Command::new("sleep").arg(wait_string).spawn().unwrap();
-            let _result = child.wait().unwrap();
+            // println!(
+            //     "Update time {:?} {:?} {:?}",
+            //     duration, wait_time, wait_string
+            // );
+            // println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
+            // let mut child = Command::new("sleep").arg(wait_string).spawn().unwrap();
+            // let _result = child.wait().unwrap();
         }else{
-            println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
+            // println!("T: {:?} A: {:?} B: {:?} C: {:?} D: {:?} E: {:?} F: {:?} G: {:?}",duration,d_a,d_b,d_c,d_d,d_e,d_f,d_g);
         }
+        time_since_last = Instant::now();
+        wait_time = (15 - duration.as_millis().min(15));
+    }else{
+        
+    }
     }
 }
