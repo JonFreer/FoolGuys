@@ -33,9 +33,9 @@ var hostname =location.hostname
 let socket: WebSocket;
 console.log(hostname)
 if(hostname!= 'localhost'){
-    socket = new WebSocket("wss://"+hostname+"/ws", "rust-websocket");
+    socket = new WebSocket("wss://"+hostname+"/ws");
 }else{
-    socket = new WebSocket("ws://"+hostname+":2865", "rust-websocket");
+    socket = new WebSocket("ws://"+hostname+":2865");
 }
 
 const world = new World(socket)
