@@ -9,12 +9,13 @@ import {Sky} from './Sky'
 import {Labels} from './Labels'
 import { MobileControls } from './MobileControls';
 import { ChatManager } from './Chat';
+import { Obstacle } from './obstacle';
 export class World {
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
-    public obstacles: { [id: string]: THREE.Mesh } = {}
+    public obstacles: { [id: string]: Obstacle } = {}
     public player_id:string='';
     // public controls: OrbitControls;
     private stats;
@@ -25,10 +26,11 @@ export class World {
     public labels:Labels;
     public mobileControls:MobileControls;
     public chatManager:ChatManager;
+
     constructor(socket:WebSocket) {
         const scope = this;
         this.socket=socket;
-        this.renderer = new THREE.WebGLRenderer()
+        this.renderer = new THREE.WebGLRenderer({antialias:true})
         this.renderer.shadowMap.enabled = true;
         // renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
@@ -115,22 +117,24 @@ export class World {
     public updatePlayer(client_id: string, players: any) {
         if (!this.clientCubes[client_id]) {
             let labelsDiv = document.querySelector('#labels');
-            const geometry = new THREE.BoxGeometry()
+            const geometry = new THREE.BoxGeometry();
+
+            let col = players[client_id].colour
             const material = new THREE.MeshStandardMaterial({
-                color: 0x5555ff,
+                color: new THREE.Color("rgb("+col.r+","+ col.g+","+ col.b+")"),
                 wireframe: false,
                 roughness: 0.1
             })
 
             this.clientCubes[client_id] = new THREE.Mesh(geometry, material)
-            this.clientCubes[client_id].name = players[client_id].name
+            this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             this.graphicsWorld.add(this.clientCubes[client_id])
 
 
         } else {
-            this.clientCubes[client_id].name = players[client_id].name
+            this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
             if (players[client_id].p) {
                 new TWEEN.Tween(this.clientCubes[client_id].position)
                     .to(
@@ -139,9 +143,11 @@ export class World {
                             y: players[client_id].p.y,
                             z: players[client_id].p.z,
                         },
-                        50
+                        0//50
                     )
                     .start()
+
+                // this.clientCubes[client_id].set
             }
             if (players[client_id].q) {
                 // new TWEEN.Tween(clientCubes[p].rotation)
@@ -159,23 +165,20 @@ export class World {
 
     public updateObstacle(id:string,obstacles:any){
         if (this.obstacles[id]!=undefined) {
-            // console.log()
-            if(id == "Hull"){
-                console.log(obstacles[id])
-            }
-            new TWEEN.Tween(this.obstacles[id].position)
+        
+            new TWEEN.Tween(this.obstacles[id].mesh.position)
             .to(
                 {
                     x: obstacles[id].p.x,
                     y: obstacles[id].p.y,
                     z: obstacles[id].p.z,
                 },
-                50
+                0
             )
             .start()
             // this.obstacles[id].set
             // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
-            this.obstacles[id].setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w),)
+            this.obstacles[id].mesh.setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
         }else{
             console.log("Cannot find obstacle",id)
         }
@@ -193,7 +196,10 @@ export class World {
         this.sky.update()
         TWEEN.update()
     
-    
+        for (const [key, value] of Object.entries(this.obstacles)) {
+            value.update(0.01);
+        }
+
         // if (this.clientCubes[this.player_id]) {
         //     // this.controls.target.set(this.clientCubes[this.player_id].position.x,this.clientCubes[this.player_id].position.y,this.clientCubes[this.player_id].position.z)
         //     // controls.
@@ -212,6 +218,7 @@ export class World {
     public render() {
         this.renderer.render(this.graphicsWorld, this.camera)
     }
+
 
     // public registerUpdatable(registree: IUpdatable): void
 	// {

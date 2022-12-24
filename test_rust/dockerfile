@@ -1,0 +1,8 @@
+FROM rust:latest
+
+COPY ./ ./
+
+RUN cargo build --release
+
+# Run the binary
+CMD ["./target/release/web_socket_test"]

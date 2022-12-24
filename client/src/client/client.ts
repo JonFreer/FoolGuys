@@ -8,6 +8,8 @@ import { io } from 'socket.io-client'
 import { World } from './World/World'
 import { Vector2 } from 'three'
 import { win32 } from 'path'
+import * as e from 'express'
+import { Obstacle } from './World/obstacle'
 
 // const scene = new THREE.Scene()
 
@@ -28,19 +30,23 @@ let timestamp = 0
 
 // const socket = io()
 var hostname =location.hostname 
-
-var socket = new WebSocket("ws://"+hostname+"/ws", "rust-websocket");
+// var socket
+let socket: WebSocket;
+console.log(hostname)
+if(hostname!= 'localhost'){
+    socket = new WebSocket("wss://"+hostname+"/ws");
+}else{
+    socket = new WebSocket("ws://"+hostname+":2865");
+}
 
 const world = new World(socket)
-
+// let time= Date.now()
 socket.onmessage = function (event) {
     // console.log(event.data)
     let msg = JSON.parse(event.data)
     // console.log(msg)
     let data = msg[1]
     let type = msg[0]
-    // console.log("ytest")
-    // console.log(msg["Join"])
 
     if(type == 'connect'){
         console.log('connect')
@@ -74,11 +80,10 @@ socket.onmessage = function (event) {
     
         Object.keys(data.dynamic_objects).forEach((r) => {
             world.updateObstacle(r, data.dynamic_objects);
-            console.log(r)
-            if(r=="rotation"){
-                console.log(data.dynamic_objects[r])
-            }
+       
         });
+
+
     }
 
     if(type == 'players'){
@@ -105,7 +110,9 @@ socket.onmessage = function (event) {
 
 
     if(msg["Chat"]){ 
-        world.chatManager.newMessage(msg["Chat"].name,msg["Chat"].message)
+        console.log(msg)
+        world.chatManager.newMessage(msg["Chat"].name.slice(1, -1),msg["Chat"].message.slice(1, -1))
+
     }
 
     
@@ -261,9 +268,13 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void {
 }
 
 function loadScene(gltf: any) {
-
+   
     // const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
     gltf.scene.traverse(function (object: any) {
+
+        console.log(object)
+
+
         if (object.isMesh) {
             object.castShadow = true;
             object.receiveShadow = true;
@@ -271,15 +282,33 @@ function loadScene(gltf: any) {
             object.material.side = THREE.FrontSide;
             object.geometry.computeVertexNormals(true)
             // object.material = floor_material
-            console.log(object.material.side)
         }
-        if (object.userData.hasOwnProperty('spin')) {
-            world.obstacles[object.name] = object
-        }else if (object.userData.hasOwnProperty('pivot')) {
-            world.obstacles[object.name] = object
-            console.log("pivot name ",object.name)
-        }
+        // if (object.userData.hasOwnProperty('spin')) {
+
+        //     world.obstacles[object.name] = new Obstacle(object);
+        // }else if (object.userData.hasOwnProperty('pivot')) {
+        //     world.obstacles[object.name] = new Obstacle(object);
+        // }
+
+        world.obstacles[object.name] = new Obstacle(object);
 
     });
     world.graphicsWorld.add(gltf.scene);
+
+    for (let i=0; i< gltf.animations.length;i++){
+        let animation = gltf.animations[i];
+        let name = animation.name.slice(0,-6);
+        console.log(animation,name);
+        world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
+        console.log(world.obstacles[name].setAnimation(animation.name,0));
+
+    }
+    // gltf.animation
+    // for ){
+
+    // }
+    // gltf.animation.traverse(function(animation:any){
+    //     console.log(animation);
+    // })
+   
 }

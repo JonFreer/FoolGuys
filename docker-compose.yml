@@ -8,7 +8,7 @@ networks:
 services:
   web:
     build: ./client
-    command: npm run build_dev
+    command: npm run start
     volumes:
       - .:/app/
       - /app/node_modules
@@ -20,9 +20,28 @@ services:
       - traefik.http.routers.web_foolguys.rule=Host(`foolguys.douvk.co.uk`) #sets the rule for the router
       - traefik.http.routers.web_foolguys.tls=true #sets the service to use TLS
       - traefik.http.routers.web_foolguys.tls.certresolver=letsEncrypt #references our certificatesResolvers in traefik.yml
+      # - "traefik.http.services.web_foolguys.loadbalancer.server.port=443"
+  # server:
+  #   build: ./test_rust
+  #   command: ./target/release/web_socket_test
+  #   volumes:
+  #     - ./client/dist/client/assets:/assets/
+  #     # - /app/node_modules
+  #   ports:
+  #     - "8082:8080"    
+  #   networks:
+  #     - bookstack-front
+  #   labels:
+  #     - traefik.http.routers.server_foolguys.tls=true #sets the service to use TLS
+  #     - traefik.http.routers.server_foolguys.tls.certresolver=letsEncrypt #references our certificatesResolvers in traefik.yml
+  #     - "traefik.http.routers.server_foolguys.rule=Host(`ws.foolguys.douvk.co.uk`)" # && PathPrefix(`/ws`)"
+  #     # - "traefik.http.middlewares.strip_ws.stripprefix.prefixes=/ws"
+  #     # - "traefik.http.routers.server_foolguys.middlewares=strip_ws"
+  #     # - "traefik.http.services.server_foolguys.loadbalancer.server.port=80"
+
   server:
     build: ./server
-    # command: ./target/release/server
+    command: ./target/release/server
     volumes:
       - ./client/dist/client/assets:/assets/
       # - /app/node_modules
@@ -36,5 +55,6 @@ services:
       - "traefik.http.routers.server_foolguys.rule=Host(`foolguys.douvk.co.uk`) && PathPrefix(`/ws`)"
       - "traefik.http.middlewares.strip_ws.stripprefix.prefixes=/ws"
       - "traefik.http.routers.server_foolguys.middlewares=strip_ws"
+      # - "traefik.http.services.server_foolguys.loadbalancer.server.port=80"
       
 
