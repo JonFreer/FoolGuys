@@ -1,19 +1,18 @@
-// use std::primitive;
-// use std::ptr::null;
-
-// use gltf::Gltf;
-use nalgebra::{Quaternion, UnitQuaternion, Vector3};
-use rapier3d::prelude::*;
 use rapier3d::prelude::{ColliderSet, RigidBodySet};
 use serde_json::Value;
 
-use crate::dynamic::DynamicObject;
+use crate::physics_objects::collision;
+use crate::physics_objects::dynamic::Objects;
+use crate::physics_objects::pivot::PivotObject;
+use crate::physics_objects::spin::SpinObject;
 
 pub struct World {
     pub rigid_body_set: RigidBodySet,
     pub collider_set: ColliderSet,
-    pub dynamic_objects: Vec<DynamicObject>,
+    pub dynamic_objects: Vec<Objects>,
 }
+
+
 
 impl World {
     pub fn new(path: &str) -> Self {
@@ -26,140 +25,36 @@ impl World {
         let (gltf, buffers, _) = gltf::import(path).unwrap();
         for scene in gltf.scenes() {
             for node in scene.nodes() {
-                let name = node.name().unwrap();
+                if let Some(_) = node.mesh() {
 
-                let extras = node.extras().as_ref();
-                if let Some(extras) = extras {
-                    let extras: gltf::json::Value =
-                        gltf::json::deserialize::from_str(extras.get()).unwrap();
-                    println!("Extras {:?} {:?}", extras["physics"], extras["physics2"]);
+                    let collider_option = collision::new_collider(&node , &buffers);
+                    if let Some(collider) = collider_option{
 
-                    if extras["physics"] == "hull" {
-                        if let Some(mesh) = node.mesh() {
-                            let scale = node.transform().decomposed().2;
-                            let mut points_vec = Vec::new();
-                            let primitive = mesh.primitives().next().unwrap();
-                            let reader = primitive.reader(|buffer| Some(&buffers[buffer.index()]));
-                            if let Some(iter) = reader.read_positions() {
-                                for vertex_position in iter {
-                                    points_vec.push(Point::new(
-                                        vertex_position[0] * scale[0],
-                                        vertex_position[1] * scale[1],
-                                        vertex_position[2] * scale[2],
-                                    ));
-                                }
-                            }
-
-                            let pos = node.transform().decomposed().0;
-
-                            let rot = node.transform().decomposed().1;
-                            let mut collider =
-                                ColliderBuilder::convex_hull(&points_vec).unwrap().build();
-                            // collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
-                            let rotation = UnitQuaternion::from_quaternion(Quaternion::new(
-                                rot[3], rot[0], rot[1], rot[2],
-                            ));
-                            collider.set_mass(0.0);
-
-                            collider.set_rotation(rotation);
-
+                        let extras = node.extras().as_ref();
+                        if let Some(extras) = extras {
+                            let extras: gltf::json::Value = gltf::json::deserialize::from_str(extras.get()).unwrap();
+                            
                             if extras["spin"] != Value::Null {
-                                let mut roll_axis = Vector3::new(0.0, 0.0, 0.0);
-                                if extras["spin"] == "x" {
-                                    roll_axis = Vector3::new(1.0, 0.0, 0.0);
-                                } else if extras["spin"] == "y" {
-                                    roll_axis = Vector3::new(0.0, 1.0, 0.0);
-                                } else if extras["spin"] == "z" {
-                                    roll_axis = Vector3::new(0.0, 0.0, 1.0);
-                                }
-
-                                let mut platform_body =
-                                    RigidBodyBuilder::kinematic_velocity_based()
-                                        .angvel(roll_axis)
-                                        .build();
-                                platform_body
-                                    .set_translation(Vector3::new(pos[0], pos[1], pos[2]), true);
-
-                                let rigid_body_handle = rigid_body_set.insert(platform_body);
-                                let collider_handle = collider_set.insert_with_parent(
-                                    collider,
-                                    rigid_body_handle,
-                                    &mut rigid_body_set,
-                                );
-
-                                let obj = DynamicObject::new(
-                                    node.name().unwrap().to_string(),
-                                    rigid_body_handle,
-                                    collider_handle,
-                                    rotation,
-                                );
-
-                                dynamic_objects.push(obj);
-                            } else if extras["pivot"] != Value::Null {
-                                println!("Pivot!!!");
-                                let mut locked_axis = LockedAxes::TRANSLATION_LOCKED;
-
-                                if extras["pivot"] == "x" {
-                                    locked_axis |= LockedAxes::ROTATION_LOCKED_Y
-                                        | LockedAxes::ROTATION_LOCKED_Z;
-                                } else if extras["pivot"] == "y" {
-                                    locked_axis |= LockedAxes::ROTATION_LOCKED_Z
-                                        | LockedAxes::ROTATION_LOCKED_X;
-                                } else if extras["pivot"] == "z" {
-                                    locked_axis |= LockedAxes::ROTATION_LOCKED_Y
-                                        | LockedAxes::ROTATION_LOCKED_X;
-                                }
-
-                                let mut platform_body =
-                                    RigidBodyBuilder::dynamic().locked_axes(locked_axis).build();
-                                // collider.set_restitution(0.7);
-                                platform_body
-                                    .set_translation(Vector3::new(pos[0], pos[1], pos[2]), true);
-                                // platform_body.lock_rotations(locked, wake_up)
-
-                                collider.set_mass(10.0);
-                                // collider.
-                                let rigid_body_handle = rigid_body_set.insert(platform_body);
-                                let collider_handle = collider_set.insert_with_parent(
-                                    collider,
-                                    rigid_body_handle,
-                                    &mut rigid_body_set,
-                                );
-
-                                let obj = DynamicObject::new(
-                                    node.name().unwrap().to_string(),
-                                    rigid_body_handle,
-                                    collider_handle,
-                                    rotation,
-                                );
-
-                                dynamic_objects.push(obj);
-                            } else {
-                                collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
-                                let _collider_handler = collider_set.insert(collider);
+                                let obj = SpinObject::new(extras["spin"].to_string(),&node,&mut rigid_body_set,collider,&mut collider_set);
+                                dynamic_objects.push(Objects::Spin(obj));
                             }
-                        } else {
-                            println!("No mesh on node");
+
+                            else if extras["pivot"] != Value::Null{
+                                let obj = PivotObject::new(extras["pivot"].to_string(),&node,&mut rigid_body_set,collider,&mut collider_set);
+                                dynamic_objects.push(Objects::Pivot(obj));
+                            }else{
+                                collider_set.insert(collider);
+                            }
+
+                        }else{
+                            collider_set.insert(collider);
                         }
+
                     }
-                } else {
-                    let pos = node.transform().decomposed().0;
-                    let scale = node.transform().decomposed().2;
-                    let mut collider =
-                        ColliderBuilder::cuboid(scale[0] / 2.0, scale[1] / 2.0, scale[2] / 2.0)
-                            .build();
-                    collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
-                    collider_set.insert(collider);
                 }
-          
-                println!(
-                    "Node #{} has {} {} children",
-                    node.index(),
-                    node.children().count(),
-                    name
-                );
             }
         }
+
         Self {
             rigid_body_set,
             collider_set,

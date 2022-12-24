@@ -7,7 +7,7 @@ use rapier3d::control::KinematicCharacterController;
 // use serde::{Deserialize, Serialize};
 // use serde_json::{Result, Number};
 
-use crate::structs::{ PlayerUpdate, Quat, Vec3, Client};
+use crate::structs::{ PlayerUpdate, Quat, Vec3, Client, Colour};
 use rand::Rng;
 use serde_json::{ Value};
 // use websocket::OwnedMessage;
@@ -27,6 +27,7 @@ pub struct Player {
     pub collider_handle: ColliderHandle,
     pub key_map: HashMap<String, bool>,
     pub to_jump: bool,
+    pub colour: Colour
 }
 
 impl Player {
@@ -50,6 +51,14 @@ impl Player {
         let collider_handle =
             collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
 
+        let mut rng = rand::thread_rng();
+
+        let colour = Colour{
+            r:rng.gen::<u8>(),
+            g:rng.gen::<u8>(),
+            b:rng.gen::<u8>(),
+        };
+
         Self {
             name,
             can_jump: true,
@@ -63,6 +72,7 @@ impl Player {
             collider_handle,
             key_map: HashMap::new(),
             to_jump: false,
+            colour:colour
         }
     }
 
@@ -172,6 +182,8 @@ impl Player {
             name: self.name.to_string(),
             p: pos_vec,
             q: rot_quat,
+            colour:self.colour.clone()
+
         }
     }
 

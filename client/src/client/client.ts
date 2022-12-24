@@ -9,6 +9,7 @@ import { World } from './World/World'
 import { Vector2 } from 'three'
 import { win32 } from 'path'
 import * as e from 'express'
+import { Obstacle } from './World/obstacle'
 
 // const scene = new THREE.Scene()
 
@@ -267,9 +268,13 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void {
 }
 
 function loadScene(gltf: any) {
-
+   
     // const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
     gltf.scene.traverse(function (object: any) {
+
+        console.log(object)
+
+
         if (object.isMesh) {
             object.castShadow = true;
             object.receiveShadow = true;
@@ -278,12 +283,32 @@ function loadScene(gltf: any) {
             object.geometry.computeVertexNormals(true)
             // object.material = floor_material
         }
-        if (object.userData.hasOwnProperty('spin')) {
-            world.obstacles[object.name] = object
-        }else if (object.userData.hasOwnProperty('pivot')) {
-            world.obstacles[object.name] = object
-        }
+        // if (object.userData.hasOwnProperty('spin')) {
+
+        //     world.obstacles[object.name] = new Obstacle(object);
+        // }else if (object.userData.hasOwnProperty('pivot')) {
+        //     world.obstacles[object.name] = new Obstacle(object);
+        // }
+
+        world.obstacles[object.name] = new Obstacle(object);
 
     });
     world.graphicsWorld.add(gltf.scene);
+
+    for (let i=0; i< gltf.animations.length;i++){
+        let animation = gltf.animations[i];
+        let name = animation.name.slice(0,-6);
+        console.log(animation,name);
+        world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
+        console.log(world.obstacles[name].setAnimation(animation.name,0));
+
+    }
+    // gltf.animation
+    // for ){
+
+    // }
+    // gltf.animation.traverse(function(animation:any){
+    //     console.log(animation);
+    // })
+   
 }

@@ -5,33 +5,30 @@ use serde::{Deserialize, Serialize};
 
 use futures_channel::mpsc::UnboundedReceiver;
 // use futures_util::stream;
-
 // use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite;
 use tungstenite::protocol::Message;
-
-// pub struct ChatMessage{
-//     name:String,
-//     msg:String
-// }
 
 #[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub enum MessageType{
     Join{name:String,id:String},
     Chat{name:String,message:String},
-    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,PlayerUpdate>}
+    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>}
 }
-
-// #[derive(Serialize, Deserialize)]
-// pub struct Join{
-//     pub name:String,
-//     pub id:String
-// }
 
 #[derive(Serialize, Deserialize)]
 #[derive(Clone, Debug)]
 pub struct PlayerUpdate{
+    pub name:String,
+    pub p:Vec3,
+    pub q:Quat,
+    pub colour:Colour
+}
+
+#[derive(Serialize, Deserialize)]
+#[derive(Clone, Debug)]
+pub struct ObjectUpdate{
     pub name:String,
     pub p:Vec3,
     pub q:Quat
@@ -54,10 +51,13 @@ pub struct Quat{
    pub w:f32
 }
 
-// #[derive(Serialize, Deserialize)]
-// pub struct UpdateView {
-//     pub viewVector: Vec3
-// }
+#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize)]
+pub struct Colour{
+    pub r:u8,
+    pub g:u8,
+    pub b:u8
+}
 
 pub struct Client {
     pub tx: UnboundedSender<Message>,

@@ -10,15 +10,24 @@ use structs::{Client, MessageType};
 
 use std::time::Instant;
 
+mod animation;
 mod client;
-mod dynamic;
+// mod dynamic;
 mod player;
 mod structs;
 mod world;
+mod physics_objects {
+    pub mod launchpad;
+    pub mod spin;
+    pub mod collision;
+    pub mod pivot;
+    pub mod dynamic;
+}
+
 use rapier3d::{crossbeam, prelude::*};
 
-use crate::player::Player;
-use crate::world::World;
+use crate::world::{World};
+use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
@@ -256,9 +265,9 @@ async fn main() -> Result<(), IoError> {
                                             player.1.can_jump = true;
                                         }
                                     }
-                                } 
+                                }
                             }
-                        } 
+                        }
                     }
                 }
             }
@@ -274,14 +283,30 @@ async fn main() -> Result<(), IoError> {
                 );
             }
 
-            let mut dynamic_objects_info = HashMap::new();
-            for i in 0..world.dynamic_objects.len() {
-                dynamic_objects_info.insert(
-                    world.dynamic_objects[i].name.clone(),
-                    world.dynamic_objects[i]
-                        .get_info(&mut world.rigid_body_set),
-                );
-            }
+            let dynamic_objects_info: HashMap<String, ObjectUpdate> = world
+                .dynamic_objects
+                .iter_mut()
+                .map(|x|
+                     (x.name(), x.get_info(&mut world.rigid_body_set))
+                    )
+                .collect();
+
+                // let dynamic_objects_info: HashMap<String, ObjectUpdate> = world
+                // .dynamic_objects
+                // .iter_mut()
+                // .map(|x| 
+                //      (unpat!(x).name.clone(), x.get_info(&mut world.rigid_body_set))
+                //     )
+                // .collect();
+
+            // let mut dynamic_objects_info = HashMap::new();
+            // for i in 0..world.dynamic_objects.len() {
+            //     dynamic_objects_info.insert(
+            //         world.dynamic_objects[i].name.clone(),
+            //         world.dynamic_objects[i]
+            //             .get_info(&mut world.rigid_body_set),
+            //     );
+            // }
 
             let player_update_message = structs::MessageType::WorldUpdate {
                 players: players_info,
@@ -300,7 +325,7 @@ async fn main() -> Result<(), IoError> {
 
             time_since_last = Instant::now();
             wait_time = 15 - duration.as_millis().min(15);
-        } 
+        }
     }
 
     // Ok(())
