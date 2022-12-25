@@ -1,25 +1,24 @@
-use nalgebra::{Unit, Quaternion};
+use nalgebra::{Quaternion, Unit};
 use rapier3d::prelude::*;
 
-use crate::structs::{Quat, Vec3, PlayerUpdate, ObjectUpdate};
+use crate::structs::{ObjectUpdate, PlayerUpdate, Quat, Vec3};
 
-use super::{spin::SpinObject, pivot::PivotObject};
+use super::{launchpad::LaunchPad, pivot::PivotObject, spin::SpinObject};
 
-
-pub enum Objects{
+pub enum Objects {
     Spin(SpinObject),
     Pivot(PivotObject),
-    Dynamic(DynamicObject)
-
+    LaunchPad(LaunchPad),
+    Dynamic(DynamicObject),
 }
-
 
 impl Objects {
     pub fn name(&self) -> String {
         match &*self {
             Objects::Spin(obj) => obj.object.name.clone(),
             Objects::Pivot(obj) => obj.object.name.clone(),
-            Objects::Dynamic(obj) => obj.name.clone()
+            Objects::LaunchPad(obj) => obj.object.name.clone(),
+            Objects::Dynamic(obj) => obj.name.clone(),
         }
     }
 
@@ -27,33 +26,39 @@ impl Objects {
         match &mut *self {
             Objects::Spin(obj) => obj.get_info(rigid_body_set),
             Objects::Pivot(obj) => obj.get_info(rigid_body_set),
-            Objects::Dynamic(obj) => obj.get_info(rigid_body_set)
+            Objects::LaunchPad(obj) => obj.get_info(rigid_body_set),
+            Objects::Dynamic(obj) => obj.get_info(rigid_body_set),
         }
     }
 }
 
 pub struct DynamicObject {
-    pub name:String,
+    pub name: String,
     pub rigid_body_handle: RigidBodyHandle,
     pub collider_handle: ColliderHandle,
-    pub original_rotation: Unit<Quaternion<f32>>
-
+    pub original_rotation: Unit<Quaternion<f32>>,
 }
 
 impl DynamicObject {
-    pub fn new(name:String,rigid_body_handle: RigidBodyHandle, collider_handle: ColliderHandle,original_rotation:Unit<Quaternion<f32>>) -> Self {
-
-
-        Self {name,rigid_body_handle,collider_handle,original_rotation}
+    pub fn new(
+        name: String,
+        rigid_body_handle: RigidBodyHandle,
+        collider_handle: ColliderHandle,
+        original_rotation: Unit<Quaternion<f32>>,
+    ) -> Self {
+        Self {
+            name,
+            rigid_body_handle,
+            collider_handle,
+            original_rotation,
+        }
     }
 
     pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> ObjectUpdate {
-
-
         let rigid_body = &rigid_body_set[self.rigid_body_handle];
 
         let pos = rigid_body.translation();
-    
+
         let pos_vec = Vec3 {
             x: pos.x,
             y: pos.y,
@@ -67,9 +72,9 @@ impl DynamicObject {
             k: rot.k,
             w: rot.w,
         };
-        
+
         ObjectUpdate {
-            name:self.name.clone(),
+            name: self.name.clone(),
             p: pos_vec,
             q: rot_quat,
         }

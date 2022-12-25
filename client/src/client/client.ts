@@ -300,7 +300,7 @@ function loadScene(gltf: any) {
         let name = animation.name.slice(0,-6);
         console.log(animation,name);
         world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
-        console.log(world.obstacles[name].setAnimation(animation.name,0));
+        // console.log(world.obstacles[name].setAnimation(animation.name,0));
 
     }
     // gltf.animation

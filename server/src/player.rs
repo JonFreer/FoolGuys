@@ -265,4 +265,11 @@ impl Player {
         }
     }
 
+    pub fn launch(&mut self, rigid_body_set: &mut RigidBodySet ,launch_dir : Vector3<f32> ){
+        let mut body = &mut rigid_body_set[self.rigid_body_handle];
+        let mut velocity = launch_dir;
+        body.set_linvel(velocity, true);
+
+    }
+
 }

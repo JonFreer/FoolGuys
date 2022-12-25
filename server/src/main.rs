@@ -26,7 +26,7 @@ mod physics_objects {
 
 use rapier3d::{crossbeam, prelude::*};
 
-use crate::world::{World};
+use crate::{world::{World}, physics_objects::dynamic::Objects};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
@@ -233,6 +233,9 @@ async fn main() -> Result<(), IoError> {
                 }
             }
 
+      
+
+
             physics_pipeline.step(
                 &gravity,
                 &integration_parameters,
@@ -248,7 +251,15 @@ async fn main() -> Result<(), IoError> {
                 &event_handler,
             );
 
+            let mut collision_vec = Vec::new();
+            
             while let Ok(collision_event) = collision_recv.try_recv() {
+                collision_vec.push(collision_event);
+            }
+
+
+
+            for collision_event in collision_vec.iter(){
                 if collision_event.started() {
                     let collider_handle1 = collision_event.collider1();
                     let collider_handle2 = collision_event.collider2();
@@ -272,6 +283,17 @@ async fn main() -> Result<(), IoError> {
                 }
             }
 
+                //Update physics objects
+                for object in world.dynamic_objects.iter_mut() {
+                match object{
+                    Objects::LaunchPad(object)=>{
+                        object.update(1.0/60.0,&mut world.rigid_body_set,&collision_vec, &mut players);
+                    },
+                    _=>{}
+                }
+            }
+
+          
             // Send players_info
 
             let mut players_info = HashMap::new();
