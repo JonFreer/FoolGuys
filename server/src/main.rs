@@ -24,6 +24,14 @@ mod physics_objects {
     pub mod dynamic;
 }
 
+mod character_states {
+    pub mod character_base;
+    pub mod idle;
+    pub mod walk;
+    pub mod jumpidle;
+    pub mod falling;
+}
+
 use rapier3d::{crossbeam, prelude::*};
 
 use crate::{world::{World}, physics_objects::dynamic::Objects};
@@ -133,6 +141,9 @@ async fn main() -> Result<(), IoError> {
     let mut multibody_joint_set = MultibodyJointSet::new();
     let mut ccd_solver = CCDSolver::new();
     let physics_hooks = ();
+    let mut query_pipline= QueryPipeline::new();
+
+    // let f = query_pipline.flags;
     // let event_handler = ();
 
     let (collision_send, collision_recv) = crossbeam::channel::unbounded();
@@ -180,6 +191,10 @@ async fn main() -> Result<(), IoError> {
             //Check for clients which no longer exist
             let mut players_to_remove = Vec::new();
             for p in players.iter_mut() {
+
+                //set the grounded to false
+                // p.1.on_ground = false;
+
                 if !peers.contains_key(p.0) {
                     // world.collider_set.remove(value.collider_handle, &mut island_manager, &mut world.rigid_body_set, true);
                     world.rigid_body_set.remove(
@@ -211,6 +226,7 @@ async fn main() -> Result<(), IoError> {
                     &mut world.rigid_body_set,
                     &mut world.collider_set,
                     integration_parameters,
+                    &query_pipline
                 );
             }
 
@@ -233,9 +249,6 @@ async fn main() -> Result<(), IoError> {
                 }
             }
 
-      
-
-
             physics_pipeline.step(
                 &gravity,
                 &integration_parameters,
@@ -247,24 +260,62 @@ async fn main() -> Result<(), IoError> {
                 &mut impulse_joint_set,
                 &mut multibody_joint_set,
                 &mut ccd_solver,
+                None,
                 &physics_hooks,
                 &event_handler,
             );
 
+            query_pipline.update( &world.rigid_body_set, &world.collider_set);
+
+
+
+            // physics_pipeline.step(
+            //     &gravity,
+            //     &integration_parameters,
+            //     &mut island_manager,
+            //     &mut broad_phase,
+            //     &mut narrow_phase,
+            //     &mut world.rigid_body_set,
+            //     &mut world.collider_set,
+            //     &mut impulse_joint_set,
+            //     &mut multibody_joint_set,
+            //     &mut ccd_solver,
+            //     &physics_hooks,
+            //     &event_handler,
+            // );
+
             let mut collision_vec = Vec::new();
             
             while let Ok(collision_event) = collision_recv.try_recv() {
-                collision_vec.push(collision_event);
+                collision_vec.push(collision_event as CollisionEvent);
             }
 
 
 
             for collision_event in collision_vec.iter(){
-                if collision_event.started() {
+                // if collision_event.started() {
+                    // collision_event.
                     let collider_handle1 = collision_event.collider1();
                     let collider_handle2 = collision_event.collider2();
 
-                    if let Some(contact_pair) =
+                    if collision_event.stopped() {
+                        for player in players.iter_mut() {
+                            // for (key, value) in &players {
+                            let mut index = None;
+                            if player.1.collider_handle == collider_handle2 {
+                                index = player.1.on_ground.iter().position(|x| *x == collider_handle1);
+                            }else if player.1.collider_handle == collider_handle1{
+                               index = player.1.on_ground.iter().position(|x| *x == collider_handle2);
+                            }
+
+                            if let Some(index) = index{
+                                player.1.on_ground.remove(index);
+                            }
+                        }
+                    }
+
+
+                    else if let Some(contact_pair) =
                         narrow_phase.contact_pair(collider_handle1, collider_handle2)
                     {
                         if contact_pair.has_any_active_contact {
@@ -273,14 +324,24 @@ async fn main() -> Result<(), IoError> {
                                     for player in players.iter_mut() {
                                         // for (key, value) in &players {
                                         if player.1.collider_handle == collider_handle2 {
-                                            player.1.can_jump = true;
+                                            // if collision_event.started() {
+                                                player.1.can_jump = true;
+                                                player.1.on_ground.push(collider_handle1);
+                                                
+                                            // }
+                                            //  if collision_event.stopped(){
+                                                // player.1.on_ground = false;
+                                            // }
                                         }
                                     }
                                 }
+                                println!("{:?}",manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)));
                             }
                         }
-                    }
+                    // }
                 }
+
+                
             }
 
                 //Update physics objects

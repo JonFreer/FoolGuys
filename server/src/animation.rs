@@ -1,11 +1,10 @@
 use gltf::{
     accessor::Iter,
     animation::{
-        util::{Rotations, Scales, Translations},
-        Interpolation as GltfInterpolation, Property, Reader,
+        util::{Rotations},
+        Interpolation as GltfInterpolation,
     },
-    iter::Buffers,
-    Animation as GltfAnimation,
+
     iter::Animations as GltfAnimations,
 };
 
@@ -148,11 +147,11 @@ impl Animation {
             println!("{:?}", c.target().node().name());
             println!("{:?}", c.target().property());
 
-            let property = c.target().property();
+            // let property = c.target().property();
             let reader = c.reader(|buffer| Some(&buffers[buffer.index()]));
-            let readOutputs = reader.read_outputs().unwrap();
-            // c.
-            let track = match readOutputs {
+            let read_ouputs = reader.read_outputs().unwrap();
+
+            match read_ouputs {
                 gltf::animation::util::ReadOutputs::Translations(data) => {
                     let track = AnimationTrack::<Vector3<f32>>::new(
                         reader.read_inputs().unwrap(),

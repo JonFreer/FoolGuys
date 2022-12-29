@@ -9,6 +9,8 @@ use futures_channel::mpsc::UnboundedReceiver;
 use tokio_tungstenite::tungstenite;
 use tungstenite::protocol::Message;
 
+use crate::character_states::character_base::CharacterState;
+
 #[derive(Clone, Debug)]
 #[derive(Serialize, Deserialize)]
 pub enum MessageType{
@@ -23,7 +25,9 @@ pub struct PlayerUpdate{
     pub name:String,
     pub p:Vec3,
     pub q:Quat,
-    pub colour:Colour
+    pub colour:Colour,
+    pub state: CharacterState,
+    pub dir: Vec3
 }
 
 #[derive(Serialize, Deserialize)]
