@@ -70,6 +70,7 @@ socket.onmessage = function (event) {
         // console.log("a",data.players)
         Object.keys(data.players).forEach((p) => {
             // console.log("b",data.players[p])
+            console.log(data.players[p].dir)
             timestamp = Date.now()
             // pingStatsHtml += p + ' ' + (timestamp - data[p].t) + 'ms<br/>'
             world.updatePlayer(p, data.players)
@@ -101,6 +102,8 @@ socket.onmessage = function (event) {
     
     
         (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
+
+        
     
     }
 
@@ -299,7 +302,7 @@ function loadScene(gltf: any) {
         let animation = gltf.animations[i];
         let name = animation.name.slice(0,-6);
         console.log(animation,name);
-        world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
+        // world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
         // console.log(world.obstacles[name].setAnimation(animation.name,0));
 
     }

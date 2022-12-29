@@ -5,39 +5,40 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { CameraOperator } from './CameraOperator';
 import { InputManager } from './InputManager';
-import {Sky} from './Sky'
-import {Labels} from './Labels'
+import { Sky } from './Sky'
+import { Labels } from './Labels'
 import { MobileControls } from './MobileControls';
 import { ChatManager } from './Chat';
 import { Obstacle } from './obstacle';
 export class World {
+
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
     public obstacles: { [id: string]: Obstacle } = {}
-    public player_id:string='';
+    public player_id: string = '';
     // public controls: OrbitControls;
     private stats;
     public sky: Sky;
-    public cameraOperator:CameraOperator;
+    public cameraOperator: CameraOperator;
     public inputManager: InputManager;
-    public socket:WebSocket;
-    public labels:Labels;
-    public mobileControls:MobileControls;
-    public chatManager:ChatManager;
+    public socket: WebSocket;
+    public labels: Labels;
+    public mobileControls: MobileControls;
+    public chatManager: ChatManager;
 
-    constructor(socket:WebSocket) {
+    constructor(socket: WebSocket) {
         const scope = this;
-        this.socket=socket;
-        this.renderer = new THREE.WebGLRenderer({antialias:true})
+        this.socket = socket;
+        this.renderer = new THREE.WebGLRenderer({ antialias: true })
         this.renderer.shadowMap.enabled = true;
         // renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
-        
-        
+
+
 
         window.addEventListener('resize', onWindowResize, false)
         function onWindowResize() {
@@ -67,7 +68,7 @@ export class World {
             2000000
         )
         this.inputManager = new InputManager(this, this.renderer.domElement);
-        this.cameraOperator = new CameraOperator(this, this.camera,this.socket, 0.3);
+        this.cameraOperator = new CameraOperator(this, this.camera, this.socket, 0.3);
         document.body.appendChild(this.renderer.domElement)
 
         // this.controls = new OrbitControls(this.camera, this.renderer.domElement)
@@ -121,7 +122,7 @@ export class World {
 
             let col = players[client_id].colour
             const material = new THREE.MeshStandardMaterial({
-                color: new THREE.Color("rgb("+col.r+","+ col.g+","+ col.b+")"),
+                color: new THREE.Color("rgb(" + col.r + "," + col.g + "," + col.b + ")"),
                 wireframe: false,
                 roughness: 0.1
             })
@@ -157,45 +158,58 @@ export class World {
                 //     )
                 //     .start()
 
-                
+
                 this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.i, players[client_id].q.j, players[client_id].q.k, players[client_id].q.w),)
             }
+
+            // if (players[client_id].p) {
+
+            let look_vector = new THREE.Vector3(
+                this.clientCubes[client_id].position.x +players[client_id].dir.x,
+                this.clientCubes[client_id].position.y + players[client_id].dir.y,
+                this.clientCubes[client_id].position.z + players[client_id].dir.z
+            )
+
+
+            this.clientCubes[client_id].lookAt(look_vector);
+
+
+
         }
     }
 
-    public updateObstacle(id:string,obstacles:any){
-        if (this.obstacles[id]!=undefined) {
-        
+    public updateObstacle(id: string, obstacles: any) {
+        if (this.obstacles[id] != undefined) {
+
             new TWEEN.Tween(this.obstacles[id].mesh.position)
-            .to(
-                {
-                    x: obstacles[id].p.x,
-                    y: obstacles[id].p.y,
-                    z: obstacles[id].p.z,
-                },
-                0
-            )
-            .start()
+                .to(
+                    {
+                        x: obstacles[id].p.x,
+                        y: obstacles[id].p.y,
+                        z: obstacles[id].p.z,
+                    },
+                    0
+                )
+                .start()
             // this.obstacles[id].set
             // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
             this.obstacles[id].mesh.setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
-        }else{
-            console.log("Cannot find obstacle",id)
+        } else {
+            console.log("Cannot find obstacle", id)
         }
     }
 
-    
 
-    public animate(){
-        requestAnimationFrame(() =>
-		{
-			this.animate();
-		});
-    
+
+    public animate() {
+        requestAnimationFrame(() => {
+            this.animate();
+        });
+
         // this.controls.update()
         this.sky.update()
         TWEEN.update()
-    
+
         for (const [key, value] of Object.entries(this.obstacles)) {
             value.update(0.01);
         }
@@ -205,8 +219,8 @@ export class World {
         //     // controls.
         //     // this.camera.lookAt(this.clientCubes[this.player_id].position)
         // }
-        this.inputManager.update(0.1,0.1)
-        if(this.clientCubes[this.player_id]!=undefined){
+        this.inputManager.update(0.1, 0.1)
+        if (this.clientCubes[this.player_id] != undefined) {
             this.cameraOperator.setTarget(this.clientCubes[this.player_id].position)
             this.cameraOperator.update(0.1);
         }
@@ -214,15 +228,15 @@ export class World {
         this.labels.update()
         this.stats.update()
     }
-    
+
     public render() {
         this.renderer.render(this.graphicsWorld, this.camera)
     }
 
 
     // public registerUpdatable(registree: IUpdatable): void
-	// {
-	// 	this.updatables.push(registree);
-	// 	this.updatables.sort((a, b) => (a.updateOrder > b.updateOrder) ? 1 : -1);
-	// }
+    // {
+    // 	this.updatables.push(registree);
+    // 	this.updatables.sort((a, b) => (a.updateOrder > b.updateOrder) ? 1 : -1);
+    // }
 }
