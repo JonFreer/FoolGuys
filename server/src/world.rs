@@ -1,6 +1,4 @@
 use gltf::{Node, Document};
-use gltf::iter::Animations;
-// use gltf::json::Node;
 use rapier3d::prelude::{ColliderSet, RigidBodySet};
 use serde_json::Value;
 

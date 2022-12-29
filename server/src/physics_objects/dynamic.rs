@@ -1,7 +1,7 @@
 use nalgebra::{Quaternion, Unit};
 use rapier3d::prelude::*;
 
-use crate::structs::{ObjectUpdate, PlayerUpdate, Quat, Vec3};
+use crate::structs::{ObjectUpdate, Quat, Vec3};
 
 use super::{launchpad::LaunchPad, pivot::PivotObject, spin::SpinObject};
 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Mul, rc::Rc, cell::RefCell};
+use std::{collections::HashMap};
 
 // use futures_channel::mpsc::UnboundedReceiver;
 use nalgebra::{Quaternion, Vector1, Vector2, Vector3};
@@ -28,9 +28,9 @@ pub struct Player {
     pub key_map: HashMap<String, bool>,
     pub to_jump: bool,
     pub colour: Colour,
-    pub on_ground: Vec<ColliderHandle>,
-    pub on_ground_2: bool,
-    pub arcadeVelocityInfluence: Vector3<f32>, // pub lin_vel: Vector3<f32>,
+    pub on_ground: bool,
+    // pub on_ground_2: bool,
+    pub acrade_veloicty_influencer: Vector3<f32>, // pub lin_vel: Vector3<f32>,
     pub character_state : CharacterState,
     pub just_jumped : bool,
     pub look_at: Vector3<f32>,
@@ -100,9 +100,9 @@ impl Player {
             key_map: HashMap::new(),
             to_jump: false,
             colour: colour,
-            on_ground: Vec::new(),
-            on_ground_2: false,
-            arcadeVelocityInfluence: Vector3::new(0.2, 0.0, 0.2), // lin_vel: Vector3::new(0.0, 0.0, 0.0),
+            on_ground:false,
+            // on_ground_2: false,
+            acrade_veloicty_influencer: Vector3::new(0.2, 0.0, 0.2), // lin_vel: Vector3::new(0.0, 0.0, 0.0),
             character_state: CharacterState::Idle(IdleState { }),
             just_jumped:false,
             look_at: Vector3::new(1.0,0.0,0.0),
@@ -136,7 +136,7 @@ impl Player {
                 Vector3::new(self.client_move_vec.x, 0.0, self.client_move_vec.y);
 
             rel_direction = rel_direction.normalize();
-            let mut rel_camera_movement =
+            let rel_camera_movement =
                 Player::appply_vector_matrix_x(self.view_vector, rel_direction) * self.speed;
 
             self.target_look_at = rel_camera_movement.normalize().clone();
@@ -144,13 +144,13 @@ impl Player {
             arcade_velocity = rel_camera_movement / integration_parameters.dt;
         }
 
-        let mut new_velocity = Vector3::new(0.0, 0.0, 0.0);
+        let mut new_velocity;// = Vector3::new(0.0, 0.0, 0.0);
         let add = true;
         if add {
             // newVelocity.copy(simulatedVelocity);
             new_velocity = simulated_velocity.clone();
 
-            let add = arcade_velocity.component_mul(&self.arcadeVelocityInfluence);
+            let add = arcade_velocity.component_mul(&self.acrade_veloicty_influencer);
 
             if simulated_velocity.x.abs() < arcade_velocity.x.abs() || simulated_velocity.x * arcade_velocity.x < 0.0
             {
@@ -171,19 +171,19 @@ impl Player {
                 Vector1::new(simulated_velocity.x)
                     .lerp(
                         &Vector1::new(arcade_velocity.x),
-                        self.arcadeVelocityInfluence.x,
+                        self.acrade_veloicty_influencer.x,
                     )
                     .x,
                 Vector1::new(simulated_velocity.y)
                     .lerp(
                         &Vector1::new(arcade_velocity.y),
-                        self.arcadeVelocityInfluence.y,
+                        self.acrade_veloicty_influencer.y,
                     )
                     .x,
                 Vector1::new(simulated_velocity.z)
                     .lerp(
                         &Vector1::new(arcade_velocity.z),
-                        self.arcadeVelocityInfluence.z,
+                        self.acrade_veloicty_influencer.z,
                     )
                     .x,
             );
@@ -194,52 +194,19 @@ impl Player {
             simulated_velocity, new_velocity, arcade_velocity
         );
 
-        // new_velocity = Vector3::new(
-        //     simulatedVelocity.x, arcadeVelocity.x, character.arcadeVelocityInfluence.x),
-        //     THREE.MathUtils.lerp(simulatedVelocity.y, arcadeVelocity.y, character.arcadeVelocityInfluence.y),
-        //     THREE.MathUtils.lerp(simulatedVelocity.z, arcadeVelocity.z, character.arcadeVelocityInfluence.z),
-        // );
 
-        // println!("{:?}",integration_parameters);
-
-        // let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
-
-        // let predicted_movement = rigid_body.linvel().clone()*integration_parameters.dt;
-
-        // let mut pos = predicted_movement;//.component_mul(&Vector::new(0.95,1.0,0.95)) ;
-
-        // if !(self.client_move_vec.x == 0.0 && self.client_move_vec.y == 0.0) {
-        //     let mut rel_direction =
-        //         Vector3::new(self.client_move_vec.x, 0.0, self.client_move_vec.y); //.normalize();
-        //                                                                            // if(self.)
-        //     rel_direction = rel_direction.normalize();
-        //     let mut rel_camera_movement =
-        //         Player::appply_vector_matrix_x(self.view_vector, rel_direction) * self.speed;
-
-        //     pos = rel_camera_movement;//*integration_parameters.dt; //
-        // }
-
-        if self.on_ground_2 {
+        if self.on_ground {
             rigid_body.set_linvel(new_velocity, true);
-            self.arcadeVelocityInfluence = Vector3::new(0.05, 0.0, 0.05);
+            self.acrade_veloicty_influencer = Vector3::new(0.05, 0.0, 0.05);
         } else {
             rigid_body.set_linvel(new_velocity, true);
-            self.arcadeVelocityInfluence = Vector3::new(0.01, 0.0, 0.01);
+            self.acrade_veloicty_influencer = Vector3::new(0.01, 0.0, 0.01);
         }
 
         let mut character_controller = KinematicCharacterController::default();
-        // character_controller.offset = CharacterLength::Relative(0.01);
 
-        // let collider_shape = collider_set[self.collider_handle].shape();
         let collider = &collider_set[self.collider_handle];
-        // rigid_body.
-
-        // collider_shape.clone()
-
-        // let query_pipeline = QueryPipeline::new();
-        // let current_position = rigid_body.position().clone();
-
-        // character_controller.
+ 
         let pos = Vector3::new(0.0, 0.0, 0.0);
         character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.5));
         let mut collisions = vec![];
@@ -252,91 +219,20 @@ impl Player {
             &collider.position(),      // The character’s initial position.
             pos.cast::<Real>(),
             QueryFilter::default()
-                // Make sure the the character we are trying to move isn’t considered an obstacle.
                 .exclude_rigid_body(self.rigid_body_handle),
             |c| collisions.push(c), // We don’t care about events in this example.
         );
 
-        // let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
 
         if corrected_movement.grounded {
-            println!("on gorund");
             self.can_jump = true;
-            self.on_ground_2 = true;
+            self.on_ground = true;
         } else {
-            println!("not on ground");
-            self.on_ground_2 = false;
+            self.on_ground = false;
         }
 
-        // let mut calc_vel = corrected_movement.translation / integration_parameters.dt ;
-
-        // let mut vel = rigid_body.linvel().clone();
-        // println!("{:?}",vel);
-        // if !self.on_ground_2 {
-        //     vel.y += -9.81*integration_parameters.dt;
-
-        // }
-        // rigid_body.set_linvel(pos/integration_parameters.dt, true);
-        // if self.on_ground {
-
-        // let calc_vel = corrected_movement.translation/integration_parameters.dt;
-        // if calc_vel.x > 0.0 && calc_vel.x > vel.x {
-        //     vel.x = calc_vel.x;
-        // } else if calc_vel.x < 0.0 && calc_vel.x < vel.x {
-        //     vel.x = calc_vel.x;
-        // }
-
-        // if calc_vel.z > 0.0 && calc_vel.z > vel.z {
-        //     vel.z = calc_vel.z;
-        // } else if calc_vel.z < 0.0 && calc_vel.z < vel.z {
-        //     vel.z = calc_vel.z;
-        // }
-
-        // if vel.x > 0.01 && pos.x < 0.0{
-        //     vel.x = vel.x *0.99;
-        // }
-
-        // if vel.x < -0.01 && pos.x > 0.0{
-        //     vel.x = vel.x * 0.99;
-        // }
-
-        // if vel.z > 0.01 && pos.z < 0.0{
-        //     vel.z = vel.z *0.99;
-        // }
-
-        // if vel.z < -0.01 && pos.z > 0.0{
-        //     vel.z = vel.z * 0.99;
-        // }
-
-        // rigid_body.set_linvel(vel, true);
-
-        // if calc_vel.y > vel.y {
-        //     vel.y += calc_vel.y;
-        // }
-
-        // vel.y += calc_vel.y;
-        // }
-
-        // rigid_body.set_translation(rigid_body.translation()+pos,true);
-
-        // character_controller.solve_character_collision_impulses(
-        //     dt,
-        //     &mut bodies,
-        //     &colliders,
-        //     &queries,
-        //     character_shape,
-        //     character_mass,
-        //     &collisions,
-        //     filter,
-        // );
-
         let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
-        // println!("{}",self.key_map);
-        // if self.key_map.contains_key(" ") {
-        //     if self.key_map[" "]{
-        //         self.to_jump = true;
-        //     }
-        // }
+    
 
         if self.to_jump && self.can_jump {
             rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 10.0, 0.0), true);
@@ -363,11 +259,8 @@ impl Player {
         //update char state
 
         match self.character_state.clone(){
-            CharacterState::JumpIdle(state) => JumpIdleState::update(self, integration_parameters.dt),
+            CharacterState::JumpIdle(_) => JumpIdleState::update(self, integration_parameters.dt),
             CharacterState::Falling => FallingState::update(self,integration_parameters.dt),
-            // CharacterState::Idle(state) => {},
-            // CharacterState::Walk => {},
-            // CharacterStat
             _ => {}
         }
 
@@ -498,23 +391,15 @@ impl Player {
     }
 
     pub fn launch(&mut self, rigid_body_set: &mut RigidBodySet, launch_dir: Vector3<f32>) {
-        let mut body = &mut rigid_body_set[self.rigid_body_handle];
-        let mut velocity = launch_dir;
+        let body = &mut rigid_body_set[self.rigid_body_handle];
+        let velocity = launch_dir;
         body.set_linvel(velocity, true);
     }
 
     pub fn on_input_change(&mut self){
 
-        // let c = RefCell::new(Rc::new(self));
-        
-        // if let CharacterState::Idle(state) = &self.character_state{
-        //     state.on_input_change(self);
-        // }
-        // self.character_state
-
-        // let char_state =self.
         match self.character_state.clone(){
-            CharacterState::Idle(state) => IdleState::on_input_change(self),
+            CharacterState::Idle(_) => IdleState::on_input_change(self),
             CharacterState::Walk => WalkState::on_input_change(self),
             _ => {}
         }

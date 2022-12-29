@@ -1,4 +1,4 @@
-use nalgebra::Vector3;
+
 use std::{
     collections::HashMap,
     env,
@@ -260,12 +260,11 @@ async fn main() -> Result<(), IoError> {
                 &mut impulse_joint_set,
                 &mut multibody_joint_set,
                 &mut ccd_solver,
-                None,
                 &physics_hooks,
                 &event_handler,
             );
 
-            query_pipline.update( &world.rigid_body_set, &world.collider_set);
+            query_pipline.update( &island_manager,&world.rigid_body_set, &world.collider_set);
 
 
 
@@ -292,57 +291,57 @@ async fn main() -> Result<(), IoError> {
 
 
 
-            for collision_event in collision_vec.iter(){
-                // if collision_event.started() {
-                    // collision_event.
-                    let collider_handle1 = collision_event.collider1();
-                    let collider_handle2 = collision_event.collider2();
+            // for collision_event in collision_vec.iter(){
+            //     // if collision_event.started() {
+            //         // collision_event.
+            //         let collider_handle1 = collision_event.collider1();
+            //         let collider_handle2 = collision_event.collider2();
 
-                    if collision_event.stopped() {
-                        for player in players.iter_mut() {
-                            // for (key, value) in &players {
-                            let mut index = None;
-                            if player.1.collider_handle == collider_handle2 {
-                                index = player.1.on_ground.iter().position(|x| *x == collider_handle1);
-                            }else if player.1.collider_handle == collider_handle1{
-                               index = player.1.on_ground.iter().position(|x| *x == collider_handle2);
-                            }
+            //         if collision_event.stopped() {
+            //             for player in players.iter_mut() {
+            //                 // for (key, value) in &players {
+            //                 let mut index = None;
+            //                 if player.1.collider_handle == collider_handle2 {
+            //                     index = player.1.on_ground.iter().position(|x| *x == collider_handle1);
+            //                 }else if player.1.collider_handle == collider_handle1{
+            //                    index = player.1.on_ground.iter().position(|x| *x == collider_handle2);
+            //                 }
 
-                            if let Some(index) = index{
-                                player.1.on_ground.remove(index);
-                            }
-                        }
-                    }
+            //                 if let Some(index) = index{
+            //                     player.1.on_ground.remove(index);
+            //                 }
+            //             }
+            //         }
 
 
-                    else if let Some(contact_pair) =
-                        narrow_phase.contact_pair(collider_handle1, collider_handle2)
-                    {
-                        if contact_pair.has_any_active_contact {
-                            for manifold in &contact_pair.manifolds {
-                                if manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)) > 0.9 {
-                                    for player in players.iter_mut() {
-                                        // for (key, value) in &players {
-                                        if player.1.collider_handle == collider_handle2 {
-                                            // if collision_event.started() {
-                                                player.1.can_jump = true;
-                                                player.1.on_ground.push(collider_handle1);
+            //         else if let Some(contact_pair) =
+            //             narrow_phase.contact_pair(collider_handle1, collider_handle2)
+            //         {
+            //             if contact_pair.has_any_active_contact {
+            //                 for manifold in &contact_pair.manifolds {
+            //                     if manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)) > 0.9 {
+            //                         for player in players.iter_mut() {
+            //                             // for (key, value) in &players {
+            //                             if player.1.collider_handle == collider_handle2 {
+            //                                 // if collision_event.started() {
+            //                                     player.1.can_jump = true;
+            //                                     player.1.on_ground.push(collider_handle1);
                                                 
-                                            // }
-                                            //  if collision_event.stopped(){
-                                                // player.1.on_ground = false;
-                                            // }
-                                        }
-                                    }
-                                }
-                                println!("{:?}",manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)));
-                            }
-                        }
-                    // }
-                }
+            //                                 // }
+            //                                 //  if collision_event.stopped(){
+            //                                     // player.1.on_ground = false;
+            //                                 // }
+            //                             }
+            //                         }
+            //                     }
+            //                     println!("{:?}",manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)));
+            //                 }
+            //             }
+            //         // }
+            //     }
 
                 
-            }
+            // }
 
                 //Update physics objects
                 for object in world.dynamic_objects.iter_mut() {

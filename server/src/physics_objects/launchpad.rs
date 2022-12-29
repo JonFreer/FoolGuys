@@ -2,12 +2,11 @@ use std::{net::SocketAddr, collections::HashMap};
 
 use gltf::Node;
 use nalgebra::{Quaternion, UnitQuaternion, Vector3};
-use rapier3d::prelude::{Collider, ColliderSet, CollisionEvent, RigidBodyBuilder, RigidBodySet, PrismaticJoint};
-use serde_json::Value;
+use rapier3d::prelude::{Collider, ColliderSet, CollisionEvent, RigidBodyBuilder, RigidBodySet};
 
 use crate::{
     animation::{Animations, NodesKeyFrame, PlaybackMode},
-    structs::ObjectUpdate, player::{Player, self},
+    structs::ObjectUpdate, player::Player,
 };
 
 use super::dynamic::DynamicObject;
@@ -29,9 +28,10 @@ impl LaunchPad {
         launch_vec: String
     ) -> Self {
 
+        //Extract vecotr from string
         let mut v = launch_vec.split_at(1).1;
         v = v.split_at(v.len()-1).0;
-        let mut v2 = v.replace(&[ '\\'][..], "");
+        let v2 = v.replace(&[ '\\'][..], "");
         let v3= v2.as_str();
         let v3 =["{",v3, "}"].join("");
 

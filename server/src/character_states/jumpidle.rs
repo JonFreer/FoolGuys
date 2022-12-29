@@ -24,12 +24,13 @@ impl JumpIdleState {
             state.timer += time_step;
             // player.can_jump= false;
             if state.timer > 0.2 && !state.already_jumped {
+                
                 state.already_jumped = true;
                 // player.jump();
-            } else if state.timer > 0.3 && player.on_ground_2 {
+
+            } else if state.timer > 0.3 && player.on_ground {
                 if !(player.client_move_vec.x == 0.0 && player.client_move_vec.y == 0.0) {
                     player.character_state = CharacterState::Walk;
-                    // this.character.setState(new Walk(this.character));
                 } else {
                     player.character_state = CharacterState::Idle(IdleState::new());
                 }
