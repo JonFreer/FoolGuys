@@ -10,12 +10,14 @@ import { Labels } from './Labels'
 import { MobileControls } from './MobileControls';
 import { ChatManager } from './Chat';
 import { Obstacle } from './obstacle';
+import { Character } from './Character';
 export class World {
 
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
+    public players: { [id: string]: Character } = {}
     public obstacles: { [id: string]: Obstacle } = {}
     public player_id: string = '';
     // public controls: OrbitControls;
@@ -27,6 +29,8 @@ export class World {
     public labels: Labels;
     public mobileControls: MobileControls;
     public chatManager: ChatManager;
+    
+    private characterGLTF: any;
 
     constructor(socket: WebSocket) {
         const scope = this;
@@ -37,8 +41,6 @@ export class World {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
-
-
 
         window.addEventListener('resize', onWindowResize, false)
         function onWindowResize() {
@@ -116,8 +118,51 @@ export class World {
     }
 
     public updatePlayer(client_id: string, players: any) {
+        if(!this.players[client_id]){
+
+            let character = new Character(this.characterGLTF,players[client_id]);
+
+            if(character.mesh != undefined){
+                this.graphicsWorld.add(character.gltf);
+                this.players[client_id]= character;
+            }
+        }else{
+            this.players[client_id].name = players[client_id].name.slice(1, -1);
+
+            if (players[client_id].p) {
+                new TWEEN.Tween(this.players[client_id].gltf.position)
+                    .to(
+                        {
+                            x: players[client_id].p.x,
+                            y: players[client_id].p.y-0.5,
+                            z: players[client_id].p.z,
+                        },
+                        0
+                    )
+                    .start()
+            }
+            if (players[client_id].q) {
+                this.players[client_id].gltf.setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.i, players[client_id].q.j, players[client_id].q.k, players[client_id].q.w),)
+            }
+
+            let look_vector = new THREE.Vector3(
+                this.players[client_id].gltf.position.x - players[client_id].dir.x,
+                this.players[client_id].gltf.position.y + players[client_id].dir.y,
+                this.players[client_id].gltf.position.z - players[client_id].dir.z
+            ) 
+
+
+            this.players[client_id].gltf.lookAt(look_vector);
+            this.players[client_id].setState(players[client_id].state)
+        }
+
         if (!this.clientCubes[client_id]) {
-            let labelsDiv = document.querySelector('#labels');
+
+         
+
+            
+
+            // let labelsDiv = document.querySelector('#labels');
             const geometry = new THREE.BoxGeometry();
 
             let col = players[client_id].colour
@@ -131,10 +176,12 @@ export class World {
             this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
-            this.graphicsWorld.add(this.clientCubes[client_id])
+            // this.graphicsWorld.add(this.clientCubes[client_id])
 
 
         } else {
+
+
             this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
             if (players[client_id].p) {
                 new TWEEN.Tween(this.clientCubes[client_id].position)
@@ -211,7 +258,11 @@ export class World {
         TWEEN.update()
 
         for (const [key, value] of Object.entries(this.obstacles)) {
-            value.update(0.01);
+            value.update(0.016);
+        }
+
+        for (const [key, value] of Object.entries(this.players)) {
+            value.update(0.016);
         }
 
         // if (this.clientCubes[this.player_id]) {
@@ -231,6 +282,10 @@ export class World {
 
     public render() {
         this.renderer.render(this.graphicsWorld, this.camera)
+    }
+
+    public loadCharacter(gltf:any){
+        this.characterGLTF = gltf;
     }
 
 

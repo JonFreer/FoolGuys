@@ -23,6 +23,10 @@ loadGLTF("assets/world.glb", (gltf) => {
     // console.log(gltf)
 })
 
+loadGLTF("assets/character.glb", (gltf) => {
+    world.loadCharacter(gltf);
+    // console.log(gltf)
+})
 
 let titleScreen = true;
 let timestamp = 0
@@ -70,7 +74,7 @@ socket.onmessage = function (event) {
         // console.log("a",data.players)
         Object.keys(data.players).forEach((p) => {
             // console.log("b",data.players[p])
-            console.log(data.players[p].dir)
+            // console.log(data.players[p].dir)
             timestamp = Date.now()
             // pingStatsHtml += p + ' ' + (timestamp - data[p].t) + 'ms<br/>'
             world.updatePlayer(p, data.players)
@@ -269,6 +273,8 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void {
             console.error(error);
         });
 }
+
+
 
 function loadScene(gltf: any) {
    
