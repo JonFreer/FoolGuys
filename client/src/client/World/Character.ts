@@ -28,7 +28,7 @@ export class Character {
     }
 
     public setState(state:any){
-        console.log(state["Walk"],state)
+        // console.log(state["Walk"],state)
 
         if( state["Idle"] != undefined && this.state != State.Idle){
             this.state = State.Idle;

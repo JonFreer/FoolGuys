@@ -42,8 +42,13 @@ export class Obstacle {
         return -1
 	}
 
-    public update(timeStep:number){
+    public update(timeStep:number, timestamp:number){
         if (this.mixer !== undefined) this.mixer.update(timeStep);
+        if((this.mesh.material as THREE.ShaderMaterial).uniforms == undefined){
+            return;
+        }
+        (this.mesh.material as THREE.ShaderMaterial).uniforms.u_time.value = timestamp;
+
     }
 
 }

@@ -189,10 +189,10 @@ impl Player {
             );
         }
 
-        println!(
-            "{:?} {:?} {:?}",
-            simulated_velocity, new_velocity, arcade_velocity
-        );
+        // println!(
+        //     "{:?} {:?} {:?}",
+        //     simulated_velocity, new_velocity, arcade_velocity
+        // );
 
 
         if self.on_ground {

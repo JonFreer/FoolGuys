@@ -11,6 +11,8 @@ import { MobileControls } from './MobileControls';
 import { ChatManager } from './Chat';
 import { Obstacle } from './obstacle';
 import { Character } from './Character';
+import { Sea } from './Sea';
+import { Grass } from './Grass';
 export class World {
 
     public renderer: THREE.WebGLRenderer;
@@ -29,7 +31,11 @@ export class World {
     public labels: Labels;
     public mobileControls: MobileControls;
     public chatManager: ChatManager;
-    
+    public sea: Sea;
+    public grass: Grass;
+
+    private global_time :number = 0;
+
     private characterGLTF: any;
 
     constructor(socket: WebSocket) {
@@ -75,6 +81,12 @@ export class World {
 
         // this.controls = new OrbitControls(this.camera, this.renderer.domElement)
         this.sky = new Sky(this);
+
+        this.sea = new Sea(this);
+
+        this.grass = new Grass(this);
+       
+
 
 
         // const floor_geometry = new THREE.BoxGeometry(10, 1, 10);
@@ -256,15 +268,18 @@ export class World {
         // this.controls.update()
         this.sky.update()
         TWEEN.update()
+        this.global_time += 0.016;
 
         for (const [key, value] of Object.entries(this.obstacles)) {
-            value.update(0.016);
+            value.update(0.016,this.global_time);
         }
 
         for (const [key, value] of Object.entries(this.players)) {
             value.update(0.016);
         }
 
+        this.sea.update(this.global_time);
+        this.grass.update(this.global_time, this.cameraOperator.camera.position);
         // if (this.clientCubes[this.player_id]) {
         //     // this.controls.target.set(this.clientCubes[this.player_id].position.x,this.clientCubes[this.player_id].position.y,this.clientCubes[this.player_id].position.z)
         //     // controls.
@@ -288,6 +303,7 @@ export class World {
         this.characterGLTF = gltf;
     }
 
+ 
 
     // public registerUpdatable(registree: IUpdatable): void
     // {
