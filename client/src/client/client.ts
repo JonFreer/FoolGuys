@@ -12,6 +12,7 @@ import { Obstacle } from './World/obstacle'
 import { UniformsLib, UniformsUtils } from 'three'
 import { Asset } from './World/Asset'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { Floor } from './World/Floor'
 // import { GUI } from 'dat.gui'
 // const scene = new THREE.Scene()
 
@@ -436,6 +437,8 @@ function loadScene(gltf: any) {
 
             if(object.name == "land" ){
                 world.grass.updateGrass(object);
+                let floor = new Floor(object);
+                world.graphicsWorld.add(floor.object);
             }
 
             world.obstacles[object.name] = new Obstacle(object);

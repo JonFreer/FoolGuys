@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-
 export class Asset {
 
     public object: THREE.Mesh;
