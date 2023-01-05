@@ -10,12 +10,16 @@ import { win32 } from 'path'
 import * as e from 'express'
 import { Obstacle } from './World/obstacle'
 import { UniformsLib, UniformsUtils } from 'three'
+import { Asset } from './World/Asset'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 // import { GUI } from 'dat.gui'
 // const scene = new THREE.Scene()
 
 
 const gltfLoader = new GLTFLoader()
-
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/libs/draco/'); 
+gltfLoader.setDRACOLoader( dracoLoader );
 
 loadGLTF("assets/world.glb", (gltf) => {
     loadScene(gltf);
@@ -24,6 +28,11 @@ loadGLTF("assets/world.glb", (gltf) => {
 
 loadGLTF("assets/character.glb", (gltf) => {
     world.loadCharacter(gltf);
+    // console.log(gltf)
+})
+loadGLTF("assets/Asset_ChestBig.glb", (gltf) => {
+    let asset = new Asset(gltf);
+    world.graphicsWorld.add(asset.object);
     // console.log(gltf)
 })
 

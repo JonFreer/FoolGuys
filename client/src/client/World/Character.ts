@@ -64,6 +64,11 @@ export class Character {
     public readCharacterData(gltf: any): void
 	{
         console.log("read char data")
+
+        if(gltf == undefined){
+            return;
+        }
+
         gltf.scene.traverse( (object: any) => {
 
             if (object.isMesh && object.name == "Body") {
