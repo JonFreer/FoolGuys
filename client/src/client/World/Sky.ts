@@ -135,7 +135,7 @@ export class Sky extends THREE.Object3D
 
 		this.refreshSunPosition();
 		
-		world.graphicsWorld.add(this);
+		// world.graphicsWorld.add(this);
 		// world.registerUpdatable(this);
 	}
 

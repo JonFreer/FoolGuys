@@ -13,14 +13,21 @@ import { Obstacle } from './obstacle';
 import { Character } from './Character';
 import { Sea } from './Sea';
 import { Grass } from './Grass';
+import { ShaderChunkLoader } from '../shaders/shader_chunks' 
+import { Floor } from './Floor';
+import { ToonSky } from './ToonSky';
+
 export class World {
 
+    // ShaderChunkLoader.load_shader_chunks();
+    
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
     public players: { [id: string]: Character } = {}
     public obstacles: { [id: string]: Obstacle } = {}
+
     public player_id: string = '';
     // public controls: OrbitControls;
     private stats;
@@ -33,12 +40,16 @@ export class World {
     public chatManager: ChatManager;
     public sea: Sea;
     public grass: Grass;
+    public floor: Floor | undefined;
 
     private global_time :number = 0;
 
     private characterGLTF: any;
 
     constructor(socket: WebSocket) {
+
+        ShaderChunkLoader.load_shader_chunks();
+        
         const scope = this;
         this.socket = socket;
         this.renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -81,12 +92,12 @@ export class World {
 
         // this.controls = new OrbitControls(this.camera, this.renderer.domElement)
         this.sky = new Sky(this);
-
+        new ToonSky(this);
         this.sea = new Sea(this);
 
         this.grass = new Grass(this);
        
-
+        
 
 
         // const floor_geometry = new THREE.BoxGeometry(10, 1, 10);
@@ -280,6 +291,10 @@ export class World {
 
         this.sea.update(this.global_time);
         this.grass.update(this.global_time, this.cameraOperator.camera.position);
+
+        if(this.floor != undefined){
+            this.floor.update(this.global_time);
+        }
         // if (this.clientCubes[this.player_id]) {
         //     // this.controls.target.set(this.clientCubes[this.player_id].position.x,this.clientCubes[this.player_id].position.y,this.clientCubes[this.player_id].position.z)
         //     // controls.

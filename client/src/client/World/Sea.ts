@@ -27,10 +27,17 @@ export class Sea{
         })
 
         const waterVertexShader = /* glsl */`
+                #include <common>
+                #include <world_pos_pars>
+
                 uniform float u_time;
                 varying vec2 v_uv;  
+                
                 void main() {
                  v_uv = uv;
+                 
+                 #include <begin_vertex>
+                 #include <world_pos>
                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x,position.y,position.z+cos(u_time)/10.0, 1.0);
                 }
         `
@@ -42,10 +49,13 @@ export class Sea{
             uniform float ss_lower_specks;
             uniform sampler2D noise_texture;
             varying vec2 v_uv;
+            #include <world_pos_pars>
             void main() {
+                    float scale = 100.0;
+                    vec2 uv = vWorldPos.xz / scale;
 
-                    vec2 v_uv_time =  vec2(v_uv.x+ u_time/500.0,v_uv.y+ u_time/500.0);
-                    vec2 v_uv_time_2 =  vec2(v_uv.x - u_time/500.0,v_uv.y - u_time/2000.0);
+                    vec2 v_uv_time =  vec2(uv.x + u_time/500.0,uv.y+ u_time/500.0);
+                    vec2 v_uv_time_2 =  vec2(uv.x - u_time/500.0,uv.y - u_time/2000.0);
                     float noise_val_ring = (texture2D(noise_texture, v_uv_time)*texture2D(noise_texture, v_uv_time_2)/2.0).x;
 
                     if(noise_val_ring > ss_lower_rings && noise_val_ring < ss_upper_rings){
@@ -77,9 +87,9 @@ export class Sea{
                         gl_FragColor = vec4(1.0,1.0,1.0, 1.0).rgba;
                     }else{
                         if(noise_val_ring>0.1){
-                            gl_FragColor = vec4(0.5,0.85,1.0, 0.8).rgba;
+                            gl_FragColor = vec4(0.5,0.85,1.0, 0.6).rgba;
                         }else{
-                            gl_FragColor = vec4(0.33333,0.7882,1.0, 0.8).rgba;
+                            gl_FragColor = vec4(0.33333,0.7882,1.0, 0.6).rgba;
                         }
                         
                     }
@@ -107,7 +117,7 @@ export class Sea{
             
         });
 
-		const geometry = new THREE.PlaneGeometry( 200, 200 );
+		const geometry = new THREE.PlaneGeometry( 1000, 1000 );
         geometry.rotateX
         // const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
         const plane = new THREE.Mesh( geometry, material );

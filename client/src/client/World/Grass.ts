@@ -1,9 +1,6 @@
 import * as THREE from 'three';
 import { UniformsLib, UniformsUtils } from 'three';
 import { World } from './World';
-import { GUI } from 'dat.gui'
-import { count } from 'console';
-// import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler';
 import {MeshSurfaceSampler} from 'three/examples/jsm/math/MeshSurfaceSampler';
 export class Grass{
 

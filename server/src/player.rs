@@ -9,7 +9,7 @@ use rapier3d::control::{CharacterLength, KinematicCharacterController};
 
 use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}};
 use rand::Rng;
-use serde_json::Value;
+use serde_json::{Value, Error};
 // use websocket::OwnedMessage;
 
 use rapier3d::prelude::*;
@@ -310,9 +310,9 @@ impl Player {
             if let Ok(message) = c.rx.try_next() {
                 let m = message.unwrap();
                 // println!("{}", m.to_string());
-
-                let v: Value = serde_json::from_str(&m.to_string()).unwrap();
-
+                
+                let msg_content:Result<Value,Error> = serde_json::from_str(&m.to_string()); //.unwrap();
+                if let Ok(v) = msg_content{
                 // println!("{} {}", msg, v[0]);
 
                 if v[0] == "name" {
@@ -379,6 +379,9 @@ impl Player {
                 if v[0] == "update_jump" {
                     self.to_jump = true;
                 }
+            }else{
+                println!("Erorr unwrapping message");
+            }
 
                 // p.tx.unbounded_send(m);
             } else {

@@ -437,11 +437,14 @@ function loadScene(gltf: any) {
 
             if(object.name == "land" ){
                 world.grass.updateGrass(object);
-                let floor = new Floor(object);
-                world.graphicsWorld.add(floor.object);
+                world.floor = new Floor(object);
+                world.graphicsWorld.add(world.floor.object);
+            }else{
+                world.obstacles[object.name] = new Obstacle(object);
             }
 
-            world.obstacles[object.name] = new Obstacle(object);
+           
+
 
             // object.material = floor_material
         }
