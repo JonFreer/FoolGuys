@@ -16,11 +16,14 @@ import { Grass } from './Grass';
 import { ShaderChunkLoader } from '../shaders/shader_chunks' 
 import { Floor } from './Floor';
 import { ToonSky } from './ToonSky';
+import { AssetLoader } from './AssetLoader';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export class World {
 
     // ShaderChunkLoader.load_shader_chunks();
     
+    public assets: AssetLoader = new AssetLoader();
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
@@ -46,10 +49,12 @@ export class World {
 
     private characterGLTF: any;
 
-    constructor(socket: WebSocket) {
+    constructor(socket: WebSocket,path:string) {
 
         ShaderChunkLoader.load_shader_chunks();
-        
+        this.loadWorld(path);
+
+
         const scope = this;
         this.socket = socket;
         this.renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -138,6 +143,34 @@ export class World {
         // scene.add(gridHelper)
 
         // this.graphicsWorld.position.z = 0
+    }
+
+    public loadWorld(path: string){
+
+        let assets_to_load = [];
+
+        this.assets.loadGLTF(path, (gltf:GLTF) => {
+            gltf.scene.traverse( (object:any) => {
+                if (object.isMesh) {
+                    if(object.name.includes("land") ){
+                        console.log("landdddddd")
+                        this.grass.updateGrass(object);
+                        this.floor = new Floor(object);
+                        this.graphicsWorld.add(this.floor.object);
+                    }else{
+                        // this.obstacles[object.name] = new Obstacle(object);
+                    }
+                }
+                if(object.type == "Object3D"){
+                    // let asset_name = object.userData.asset
+                    this.assets.add(object.userData.asset,gltf,this);
+                    // console.log(asset_name)
+                }
+                    console.log("object",object)
+            });
+            
+        })
+    
     }
 
     public updatePlayer(client_id: string, players: any) {

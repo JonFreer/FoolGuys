@@ -1,22 +1,21 @@
 import * as THREE from "three";
+import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 export class Asset {
 
-    public object: THREE.Mesh;
+    public object: THREE.Mesh ;
 
-    constructor(gltf:any){
-        
-        const noise_perlin = new THREE.TextureLoader().load( "assets/Assets_Gradients.png");
-
-        this.object = gltf;
+    constructor(gltf:GLTF){
+        this.object = new THREE.Mesh();
+        const noise_perlin = new THREE.TextureLoader().load( "assets/Assets_Gradients_Small.png");
+        noise_perlin.flipY = false
+        // this.object = gltf;
         gltf.scene.traverse( (object: any) => {
             console.log(object)
-            if(object.name == "Mesh"){
-                this.object = object;
-                // console.log("MATERIAL",object.material);
-                // (this.object.material as THREE.MeshBasicMaterial).map= noise_perlin;
+            if(object.name.includes("Mesh")){
+                this.object = object.clone();
                 const material = new THREE.MeshBasicMaterial( { map: noise_perlin } );
-                this.object.translateY(10);
+                
                 this.object.material = material;
                 
             }

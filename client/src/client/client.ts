@@ -22,10 +22,6 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/libs/draco/'); 
 gltfLoader.setDRACOLoader( dracoLoader );
 
-loadGLTF("assets/world.glb", (gltf) => {
-    loadScene(gltf);
-    // console.log(gltf)
-})
 
 loadGLTF("assets/character.glb", (gltf) => {
     world.loadCharacter(gltf);
@@ -52,7 +48,7 @@ if (hostname != 'localhost') {
     socket = new WebSocket("ws://" + hostname + ":2865");
 }
 
-const world = new World(socket)
+const world = new World(socket,"assets/world.glb")
 // let time= Date.now()
 socket.onmessage = function (event) {
     // console.log(event.data)
@@ -135,61 +131,6 @@ socket.onmessage = function (event) {
 
 
 }
-
-// socket.on('connect', function () {
-//     console.log('connect')
-// })
-// socket.on('disconnect', function (message: any) {
-//     console.log('disconnect ' + message)
-// })
-// socket.on('joined', (id: any, name: string) => {
-//     world.player_id = id
-
-// })
-
-// socket.on("removePlayer", (id: string) => {
-//     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
-// })
-// socket.on('players', (data: any) => {
-//     // console.log(data)
-//     let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
-//     Object.keys(data.players).forEach((p) => {
-//         timestamp = Date.now()
-//         pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
-//         world.updatePlayer(p, data.players)
-
-//     });
-
-//     Object.keys(data.rollers).forEach((r) => {
-//         world.updateObstacle(r, data.rollers);
-//     });
-
-
-//     (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
-// })
-// socket.on('removeClient', (id: string) => {
-//     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(id) as THREE.Object3D)
-// })
-
-// socket.on('chat',(msg:any)=>{
-//     world.chatManager.newMessage(msg.name,msg.message)
-// })
-
-
-// const gui = new GUI()
-// const cubeFolder = gui.addFolder('Cube')
-// const cubePositionFolder = cubeFolder.addFolder('Position')
-// cubePositionFolder.add(myObject3D.position, 'x', -5, 5)
-// cubePositionFolder.add(myObject3D.position, 'z', -5, 5)
-// cubePositionFolder.open()
-// const cubeRotationFolder = cubeFolder.addFolder('Rotation')
-// cubeRotationFolder.add(myObject3D.rotation, 'x', 0, Math.PI * 2, 0.01)
-// cubeRotationFolder.add(myObject3D.rotation, 'y', 0, Math.PI * 2, 0.01)
-// cubeRotationFolder.add(myObject3D.rotation, 'z', 0, Math.PI * 2, 0.01)
-// cubeRotationFolder.open()
-// cubeFolder.open()
-
-
 
 document.addEventListener('keydown', onDocumentKey, false)
 document.addEventListener('keyup', onDocumentKey, false)
@@ -285,196 +226,196 @@ function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void {
 
 
 
-function loadScene(gltf: any) {
+// function loadScene(gltf: any) {
 
-    const vShader = /* glsl */`
-    #include <common>
-    #include <fog_pars_vertex>
-    #include <shadowmap_pars_vertex>
+//     const vShader = /* glsl */`
+//     #include <common>
+//     #include <fog_pars_vertex>
+//     #include <shadowmap_pars_vertex>
 
-    varying vec2 v_uv;  
-    varying vec4 world_pos;  
-    void main() {
-     v_uv = uv;
-     world_pos =   vec4(position,1.0);
-    //  gl_Position = projectionMatrix * modelViewMatrix *    vec4(position, 1.0);
+//     varying vec2 v_uv;  
+//     varying vec4 world_pos;  
+//     void main() {
+//      v_uv = uv;
+//      world_pos =   vec4(position,1.0);
+//     //  gl_Position = projectionMatrix * modelViewMatrix *    vec4(position, 1.0);
 
-    #include <beginnormal_vertex>
-	#include <morphnormal_vertex>
-	#include <skinbase_vertex>
-	#include <skinnormal_vertex>
-	#include <defaultnormal_vertex>
-	#include <begin_vertex>
-	#include <morphtarget_vertex>
-	#include <skinning_vertex>
-	#include <project_vertex>
-	#include <worldpos_vertex>
-	#include <shadowmap_vertex>
-	#include <fog_vertex>
-}`
+//     #include <beginnormal_vertex>
+// 	#include <morphnormal_vertex>
+// 	#include <skinbase_vertex>
+// 	#include <skinnormal_vertex>
+// 	#include <defaultnormal_vertex>
+// 	#include <begin_vertex>
+// 	#include <morphtarget_vertex>
+// 	#include <skinning_vertex>
+// 	#include <project_vertex>
+// 	#include <worldpos_vertex>
+// 	#include <shadowmap_vertex>
+// 	#include <fog_vertex>
+// }`
 
-    const fShader = /* glsl */ `
+//     const fShader = /* glsl */ `
 
     
-        #include <common>
-        #include <packing>
-        #include <fog_pars_fragment>
-        #include <bsdfs>
-        #include <lights_pars_begin>
-        #include <shadowmap_pars_fragment>
-        #include <shadowmask_pars_fragment>
-        #include <dithering_pars_fragment>
+//         #include <common>
+//         #include <packing>
+//         #include <fog_pars_fragment>
+//         #include <bsdfs>
+//         #include <lights_pars_begin>
+//         #include <shadowmap_pars_fragment>
+//         #include <shadowmask_pars_fragment>
+//         #include <dithering_pars_fragment>
 
-        varying vec2 v_uv;
-        varying vec4 world_pos;  
-        uniform vec2 u_mouse;
-        uniform vec2 u_resolution;
-        uniform vec3 pos;
-        uniform sampler2D t;
-        uniform float u_time;
+//         varying vec2 v_uv;
+//         varying vec4 world_pos;  
+//         uniform vec2 u_mouse;
+//         uniform vec2 u_resolution;
+//         uniform vec3 pos;
+//         uniform sampler2D t;
+//         uniform float u_time;
 
-        void main() {
+//         void main() {
 
-            vec4 helmet = texture2D(t, v_uv);
-            vec3 shadowColor = vec3(0, 0, 0);
-            float shadowPower = 0.5;
+//             vec4 helmet = texture2D(t, v_uv);
+//             vec3 shadowColor = vec3(0, 0, 0);
+//             float shadowPower = 0.5;
 
-            // vec3 coord = vec3(gl_FragCoord.z / gl_FragCoord.w,gl_FragCoord.z / gl_FragCoord.w,gl_FragCoord.z / gl_FragCoord.w);
-            // float f = 8.0f;
+//             // vec3 coord = vec3(gl_FragCoord.z / gl_FragCoord.w,gl_FragCoord.z / gl_FragCoord.w,gl_FragCoord.z / gl_FragCoord.w);
+//             // float f = 8.0f;
 
-            vec3 col = vec3(helmet.x,helmet.y,helmet.z);
+//             vec3 col = vec3(helmet.x,helmet.y,helmet.z);
 
-            float wave_height =  cos(u_time)/10.0;
-            float max_wave_height = 1.0/10.0;
+//             float wave_height =  cos(u_time)/10.0;
+//             float max_wave_height = 1.0/10.0;
 
-            float position = pos.y + world_pos.y;
-            float sin_val =  -sin(u_time);
+//             float position = pos.y + world_pos.y;
+//             float sin_val =  -sin(u_time);
 
-            vec4 target_col = vec4( mix(col, shadowColor, (1.0 - getShadowMask() ) * shadowPower), 1.0);
-            if(position > max_wave_height + 0.1){ //above the wake
-                gl_FragColor = target_col;
-            }
-            else if (position < wave_height +0.1 && position > wave_height ){ //the wake
+//             vec4 target_col = vec4( mix(col, shadowColor, (1.0 - getShadowMask() ) * shadowPower), 1.0);
+//             if(position > max_wave_height + 0.1){ //above the wake
+//                 gl_FragColor = target_col;
+//             }
+//             else if (position < wave_height +0.1 && position > wave_height ){ //the wake
     
-                gl_FragColor = vec4(1.0,1,1, 1.0).rgba;
+//                 gl_FragColor = vec4(1.0,1,1, 1.0).rgba;
             
-        }else if(position>wave_height+0.1){
-            // if(sin_val>0.0f){
-            //     gl_FragColor = mix(target_col, vec4(0.0,0.0,0.0,1.0), cos(u_time)/14.0);
-            // }else{
-            //     gl_FragColor = target_col;
-            // }
+//         }else if(position>wave_height+0.1){
+//             // if(sin_val>0.0f){
+//             //     gl_FragColor = mix(target_col, vec4(0.0,0.0,0.0,1.0), cos(u_time)/14.0);
+//             // }else{
+//             //     gl_FragColor = target_col;
+//             // }
 
-            if(sin_val <0.0f){
-                float factor = min(max(1.0-((wave_height+max_wave_height)*3.0-position),0.0),1.0);
-                gl_FragColor = mix(vec4(0.0,0.0,0.0,1.0), target_col, factor);
-                // gl_FragColor = vec4(1.0-((wave_height+max_wave_height)*10.0-position),0.0,0.0,1.0);
-            }else{
-                float factor = min(max(1.0-((0.0)*3.0-position),0.0),1.0);
-                gl_FragColor = mix(vec4(0.0,0.0,0.0,1.0), target_col, factor);
-                // gl_FragColor = target_col;
-            }
+//             if(sin_val <0.0f){
+//                 float factor = min(max(1.0-((wave_height+max_wave_height)*3.0-position),0.0),1.0);
+//                 gl_FragColor = mix(vec4(0.0,0.0,0.0,1.0), target_col, factor);
+//                 // gl_FragColor = vec4(1.0-((wave_height+max_wave_height)*10.0-position),0.0,0.0,1.0);
+//             }else{
+//                 float factor = min(max(1.0-((0.0)*3.0-position),0.0),1.0);
+//                 gl_FragColor = mix(vec4(0.0,0.0,0.0,1.0), target_col, factor);
+//                 // gl_FragColor = target_col;
+//             }
             
-        }
-            else{ //below the sea
-                gl_FragColor = vec4( mix(col, shadowColor, (1.0 - getShadowMask() ) * shadowPower), 1.0);
+//         }
+//             else{ //below the sea
+//                 gl_FragColor = vec4( mix(col, shadowColor, (1.0 - getShadowMask() ) * shadowPower), 1.0);
 
-                gl_FragColor = mix(gl_FragColor, vec4(0.33333,0.7882, 1.0, 0.8), -(position)/3.0);
-            }
+//                 gl_FragColor = mix(gl_FragColor, vec4(0.33333,0.7882, 1.0, 0.8), -(position)/3.0);
+//             }
            
-            #include <fog_fragment>
-            #include <dithering_fragment>
+//             #include <fog_fragment>
+//             #include <dithering_fragment>
 
-        }
-        `
+//         }
+//         `
 
     
 
-    const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-    gltf.scene.traverse(function (object: any) {
+//     const floor_material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+//     gltf.scene.traverse(function (object: any) {
 
-        // console.log(object.ma)
+//         // console.log(object.ma)
 
 
-        if (object.isMesh) {
+//         if (object.isMesh) {
 
-            if (object.material.map != null) {
-                const uniforms =  UniformsUtils.merge([{
-                    pos: { value: object.position },
-                    t: { value: object.material.map },
-                    u_time:{value:0.0}
-                },
-                UniformsLib.lights,
+//             if (object.material.map != null) {
+//                 const uniforms =  UniformsUtils.merge([{
+//                     pos: { value: object.position },
+//                     t: { value: object.material.map },
+//                     u_time:{value:0.0}
+//                 },
+//                 UniformsLib.lights,
             
-            ]);
+//             ]);
 
-                const material = new THREE.ShaderMaterial({
-                    vertexShader: vShader,
-                    fragmentShader: fShader,
-                    uniforms,
-                    lights: true
-                });
+//                 const material = new THREE.ShaderMaterial({
+//                     vertexShader: vShader,
+//                     fragmentShader: fShader,
+//                     uniforms,
+//                     lights: true
+//                 });
 
-                // object.geometry.computeVertexNormals(true)
-                object.material.side = THREE.FrontSide;
-                console.log(object.material.map)
+//                 // object.geometry.computeVertexNormals(true)
+//                 object.material.side = THREE.FrontSide;
+//                 console.log(object.material.map)
 
-                object.material = material;
-            }
+//                 object.material = material;
+//             }
 
 
-            // if(object.name == "sea"){
+//             // if(object.name == "sea"){
          
 
-            //     object.material = material;
+//             //     object.material = material;
 
-            // }
+//             // }
 
-            console.log(object.material);
-            object.geometry.computeVertexNormals(true)
-            object.castShadow = true;
-            object.receiveShadow = true;
+//             console.log(object.material);
+//             object.geometry.computeVertexNormals(true)
+//             object.castShadow = true;
+//             object.receiveShadow = true;
 
-            if(object.name == "land" ){
-                world.grass.updateGrass(object);
-                world.floor = new Floor(object);
-                world.graphicsWorld.add(world.floor.object);
-            }else{
-                world.obstacles[object.name] = new Obstacle(object);
-            }
+//             if(object.name == "land" ){
+//                 world.grass.updateGrass(object);
+//                 world.floor = new Floor(object);
+//                 world.graphicsWorld.add(world.floor.object);
+//             }else{
+//                 world.obstacles[object.name] = new Obstacle(object);
+//             }
 
            
 
 
-            // object.material = floor_material
-        }
-        // if (object.userData.hasOwnProperty('spin')) {
+//             // object.material = floor_material
+//         }
+//         // if (object.userData.hasOwnProperty('spin')) {
 
-        //     world.obstacles[object.name] = new Obstacle(object);
-        // }else if (object.userData.hasOwnProperty('pivot')) {
-        //     world.obstacles[object.name] = new Obstacle(object);
-        // }
-
-
-    });
+//         //     world.obstacles[object.name] = new Obstacle(object);
+//         // }else if (object.userData.hasOwnProperty('pivot')) {
+//         //     world.obstacles[object.name] = new Obstacle(object);
+//         // }
 
 
-    world.graphicsWorld.add(gltf.scene);
+//     });
 
-    for (let i = 0; i < gltf.animations.length; i++) {
-        let animation = gltf.animations[i];
-        let name = animation.name.slice(0, -6);
-        console.log(animation, name);
-        // world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
-        // console.log(world.obstacles[name].setAnimation(animation.name,0));
 
-    }
-    // gltf.animation
-    // for ){
+//     world.graphicsWorld.add(gltf.scene);
 
-    // }
-    // gltf.animation.traverse(function(animation:any){
-    //     console.log(animation);
-    // })
+//     for (let i = 0; i < gltf.animations.length; i++) {
+//         let animation = gltf.animations[i];
+//         let name = animation.name.slice(0, -6);
+//         console.log(animation, name);
+//         // world.obstacles[name].setAnimations(gltf.animations,gltf.scene);
+//         // console.log(world.obstacles[name].setAnimation(animation.name,0));
 
-}
+//     }
+//     // gltf.animation
+//     // for ){
+
+//     // }
+//     // gltf.animation.traverse(function(animation:any){
+//     //     console.log(animation);
+//     // })
+
+// }

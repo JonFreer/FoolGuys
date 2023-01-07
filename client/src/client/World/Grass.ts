@@ -149,6 +149,7 @@ export class Grass{
     }
 
     updateGrass(land_mesh:THREE.Mesh){
+        console.log("updating grass")
         const sampler = new MeshSurfaceSampler( land_mesh )
         .setWeightAttribute( 'color' )
         .build();
@@ -173,6 +174,7 @@ export class Grass{
              this.object.setMatrixAt( i, this.dummy.matrix );
         }
         this.object.instanceMatrix.needsUpdate = true;
+        console.log("updated")
     }
    
 

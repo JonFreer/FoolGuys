@@ -102,7 +102,8 @@ async fn main() -> Result<(), IoError> {
     let ip;
     if cfg!(debug_assertions) {
         println!("Running debug server");
-        path = "../client/dist/client/assets/world.glb";
+        // path = "../client/dist/client/assets/world.glb";
+        path = "../Blender/collision.glb";
         ip = "127.0.0.1:2865";
     } else {
         println!("Running Prod Server");
@@ -174,6 +175,7 @@ async fn main() -> Result<(), IoError> {
                         players.len(),
                         &mut world.rigid_body_set,
                         &mut world.collider_set,
+                        &world.spawn_points
                     );
 
                     value
@@ -226,7 +228,8 @@ async fn main() -> Result<(), IoError> {
                     &mut world.rigid_body_set,
                     &mut world.collider_set,
                     integration_parameters,
-                    &query_pipline
+                    &query_pipline,
+                    &world.spawn_points
                 );
             }
 

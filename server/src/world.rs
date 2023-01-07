@@ -1,4 +1,7 @@
+use std::thread::spawn;
+
 use gltf::{Node, Document};
+use nalgebra::{Vector2, Vector3};
 use rapier3d::prelude::{ColliderSet, RigidBodySet};
 use serde_json::Value;
 
@@ -12,6 +15,7 @@ pub struct World {
     pub rigid_body_set: RigidBodySet,
     pub collider_set: ColliderSet,
     pub dynamic_objects: Vec<Objects>,
+    pub spawn_points: Vec<Vector3<f32>>
 }
 
 impl World {
@@ -33,8 +37,28 @@ impl World {
             rigid_body_set,
             collider_set,
             dynamic_objects,
+            spawn_points: load_spawn_points(&gltf)
         }
     }
+}
+
+pub fn load_spawn_points(gltf:&Document) -> Vec<Vector3<f32>>{
+    let mut spawn_points = Vec::new();
+    for scene in gltf.scenes() {
+        for node in scene.nodes() {
+            if let Some(extras) = node.extras() {
+                println!("{:?}",extras.get());
+                let extras: gltf::json::Value = gltf::json::deserialize::from_str(extras.get()).unwrap();
+                if extras["spawn_point"] != Value::Null {
+                    println!("{:?}",node);
+                    let translation = node.transform().decomposed().0;
+                    // println!("{:?}",transform);
+                    spawn_points.push(Vector3::new(translation[0],translation[1],translation[2]));
+                }
+            }
+        }
+    }
+    spawn_points
 }
 
 pub fn create_object(

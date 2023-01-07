@@ -42,15 +42,18 @@ impl Player {
         num_players: usize,
         rigid_body_set: &mut RigidBodySet,
         collider_set: &mut ColliderSet,
+        spawn_points: &Vec<Vector3<f32>>
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
 
         /* Create the bounding ball. */
-        let rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![0.0, 10.0, 0.0])
+        let mut rigid_body = RigidBodyBuilder::dynamic()
+            // .translation(vector![0.0, 30.0, 0.0])
             .ccd_enabled(true)
             .lock_rotations()
             .build();
+
+        Player::respawn(spawn_points, &mut rigid_body);
         // let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5)
         //     .active_events(ActiveEvents::COLLISION_EVENTS)
         //     .restitution(0.7)
@@ -114,12 +117,20 @@ impl Player {
         Vector3::new(a.x * b.z + a.z * b.x, b.y, a.z * b.z + -a.x * b.x)
     }
 
+    pub fn respawn(spawn_points: &Vec<Vector3<f32>> , rigid_body :&mut RigidBody){
+        rigid_body.set_translation(spawn_points[0], true);
+        rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
+        rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
+    }
+
+
     pub fn update_physics(
         &mut self,
         rigid_body_set: &mut RigidBodySet,
         collider_set: &mut ColliderSet,
         integration_parameters: IntegrationParameters,
         query_pipeline: &QueryPipeline,
+        spawn_points: &Vec<Vector3<f32>>
     ) {
         self.just_jumped = false;
 
@@ -235,7 +246,7 @@ impl Player {
     
 
         if self.to_jump && self.can_jump {
-            rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 10.0, 0.0), true);
+            rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 7.0, 0.0), true);
             self.can_jump = false;
             self.just_jumped = true;
             
@@ -244,13 +255,14 @@ impl Player {
         self.to_jump = false;
 
         if rigid_body.translation().y < (-10.0) {
-            let mut rng = rand::thread_rng();
-            rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
-            rigid_body.set_translation(
-                Vector3::new(rng.gen_range(-5.0..5.0), 6.0, rng.gen_range(-5.0..5.0)),
-                true,
-            );
-            rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
+            // let mut rng = rand::thread_rng();
+            // rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
+            // rigid_body.set_translation(
+            //     Vector3::new(rng.gen_range(-5.0..5.0), 6.0, rng.gen_range(-5.0..5.0)),
+            //     true,
+            // );
+            // rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
+            Player::respawn(spawn_points,rigid_body);
         }
 
         self.look_at = self.look_at.lerp(&self.target_look_at, 0.05);
@@ -304,6 +316,7 @@ impl Player {
         }
 
     }
+
 
     pub fn read_messages(&mut self, c: &mut Client) {
         loop {
