@@ -107,7 +107,7 @@ async fn main() -> Result<(), IoError> {
         ip = "127.0.0.1:2865";
     } else {
         println!("Running Prod Server");
-        path = "/assets/world.glb";
+        path = "/assets/collision.glb";
         ip = "0.0.0.0:2865"
     }
 

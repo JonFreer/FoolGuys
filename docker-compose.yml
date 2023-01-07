@@ -43,7 +43,8 @@ services:
     build: ./server
     command: ./target/release/server
     volumes:
-      - ./client/dist/client/assets:/assets/
+    - ./Blender:/assets/
+      # - ./client/dist/client/assets:/assets/
       # - /app/node_modules
     ports:
       - "2865:2865"    
