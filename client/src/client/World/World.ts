@@ -176,39 +176,26 @@ export class World {
     public updatePlayer(client_id: string, players: any) {
         if(!this.players[client_id]){
 
-            let character = new Character(this.characterGLTF,players[client_id]);
+            let character = new Character(players[client_id],this.assets,this);
 
-            if(character.mesh != undefined){
-                this.graphicsWorld.add(character.gltf);
+            // if(character.mesh != undefined){
+                // this.graphicsWorld.add(character.gltf);
                 this.players[client_id]= character;
-            }
+            // }
+
         }else{
             this.players[client_id].name = players[client_id].name.slice(1, -1);
 
             if (players[client_id].p) {
-                new TWEEN.Tween(this.players[client_id].gltf.position)
-                    .to(
-                        {
-                            x: players[client_id].p.x,
-                            y: players[client_id].p.y-0.5,
-                            z: players[client_id].p.z,
-                        },
-                        0
-                    )
-                    .start()
+                this.players[client_id].setPosition(players[client_id].p)
             }
             if (players[client_id].q) {
-                this.players[client_id].gltf.setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.i, players[client_id].q.j, players[client_id].q.k, players[client_id].q.w),)
+                this.players[client_id].setRotation(players[client_id].q)
             }
 
-            let look_vector = new THREE.Vector3(
-                this.players[client_id].gltf.position.x - players[client_id].dir.x,
-                this.players[client_id].gltf.position.y + players[client_id].dir.y,
-                this.players[client_id].gltf.position.z - players[client_id].dir.z
-            ) 
-
-
-            this.players[client_id].gltf.lookAt(look_vector);
+            this.players[client_id].setLookVector(players[client_id].dir)
+       
+           
             this.players[client_id].setState(players[client_id].state)
         }
 
