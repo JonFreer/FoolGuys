@@ -61,6 +61,8 @@ export class World {
         this.renderer.shadowMap.enabled = true;
         // renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+  
+
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
 
@@ -147,7 +149,7 @@ export class World {
 
     public loadWorld(path: string){
 
-        let assets_to_load = [];
+
 
         this.assets.loadGLTF(path, (gltf:GLTF) => {
             gltf.scene.traverse( (object:any) => {

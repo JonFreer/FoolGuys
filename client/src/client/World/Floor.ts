@@ -205,6 +205,8 @@ export class Floor {
 
         gltf.material = material;
         this.object = gltf;
+        this.object.receiveShadow = true;
+        this.object.castShadow = true;
 
     }
 

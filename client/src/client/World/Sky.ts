@@ -70,7 +70,7 @@ export class Sky extends THREE.Object3D
 		this.world.graphicsWorld.add( this.hemiLight );
 
 		const light = new THREE.DirectionalLight( 0xffffff, 1 );
-		light.position.set( 10, 10, 10 ); //default; light shining from top
+		light.position.set( 100, 100, 100 ); //default; light shining from top
 		light.castShadow = true; // default false
 		this.world.graphicsWorld.add( light );
 
@@ -78,12 +78,15 @@ export class Sky extends THREE.Object3D
 		light.shadow.mapSize.width = 4096; // default
 		light.shadow.mapSize.height = 4096; // default
 		light.shadow.camera.near = 0.05; // default
-		light.shadow.camera.far = 100; // default
+		light.shadow.camera.far = 400; // default
 		// light.shadow.camera.visible = true;
-		light.shadow.camera.bottom=50
-		light.shadow.camera.left=50
-		light.shadow.camera.right=-50
-		light.shadow.camera.top = -50
+		light.shadow.camera.bottom=100
+		light.shadow.camera.left=100
+		light.shadow.camera.right=-100
+		light.shadow.camera.top = -100
+
+		
+		// light.shadow.camera.
 		// light.shadow.camera
 		// light.shadow.bias= -0.0005
 

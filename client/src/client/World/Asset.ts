@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { TextureLoader } from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 export class Asset {
@@ -14,7 +15,10 @@ export class Asset {
             console.log(object)
             if(object.name.includes("Mesh")){
                 this.object = object.clone();
-                const material = new THREE.MeshBasicMaterial( { map: noise_perlin } );
+                this.object.castShadow = true;
+                this.object.receiveShadow = true;
+                this.object.geometry.computeVertexNormals()
+                const material = new THREE.MeshLambertMaterial( { map: noise_perlin } );
                 
                 this.object.material = material;
                 
