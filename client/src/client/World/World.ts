@@ -18,6 +18,7 @@ import { Floor } from './Floor';
 import { ToonSky } from './ToonSky';
 import { AssetLoader } from './AssetLoader';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Asset } from './Asset';
 
 export class World {
 
@@ -29,7 +30,7 @@ export class World {
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
     public players: { [id: string]: Character } = {}
-    public obstacles: { [id: string]: Obstacle } = {}
+    public obstacles: { [id: string]: Asset } = {}
 
     public player_id: string = '';
     // public controls: OrbitControls;
@@ -44,6 +45,7 @@ export class World {
     public sea: Sea;
     public grass: Grass;
     public floor: Floor | undefined;
+    public updatables : Asset[] = [];
 
     private global_time :number = 0;
 
@@ -83,7 +85,7 @@ export class World {
         this.chatManager = new ChatManager(this.socket);
 
         this.stats = Stats()
-        // document.body.appendChild(this.stats.dom)
+        document.body.appendChild(this.stats.dom)
 
         this.graphicsWorld = new THREE.Scene();
 
@@ -270,10 +272,21 @@ export class World {
         }
     }
 
+    public removePlayer(id:string){
+        if(this.players[id].gltf_scene != undefined){
+            this.graphicsWorld.remove(this.players[id].gltf_scene as THREE.Group);
+        }
+
+        delete this.players[id];
+        
+    }
+
     public updateObstacle(id: string, obstacles: any) {
+        // return
+        // console.log(obstacles)
         if (this.obstacles[id] != undefined) {
 
-            new TWEEN.Tween(this.obstacles[id].mesh.position)
+            new TWEEN.Tween(this.obstacles[id].object.position)
                 .to(
                     {
                         x: obstacles[id].p.x,
@@ -285,9 +298,18 @@ export class World {
                 .start()
             // this.obstacles[id].set
             // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
-            this.obstacles[id].mesh.setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
+            this.obstacles[id].object.setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
         } else {
-            console.log("Cannot find obstacle", id)
+            
+            let obstacle = obstacles[id];
+            
+            let name = obstacle["asset_name"].replaceAll('"','');
+            // console.log(obstacle,name)
+            if(this.assets.assets[name] != undefined){
+                let asset = new Asset(this.assets.assets[name],this);
+                this.obstacles[id]=asset;
+                console.log("Loaded dynamic Object", id)
+            }
         }
     }
 
@@ -304,7 +326,7 @@ export class World {
         this.global_time += 0.016;
 
         for (const [key, value] of Object.entries(this.obstacles)) {
-            value.update(0.016,this.global_time);
+            value.update(0.016);//,this.global_time);
         }
 
         for (const [key, value] of Object.entries(this.players)) {
@@ -316,6 +338,10 @@ export class World {
 
         if(this.floor != undefined){
             this.floor.update(this.global_time);
+        }
+
+        for (let i = 0; i< this.updatables.length; i++){
+            this.updatables[i].update(this.global_time);
         }
         // if (this.clientCubes[this.player_id]) {
         //     // this.controls.target.set(this.clientCubes[this.player_id].position.x,this.clientCubes[this.player_id].position.y,this.clientCubes[this.player_id].position.z)

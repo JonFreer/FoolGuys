@@ -104,6 +104,7 @@ export class Floor {
         uniform vec3 playerPos;
 
         void main() {
+            // #include <depth_dither>
             vec4 diffuseColor =  vec4(1.0,1.0,0.0, 1.);// vec4(diffuse, 1.);
             // vec4 diffuse = vec4(1.0,0.0,0.0,0.0);
             vec4 splatting = texture2D(splat_map, vUv);

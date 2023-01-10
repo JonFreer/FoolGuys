@@ -1,82 +1,50 @@
-use nalgebra::{Quaternion, Unit};
-use rapier3d::prelude::*;
+use super::rigid_body_parent::RigidBodyData;
 
-use crate::structs::{ObjectUpdate, Quat, Vec3};
+use gltf::{Node, json::asset};
+use nalgebra::{Quaternion, UnitQuaternion, Vector3};
+use rapier3d::prelude::{Collider, ColliderSet, LockedAxes, RigidBodyBuilder, RigidBodySet};
 
-use super::{launchpad::LaunchPad, pivot::PivotObject, spin::SpinObject};
-
-pub enum Objects {
-    Spin(SpinObject),
-    Pivot(PivotObject),
-    LaunchPad(LaunchPad),
-    Dynamic(DynamicObject),
-}
-
-impl Objects {
-    pub fn name(&self) -> String {
-        match &*self {
-            Objects::Spin(obj) => obj.object.name.clone(),
-            Objects::Pivot(obj) => obj.object.name.clone(),
-            Objects::LaunchPad(obj) => obj.object.name.clone(),
-            Objects::Dynamic(obj) => obj.name.clone(),
-        }
-    }
-
-    pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> ObjectUpdate {
-        match &mut *self {
-            Objects::Spin(obj) => obj.get_info(rigid_body_set),
-            Objects::Pivot(obj) => obj.get_info(rigid_body_set),
-            Objects::LaunchPad(obj) => obj.get_info(rigid_body_set),
-            Objects::Dynamic(obj) => obj.get_info(rigid_body_set),
-        }
-    }
-}
+use crate::structs::ObjectUpdate;
 
 pub struct DynamicObject {
-    pub name: String,
-    pub rigid_body_handle: RigidBodyHandle,
-    pub collider_handle: ColliderHandle,
-    pub original_rotation: Unit<Quaternion<f32>>,
+    pub object: RigidBodyData,
 }
 
 impl DynamicObject {
     pub fn new(
-        name: String,
-        rigid_body_handle: RigidBodyHandle,
-        collider_handle: ColliderHandle,
-        original_rotation: Unit<Quaternion<f32>>,
+        node: &Node,
+        rigid_body_set: &mut RigidBodySet,
+        mut collider: Collider,
+        collider_set: &mut ColliderSet,
+        asset_name: String,
     ) -> Self {
-        Self {
-            name,
+        let pos = node.transform().decomposed().0;
+        let rot = node.transform().decomposed().1;
+
+        let rotation =
+            UnitQuaternion::from_quaternion(Quaternion::new(rot[3], rot[0], rot[1], rot[2]));
+
+        let mut platform_body = RigidBodyBuilder::dynamic().build();
+
+        platform_body.set_translation(Vector3::new(pos[0], pos[1], pos[2]), true);
+        collider.set_translation(Vector3::new(0.0, 0.0, 0.0));
+
+        let rigid_body_handle = rigid_body_set.insert(platform_body);
+        let collider_handle =
+            collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
+
+        let object = RigidBodyData::new(
+            node.name().unwrap().to_string(),
             rigid_body_handle,
             collider_handle,
-            original_rotation,
-        }
+            rotation,
+            asset_name
+        );
+
+        Self { object }
     }
 
     pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> ObjectUpdate {
-        let rigid_body = &rigid_body_set[self.rigid_body_handle];
-
-        let pos = rigid_body.translation();
-
-        let pos_vec = Vec3 {
-            x: pos.x,
-            y: pos.y,
-            z: pos.z,
-        };
-        let rot = rigid_body.rotation() * self.original_rotation;
-        // rot.
-        let rot_quat = Quat {
-            i: rot.i,
-            j: rot.j,
-            k: rot.k,
-            w: rot.w,
-        };
-
-        ObjectUpdate {
-            name: self.name.clone(),
-            p: pos_vec,
-            q: rot_quat,
-        }
+        self.object.get_info(rigid_body_set)
     }
 }

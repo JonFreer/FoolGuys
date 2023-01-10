@@ -63,7 +63,7 @@ class ExportScene(bpy.types.Operator):
 
         objs = []
         land = None
-
+        objs_collisions = []
         for obj in scene.objects:
 
             if (obj.is_instancer):
@@ -73,8 +73,16 @@ class ExportScene(bpy.types.Operator):
 
             if (obj.name == 'land'):
                 land = obj
+              
 
-            print(obj.name)
+            if("physics" in obj):
+                temp_obj = obj.copy()
+                temp_obj["asset_name"] = "Asset_RockA"
+                objs_collisions.append(temp_obj)
+                
+                # client_collection.objects.link(land.copy())
+                # print(obj.name)
+        
         
         for obj in objs:
             temp_collection.objects.link(obj)
@@ -89,7 +97,8 @@ class ExportScene(bpy.types.Operator):
 
         objs = [obj for obj in temp_collection.all_objects]
         for obj in objs:
-            if ("Collision" in obj.name):
+            # print("spawn_point" in obj)
+            if ("physics" in obj):
                 temp_collection.objects.unlink(obj)
                 collision_collection.objects.link(obj)
             if (obj.type=="EMPTY"):
@@ -99,10 +108,12 @@ class ExportScene(bpy.types.Operator):
         collision_collection.objects.link(land.copy())
         client_collection.objects.link(land.copy())
 
+        for obj in objs_collisions:
+            collision_collection.objects.link(obj)
+
 
         for obj in collision_collection.all_objects:
             obj.select_set(True)
-
 
         if "Spawn Points" in bpy.data.collections:
             for obj in bpy.data.collections["Spawn Points"].all_objects:
@@ -133,9 +144,9 @@ class ExportScene(bpy.types.Operator):
 
   
 
-        remove_collection(collision_collection)
-        remove_collection(client_collection)
-        remove_collection(temp_collection)
+        # remove_collection(collision_collection)
+        # remove_collection(client_collection)
+        # remove_collection(temp_collection)
 
 
         return {'FINISHED'}            # Lets Blender know the operator finished successfully.

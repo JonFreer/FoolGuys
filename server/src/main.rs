@@ -21,6 +21,7 @@ mod physics_objects {
     pub mod spin;
     pub mod collision;
     pub mod pivot;
+    pub mod rigid_body_parent;
     pub mod dynamic;
 }
 
@@ -34,7 +35,7 @@ mod character_states {
 
 use rapier3d::{crossbeam, prelude::*};
 
-use crate::{world::{World}, physics_objects::dynamic::Objects};
+use crate::{world::{World}, physics_objects::rigid_body_parent::Objects};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;

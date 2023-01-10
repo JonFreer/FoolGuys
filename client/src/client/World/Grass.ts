@@ -167,7 +167,7 @@ export class Grass{
             // ( Math.random() - 0.5 ) * 10 
             //  );
 
-             const rand = Math.random()/2+0.8*3;
+             const rand = Math.random()/2+0.8;
              this.dummy.position.copy( _position );
              this.dummy.scale.set(rand,rand,rand)
              this.dummy.updateMatrix();

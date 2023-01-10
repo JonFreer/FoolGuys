@@ -7,7 +7,7 @@ export class AssetLoader {
 
     private gltfLoader: GLTFLoader;
     private loadingTracker: LoadingTrackerEntry[] = [];
-    private assets: { [id: string]: GLTF; } = {};
+    public assets: { [id: string]: GLTF; } = {};
 
     constructor() {
         this.gltfLoader = new GLTFLoader();
@@ -38,13 +38,10 @@ export class AssetLoader {
 
                 world_gltf.scene.traverse( (object:any) => {
                     if(object.userData.asset == asset_name){
-                        let asset = new Asset(gltf);
-                        console.log(asset_name,asset.object)
+                        let asset = new Asset(gltf,world);
                         asset.object.scale.set(object.scale.x,object.scale.y,object.scale.y);
                         asset.object.position.set(object.position.x,object.position.y,object.position.z);
                         asset.object.quaternion.set(object.quaternion.x,object.quaternion.y,object.quaternion.z,object.quaternion.w)
-                        world.graphicsWorld.add(asset.object)
-
                     }
                 })
             })

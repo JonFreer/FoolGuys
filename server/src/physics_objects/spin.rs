@@ -6,10 +6,11 @@ use crate::{
     structs::ObjectUpdate,
 };
 
-use super::dynamic::DynamicObject;
+use super::rigid_body_parent::RigidBodyData;
+
 
 pub struct SpinObject {
-    pub object: DynamicObject,
+    pub object: RigidBodyData,
 }
 
 impl SpinObject {
@@ -50,11 +51,12 @@ impl SpinObject {
             rigid_body_set,
         );
 
-        let object = DynamicObject::new(
+        let object = RigidBodyData::new(
             node.name().unwrap().to_string(),
             rigid_body_handle,
             collider_handle,
             rotation,
+            "todo".to_string()
         );
 
         Self { object }

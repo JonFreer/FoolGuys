@@ -35,7 +35,8 @@ pub struct PlayerUpdate{
 pub struct ObjectUpdate{
     pub name:String,
     pub p:Vec3,
-    pub q:Quat
+    pub q:Quat,
+    pub asset_name: String
 }
 
 #[derive(Clone, Debug)]

@@ -2,7 +2,7 @@ use gltf::{Node, mesh::util::indices};
 use nalgebra::{Vector3, Quaternion, UnitQuaternion};
 use rapier3d::prelude::{ColliderBuilder, Collider, Point};
 
-pub fn new_collider(node: &Node, buffers: &Vec<gltf::buffer::Data>) -> Option<Collider>{
+pub fn  new_collider(node: &Node, buffers: &Vec<gltf::buffer::Data>) -> Option<Collider>{
     
     let extras:Option<gltf::json::Value> = match node.extras().as_ref(){
         Some(e) => Some(gltf::json::deserialize::from_str(e.get()).unwrap()),

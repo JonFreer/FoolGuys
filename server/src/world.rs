@@ -1,3 +1,4 @@
+use std::f32::consts::E;
 use std::thread::spawn;
 
 use gltf::{Node, Document};
@@ -6,7 +7,8 @@ use rapier3d::prelude::{ColliderSet, RigidBodySet};
 use serde_json::Value;
 
 use crate::physics_objects::collision;
-use crate::physics_objects::dynamic::Objects;
+use crate::physics_objects::dynamic::DynamicObject;
+use crate::physics_objects::rigid_body_parent::{Objects};
 use crate::physics_objects::launchpad::LaunchPad;
 use crate::physics_objects::pivot::PivotObject;
 use crate::physics_objects::spin::SpinObject;
@@ -29,6 +31,7 @@ impl World {
         let (gltf, buffers, _) = gltf::import(path).unwrap();
         for scene in gltf.scenes() {
             for node in scene.nodes() {
+
                 create_object(&node,&buffers,&mut dynamic_objects,&mut rigid_body_set, &mut collider_set,&gltf);
             }
         }
@@ -50,9 +53,7 @@ pub fn load_spawn_points(gltf:&Document) -> Vec<Vector3<f32>>{
                 println!("{:?}",extras.get());
                 let extras: gltf::json::Value = gltf::json::deserialize::from_str(extras.get()).unwrap();
                 if extras["spawn_point"] != Value::Null {
-                    println!("{:?}",node);
                     let translation = node.transform().decomposed().0;
-                    // println!("{:?}",transform);
                     spawn_points.push(Vector3::new(translation[0],translation[1],translation[2]));
                 }
             }
@@ -77,7 +78,23 @@ pub fn create_object(
                 let extras: gltf::json::Value =
                     gltf::json::deserialize::from_str(extras.get()).unwrap();
                 println!("Launch {:?}", extras["launchpad"]);
-                if extras["spin"] != Value::Null {
+                if extras["dynamic"] != Value::Null {
+                    let mut asset_name = "default".to_string();
+                    if extras["asset_name"] != Value::Null {
+                        asset_name = extras["asset_name"].to_string(); 
+                    }
+
+                    println!("dynamic object");
+                    let obj = DynamicObject::new(  
+                        &node,
+                        rigid_body_set,
+                        collider,
+                        collider_set,
+                        asset_name
+                    );
+                    dynamic_objects.push(Objects::Dynamic(obj));
+                }
+                else if extras["spin"] != Value::Null {
                     let obj = SpinObject::new(
                         extras["spin"].to_string(),
                         &node,

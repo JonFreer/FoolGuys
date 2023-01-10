@@ -10,8 +10,8 @@ import bg_fog_pars from './bg_fog_pars.glsl';
 import big_shadow_pars from './big_shadow_pars.glsl';
 import bg_fog from './bg_fog.glsl';
 import depth_dither from './depth_dither.glsl';
-
-
+import luma from './luma.glsl';
+import blend_modes from './blend_modes.glsl';
 
 
 
@@ -28,6 +28,8 @@ export class ShaderChunkLoader {
        ShaderChunk["big_shadow_pars"] = big_shadow_pars;
        ShaderChunk["bg_fog"] = bg_fog;
        ShaderChunk["depth_dither"] = depth_dither;
+       ShaderChunk["luma"] = luma;
+       ShaderChunk["blend_modes"] = blend_modes;
  
     }
 

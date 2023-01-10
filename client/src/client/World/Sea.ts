@@ -17,14 +17,15 @@ export class Sea{
         noise_perlin.wrapT = THREE.RepeatWrapping;
         noise_perlin.repeat.x = 200;
         noise_perlin.repeat.y = 200;
-        const gui = new GUI()
-        const cubeFolder = gui.addFolder('Cube')
-        cubeFolder.add(this, 'ss_lower', 0, 1).onChange((value) =>{
-            (this.object.material as THREE.ShaderMaterial).uniforms.ss_lower.value = value;
-        })
-        cubeFolder.add(this, 'ss_upper', 0, 1).onChange((value) =>{
-            (this.object.material as THREE.ShaderMaterial).uniforms.ss_upper.value = value;
-        })
+
+        // const gui = new GUI()
+        // const cubeFolder = gui.addFolder('Cube')
+        // cubeFolder.add(this, 'ss_lower', 0, 1).onChange((value) =>{
+        //     (this.object.material as THREE.ShaderMaterial).uniforms.ss_lower.value = value;
+        // })
+        // cubeFolder.add(this, 'ss_upper', 0, 1).onChange((value) =>{
+        //     (this.object.material as THREE.ShaderMaterial).uniforms.ss_upper.value = value;
+        // })
 
         const waterVertexShader = /* glsl */`
                 #include <common>
@@ -51,6 +52,7 @@ export class Sea{
             varying vec2 v_uv;
             #include <world_pos_pars>
             void main() {
+                
                     float scale = 100.0;
                     vec2 uv = vWorldPos.xz / scale;
 

@@ -9,10 +9,12 @@ use crate::{
     structs::ObjectUpdate, player::Player,
 };
 
-use super::dynamic::DynamicObject;
+use super::rigid_body_parent::RigidBodyData;
+
+// use super::rigid_body_parent::RigidBodyData;
 
 pub struct LaunchPad {
-    pub object: DynamicObject,
+    pub object: RigidBodyData,
     animations: Animations,
     launch_dir: Vector3<f32>
 }
@@ -61,11 +63,12 @@ impl LaunchPad {
         let collider_handle =
             collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
 
-        let object = DynamicObject::new(
+        let object = RigidBodyData::new(
             node.name().unwrap().to_string(),
             rigid_body_handle,
             collider_handle,
             rotation,
+            "todo".to_string()
         );
 
         // animations.playback_state.

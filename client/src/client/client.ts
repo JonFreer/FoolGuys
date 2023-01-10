@@ -76,6 +76,8 @@ socket.onmessage = function (event) {
     if (msg["WorldUpdate"]) {
         let data = msg["WorldUpdate"]
         let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
+
+
         // console.log("a",data.players)
         Object.keys(data.players).forEach((p) => {
             // console.log("b",data.players[p])
@@ -86,6 +88,11 @@ socket.onmessage = function (event) {
 
         });
 
+        Object.keys(world.players).forEach((id) => {
+            if(data.players[id]==undefined){
+                world.removePlayer(id)
+            }
+        })
         // /dynamic_objects
 
         Object.keys(data.dynamic_objects).forEach((r) => {

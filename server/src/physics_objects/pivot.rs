@@ -4,10 +4,10 @@ use rapier3d::prelude::{Collider, ColliderSet, LockedAxes, RigidBodyBuilder, Rig
 
 use crate::structs::ObjectUpdate;
 
-use super::dynamic::DynamicObject;
+use super::rigid_body_parent::RigidBodyData;
 
 pub struct PivotObject {
-    pub object: DynamicObject,
+    pub object: RigidBodyData,
 }
 
 impl PivotObject {
@@ -47,11 +47,12 @@ impl PivotObject {
         let collider_handle =
             collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
 
-        let object = DynamicObject::new(
+        let object = RigidBodyData::new(
             node.name().unwrap().to_string(),
             rigid_body_handle,
             collider_handle,
             rotation,
+            "todo".to_string()
         );
 
         Self { object }
