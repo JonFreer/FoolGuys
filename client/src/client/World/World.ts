@@ -282,7 +282,6 @@ export class World {
     }
 
     public updateObstacle(id: string, obstacles: any) {
-        // return
         // console.log(obstacles)
         if (this.obstacles[id] != undefined) {
 
