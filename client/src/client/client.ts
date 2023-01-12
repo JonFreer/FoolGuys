@@ -176,7 +176,7 @@ world.animate()
 
 
 function onDocumentKey(e: KeyboardEvent) {
-    keyMap[e.key] = e.type === 'keydown'
+    keyMap[e.key.toLowerCase()] = e.type === 'keydown'
     let movement = new Vector2(0, 0)
     if (keyMap['w'] || keyMap["W"]) {
         movement.y += 1

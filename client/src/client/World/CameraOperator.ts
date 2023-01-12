@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { World } from './World';
 import { IInputReceiver } from '../interfaces/IInputReceiver';
 import { Vector3 } from 'three';
-import { Socket } from 'socket.io-client';
+// import { Socket } from 'socket.io-client';
 // import { KeyBinding } from './KeyBinding';
 // import { Character } from '../characters/Character';
 // import _ = require('lodash');

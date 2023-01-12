@@ -281,7 +281,7 @@ export class World {
     }
 
     public updateObstacle(id: string, obstacles: any) {
-        console.log(obstacles)
+        // console.log(obstacles)
         if (this.obstacles[id] != undefined) {
 
             new TWEEN.Tween(this.obstacles[id].object.position)

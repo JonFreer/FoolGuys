@@ -366,7 +366,6 @@ impl Player {
                     self.key_map = HashMap::new();
 
                     for (key, value) in key_map.as_object().unwrap() {
-                        // println!("{}",key);
                         self.key_map
                             .insert(key.to_string(), value.as_bool().unwrap());
                     }
