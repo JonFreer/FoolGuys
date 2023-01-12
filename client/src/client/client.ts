@@ -198,6 +198,13 @@ function onDocumentKey(e: KeyboardEvent) {
         e.preventDefault()
     }
 
+    if(e.type == 'keydown'){
+        if(e.key.toLowerCase() == 'p'){
+            socket.send(JSON.stringify(['throw', {
+            }]))
+        }
+    }
+
 }
 
 function sendUpdate(movement: THREE.Vector2) {

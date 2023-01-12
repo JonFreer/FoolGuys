@@ -1,13 +1,13 @@
 use std::{collections::HashMap};
 
 // use futures_channel::mpsc::UnboundedReceiver;
-use nalgebra::{Quaternion, Vector1, Vector2, Vector3};
+use nalgebra::{Quaternion, Vector1, Vector2, Vector3, UnitQuaternion};
 use rapier3d::control::{CharacterLength, KinematicCharacterController};
 // use tokio_tungstenite::tungstenite::Message;
 // use serde::{Deserialize, Serialize};
 // use serde_json::{Result, Number};
 
-use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}};
+use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World};
 use rand::Rng;
 use serde_json::{Value, Error};
 // use websocket::OwnedMessage;
@@ -19,7 +19,7 @@ pub struct Player {
     pub can_jump: bool,
     pub chat_queue: Vec<String>,
     pub position: Vector3<f32>,
-    pub rotation: Quaternion<f32>,
+    // pub rotation: Quaternion<f32>,
     pub view_vector: Vector3<f32>,
     pub client_move_vec: Vector2<f32>,
     pub speed: f32,
@@ -27,6 +27,7 @@ pub struct Player {
     pub collider_handle: ColliderHandle,
     pub key_map: HashMap<String, bool>,
     pub to_jump: bool,
+    pub to_throw: bool,
     pub colour: Colour,
     pub on_ground: bool,
     // pub on_ground_2: bool,
@@ -94,7 +95,7 @@ impl Player {
             can_jump: true,
             chat_queue: Vec::new(),
             position: Vector3::new(0.0, 0.0, 0.0),
-            rotation: Quaternion::new(0.0, 0.0, 0.0, 0.0),
+            // rotation: Quaternion::new(0.0, 0.0, 0.0, 0.0),
             view_vector: Vector3::new(0.0, 0.0, 0.0),
             client_move_vec: Vector2::new(0.0, 0.0),
             speed: 0.1,
@@ -102,6 +103,7 @@ impl Player {
             collider_handle,
             key_map: HashMap::new(),
             to_jump: false,
+            to_throw:false,
             colour: colour,
             on_ground:false,
             // on_ground_2: false,
@@ -126,17 +128,16 @@ impl Player {
 
     pub fn update_physics(
         &mut self,
-        rigid_body_set: &mut RigidBodySet,
-        collider_set: &mut ColliderSet,
+
         integration_parameters: IntegrationParameters,
         query_pipeline: &QueryPipeline,
-        spawn_points: &Vec<Vector3<f32>>
+        world: &mut World
     ) {
         self.just_jumped = false;
 
 
 
-        let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
+        let rigid_body = &mut world.rigid_body_set[self.rigid_body_handle];
 
         let simulated_velocity = rigid_body.linvel().clone();
 
@@ -216,15 +217,15 @@ impl Player {
 
         let mut character_controller = KinematicCharacterController::default();
 
-        let collider = &collider_set[self.collider_handle];
+        let collider = &world.collider_set[self.collider_handle];
  
         let pos = Vector3::new(0.0, 0.0, 0.0);
         character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.5));
         let mut collisions = vec![];
         let corrected_movement = character_controller.move_shape(
             integration_parameters.dt, // The timestep length (can be set to SimulationSettings::dt).
-            &rigid_body_set,           // The RigidBodySet.
-            &collider_set,             // The ColliderSet.
+            &world.rigid_body_set,           // The RigidBodySet.
+            &world.collider_set,             // The ColliderSet.
             query_pipeline,            // The QueryPipeline.
             collider.shape(),          // The character’s shape.
             &collider.position(),      // The character’s initial position.
@@ -242,7 +243,7 @@ impl Player {
             self.on_ground = false;
         }
 
-        let rigid_body = &mut rigid_body_set[self.rigid_body_handle];
+        let rigid_body = &mut world.rigid_body_set[self.rigid_body_handle];
     
 
         if self.to_jump && self.can_jump {
@@ -262,7 +263,7 @@ impl Player {
             //     true,
             // );
             // rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
-            Player::respawn(spawn_points,rigid_body);
+            Player::respawn(&world.spawn_points,rigid_body);
         }
 
         self.look_at = self.look_at.lerp(&self.target_look_at, 0.05);
@@ -276,7 +277,21 @@ impl Player {
             _ => {}
         }
 
+        if self.to_throw{
 
+            println!("THROWING");
+
+            let rigid_body = &world.rigid_body_set[self.rigid_body_handle];
+
+            world.add_dynamic_asset("asset_id".to_string(),
+             "Asset_Apple".to_string(),
+              Vector3::new(1.0,1.0,1.0), 
+              rigid_body.translation()+Vector3::new(1.0,2.0,1.0), 
+              *rigid_body.rotation(),
+                true);
+
+            self.to_throw = false;
+        }
 
 
     }
@@ -390,6 +405,10 @@ impl Player {
 
                 if v[0] == "update_jump" {
                     self.to_jump = true;
+                }
+
+                if v[0] == "throw" {
+                    self.to_throw = true;
                 }
             }else{
                 println!("Erorr unwrapping message");

@@ -44,6 +44,7 @@ services:
     command: ./target/release/server
     volumes:
     - ./Blender:/assets/
+    - ./client/dist/client/assets/unoptimized:/assets_unoptimized/
       # - ./client/dist/client/assets:/assets/
       # - /app/node_modules
     ports:

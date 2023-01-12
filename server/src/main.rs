@@ -117,7 +117,7 @@ async fn main() -> Result<(), IoError> {
     } else {
         println!("Running Prod Server");
         path = "/assets/collision.glb";
-        asset_path = "../client/dist/client/assets"; //TODO
+        asset_path = "/assets_unoptimized/"; //TODO
         ip = "0.0.0.0:2865"
     }
 
@@ -132,7 +132,10 @@ async fn main() -> Result<(), IoError> {
     tokio::spawn(sokcer_handler(state.clone(), listener));
 
     //RAPIER BOILERPLATE
-    let mut world = World::new(path,asset_path);
+    let mut world = World::new(asset_path);
+
+    world.load_world(path);
+
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
     // return;
@@ -235,11 +238,10 @@ async fn main() -> Result<(), IoError> {
 
             for p in players.iter_mut() {
                 p.1.update_physics(
-                    &mut world.rigid_body_set,
-                    &mut world.collider_set,
+          
                     integration_parameters,
                     &query_pipline,
-                    &world.spawn_points
+                    &mut world
                 );
             }
 
