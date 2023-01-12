@@ -12,7 +12,6 @@ use std::time::Instant;
 
 mod animation;
 mod client;
-// mod dynamic;
 mod player;
 mod structs;
 mod world;
@@ -36,9 +35,8 @@ mod character_states {
     pub mod falling;
 }
 
-use rapier3d::{crossbeam, prelude::*};
 
-use crate::{world::{World}, physics_objects::rigid_body_parent::Objects, physics::Physics};
+use crate::{world::{World}, physics::Physics};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
@@ -134,39 +132,16 @@ async fn main() -> Result<(), IoError> {
     tokio::spawn(sokcer_handler(state.clone(), listener));
 
     let mut physics_engine = Physics::new();
-    //RAPIER BOILERPLATE
+
     let mut world = World::new(asset_path);
 
     world.load_world(path,&mut physics_engine);
 
-
-
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
-    // return;
-    // let mut rigid_body_set = RigidBodySet::new();
-    // let mut collider_set = ColliderSet::new();
-    /* Create the ground. */
-    // let collider = ColliderBuilder::cuboid(10.0, 0.1, 10.0).build();
 
-    /* Create other structures necessary for the simulation. */
-
-
-    // let f = query_pipline.flags;
-    // let event_handler = ();
-
-
-
-
-
-    // // let mut server = Server::bind(ip).unwrap();
-    // let mut server = Server::bind(ip).unwrap();
-    // server.set_nonblocking(true);
-
-    // let mut players: Arc<RwLock<Vec<Player>>> = Arc::new(RwLock::new(Vec::new()));
     let mut players: HashMap<SocketAddr, Player> = HashMap::new();
 
-    println!("HIIII");
     loop {
         if (Instant::now() - time_since_last).as_millis() > wait_time {
             let start_time = Instant::now();
@@ -254,76 +229,7 @@ async fn main() -> Result<(), IoError> {
 
 
 
-            // physics_pipeline.step(
-            //     &gravity,
-            //     &integration_parameters,
-            //     &mut island_manager,
-            //     &mut broad_phase,
-            //     &mut narrow_phase,
-            //     &mut world.rigid_body_set,
-            //     &mut world.collider_set,
-            //     &mut impulse_joint_set,
-            //     &mut multibody_joint_set,
-            //     &mut ccd_solver,
-            //     &physics_hooks,
-            //     &event_handler,
-            // );
-
-           
-
-
-
-            // for collision_event in collision_vec.iter(){
-            //     // if collision_event.started() {
-            //         // collision_event.
-            //         let collider_handle1 = collision_event.collider1();
-            //         let collider_handle2 = collision_event.collider2();
-
-            //         if collision_event.stopped() {
-            //             for player in players.iter_mut() {
-            //                 // for (key, value) in &players {
-            //                 let mut index = None;
-            //                 if player.1.collider_handle == collider_handle2 {
-            //                     index = player.1.on_ground.iter().position(|x| *x == collider_handle1);
-            //                 }else if player.1.collider_handle == collider_handle1{
-            //                    index = player.1.on_ground.iter().position(|x| *x == collider_handle2);
-            //                 }
-
-            //                 if let Some(index) = index{
-            //                     player.1.on_ground.remove(index);
-            //                 }
-            //             }
-            //         }
-
-
-            //         else if let Some(contact_pair) =
-            //             narrow_phase.contact_pair(collider_handle1, collider_handle2)
-            //         {
-            //             if contact_pair.has_any_active_contact {
-            //                 for manifold in &contact_pair.manifolds {
-            //                     if manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)) > 0.9 {
-            //                         for player in players.iter_mut() {
-            //                             // for (key, value) in &players {
-            //                             if player.1.collider_handle == collider_handle2 {
-            //                                 // if collision_event.started() {
-            //                                     player.1.can_jump = true;
-            //                                     player.1.on_ground.push(collider_handle1);
-                                                
-            //                                 // }
-            //                                 //  if collision_event.stopped(){
-            //                                     // player.1.on_ground = false;
-            //                                 // }
-            //                             }
-            //                         }
-            //                     }
-            //                     println!("{:?}",manifold.data.normal.dot(&Vector3::new(0.0, 1.0, 0.0)));
-            //                 }
-            //             }
-            //         // }
-            //     }
-
-                
-            // }
+            
 
                 //Update physics objects
             world.update(&mut players,&mut physics_engine);
@@ -347,23 +253,6 @@ async fn main() -> Result<(), IoError> {
                      (x.name(), x.get_info(&mut physics_engine.rigid_body_set))
                     )
                 .collect();
-
-                // let dynamic_objects_info: HashMap<String, ObjectUpdate> = world
-                // .dynamic_objects
-                // .iter_mut()
-                // .map(|x| 
-                //      (unpat!(x).name.clone(), x.get_info(&mut world.rigid_body_set))
-                //     )
-                // .collect();
-
-            // let mut dynamic_objects_info = HashMap::new();
-            // for i in 0..world.dynamic_objects.len() {
-            //     dynamic_objects_info.insert(
-            //         world.dynamic_objects[i].name.clone(),
-            //         world.dynamic_objects[i]
-            //             .get_info(&mut world.rigid_body_set),
-            //     );
-            // }
 
             let player_update_message = structs::MessageType::WorldUpdate {
                 players: players_info,

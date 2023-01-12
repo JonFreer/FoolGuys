@@ -1,12 +1,10 @@
 use std::collections::HashMap;
-use std::f32::consts::E;
-use std::hash::Hash;
+
 use std::net::SocketAddr;
-use std::thread::spawn;
+
 
 use gltf::{Document, Node};
-use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector2, Vector3};
-use rapier3d::prelude::{ColliderSet, CollisionEvent, IslandManager, RigidBodySet};
+use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
 use serde_json::Value;
 
 use crate::physics::Physics;
@@ -28,8 +26,8 @@ pub struct World {
 
 impl World {
     pub fn new(asset_path: &str) -> Self {
-        let mut assets = HashMap::new();
-        let mut dynamic_objects = Vec::new();
+        let assets = HashMap::new();
+        let dynamic_objects = Vec::new();
 
         println!("Created world");
 
@@ -64,7 +62,7 @@ impl World {
         lifetime: f32,
         physics_engine: &mut Physics,
     ) {
-        if (recreate) {}
+        // if (recreate) {}
 
         if !self.assets.contains_key(&asset_name) {
             let format = format!("{}{}{}", self.asset_path, asset_name, ".glb").replace('"', "");
@@ -197,30 +195,7 @@ impl World {
                         0.0,
                         physics_engine,
                     );
-                    // let name = extras["asset"].to_string();
-                    // //check if asset is loaded, if not load the asset
-                    // if !assets.contains_key(&name) {
-                    //     let format = format!("{}{}{}", asset_path, name, ".glb").replace('"', "");
-                    //     println!("Loading Asset {}", format);
-                    //     let asset = AssetBase::new(format);
-                    //     assets.insert(name.clone(), asset);
-                    // }
 
-                    // let mut asset = assets.get(&name).unwrap();
-
-                    // let s = node.transform().decomposed().2;
-                    // let scale = Vector3::new(s[0], s[1], s[2]);
-
-                    // let obj = DynamicObject::new(
-                    //     &node,
-                    //     rigid_body_set,
-                    //     asset.get_collider(scale),
-                    //     collider_set,
-                    //     name,
-                    //     scale,
-                    // );
-
-                    // dynamic_objects.push(Objects::Dynamic(obj));
                 }
             }
         }

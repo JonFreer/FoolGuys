@@ -2,7 +2,7 @@ use std::{net::SocketAddr, collections::HashMap};
 
 use gltf::Node;
 use nalgebra::{Quaternion, UnitQuaternion, Vector3};
-use rapier3d::prelude::{Collider, ColliderSet, CollisionEvent, RigidBodyBuilder, RigidBodySet};
+use rapier3d::prelude::{Collider, ColliderSet, RigidBodyBuilder, RigidBodySet};
 
 use crate::{
     animation::{Animations, NodesKeyFrame, PlaybackMode},

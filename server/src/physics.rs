@@ -33,20 +33,20 @@ impl Physics {
     pub fn new() -> Self {
         let gravity = vector![0.0, -9.81, 0.0];
 
-        let mut rigid_body_set = RigidBodySet::new();
-        let mut collider_set = ColliderSet::new();
+        let rigid_body_set = RigidBodySet::new();
+        let collider_set = ColliderSet::new();
 
         let integration_parameters = IntegrationParameters::default();
-        let mut physics_pipeline = PhysicsPipeline::new();
+        let physics_pipeline = PhysicsPipeline::new();
 
-        let mut broad_phase = BroadPhase::new();
-        let mut narrow_phase = NarrowPhase::new();
-        let mut impulse_joint_set = ImpulseJointSet::new();
-        let mut multibody_joint_set = MultibodyJointSet::new();
-        let mut ccd_solver = CCDSolver::new();
+        let broad_phase = BroadPhase::new();
+        let narrow_phase = NarrowPhase::new();
+        let impulse_joint_set = ImpulseJointSet::new();
+        let multibody_joint_set = MultibodyJointSet::new();
+        let ccd_solver = CCDSolver::new();
         let physics_hooks = ();
-        let mut query_pipline = QueryPipeline::new();
-        let mut island_manager = IslandManager::new();
+        let query_pipline = QueryPipeline::new();
+        let island_manager = IslandManager::new();
 
         let (collision_send, collision_recv) = crossbeam::channel::unbounded();
         let (contact_force_send, _contact_force_recv) = crossbeam::channel::unbounded();
@@ -123,7 +123,7 @@ impl Physics {
     ) -> EffectiveCharacterMovement {
         let pos = Vector3::new(0.0, 0.0, 0.0);
 
-        let mut character_controller = KinematicCharacterController::default();
+        let character_controller = KinematicCharacterController::default();
 
         let collider = self.get_collider(collider_handle).clone();
 
