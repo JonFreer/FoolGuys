@@ -146,7 +146,6 @@ export class World {
         gridHelper.position.y = -0.5
         // scene.add(gridHelper)
 
-        // this.graphicsWorld.position.z = 0
     }
 
     public loadWorld(path: string){
@@ -282,7 +281,7 @@ export class World {
     }
 
     public updateObstacle(id: string, obstacles: any) {
-        // console.log(obstacles)
+        console.log(obstacles)
         if (this.obstacles[id] != undefined) {
 
             new TWEEN.Tween(this.obstacles[id].object.position)
