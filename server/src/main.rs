@@ -23,6 +23,7 @@ mod physics_objects {
     pub mod pivot;
     pub mod rigid_body_parent;
     pub mod dynamic;
+    pub mod asset;
 }
 
 mod character_states {
@@ -99,16 +100,24 @@ async fn sokcer_handler(peer_map: PeerMap, listener: TcpListener) {
 
 #[tokio::main]
 async fn main() -> Result<(), IoError> {
+
+    // let (gltf, buffers, _) = gltf::import("../client/dist/client/assets/assets/Asset_Apple2.glb").unwrap();
+    // Ok()
+    // return;
+
     let path;
+    let asset_path;
     let ip;
     if cfg!(debug_assertions) {
         println!("Running debug server");
         // path = "../client/dist/client/assets/world.glb";
         path = "../Blender/collision.glb";
+        asset_path = "../client/dist/client/assets/unoptimized/";
         ip = "127.0.0.1:2865";
     } else {
         println!("Running Prod Server");
         path = "/assets/collision.glb";
+        asset_path = "../client/dist/client/assets"; //TODO
         ip = "0.0.0.0:2865"
     }
 
@@ -123,7 +132,7 @@ async fn main() -> Result<(), IoError> {
     tokio::spawn(sokcer_handler(state.clone(), listener));
 
     //RAPIER BOILERPLATE
-    let mut world = World::new(path);
+    let mut world = World::new(path,asset_path);
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
     // return;

@@ -41,6 +41,52 @@ class SetPhysicsHull(bpy.types.Operator):
         
         return {'FINISHED'}   
 
+class SetPhysicsBall(bpy.types.Operator):
+    """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "game_export.physics_ball"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "Set Physics Ball"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+
+    def execute(self,context):
+
+
+        for obj in bpy.context.selected_objects:
+            obj["physics"]= "ball"
+            obj.display_type = "WIRE"
+        
+        return {'FINISHED'}   
+
+
+class ExportAssets(bpy.types.Operator):
+    """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "game_export.export_assets"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "Export Assets"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+
+    def execute(self,context):
+        PATH = os.path.dirname(os.path.dirname(os.path.dirname(bpy.path.abspath("//"))))
+        print(PATH)
+        for collection in bpy.data.collections:
+            print(collection.name)
+            # bpy.ops.object.select_all(action='DESELECT')
+            layer_collection = bpy.context.view_layer.layer_collection.children[collection.name]
+
+            layer_collection.exclude = False
+            bpy.context.view_layer.active_layer_collection = layer_collection
+
+            
+
+            bpy.ops.export_scene.gltf(
+                filepath=os.path.join(PATH , "client/dist/client/assets/unoptimized/",collection.name+".glb"), 
+                use_active_collection   = True,
+                export_extras = True
+            )
+
+            layer_collection.exclude = True
+
+
+
+        return {'FINISHED'}  
 
 class ExportScene(bpy.types.Operator):
     """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
@@ -50,67 +96,20 @@ class ExportScene(bpy.types.Operator):
 
     def execute(self, context):        # execute() is called when running the operator.
         PATH = os.path.dirname(os.path.dirname(bpy.path.abspath("//")))
-        # The original script
+
         scene = context.scene
 
-        temp_collection = bpy.data.collections.new("Temp")
         collision_collection = bpy.data.collections.new("Collisions")
         client_collection = bpy.data.collections.new("Client")
 
         scene.collection.children.link(collision_collection)
-        scene.collection.children.link(temp_collection)
         scene.collection.children.link(client_collection)
 
-        objs = []
-        land = None
-        objs_collisions = []
-        for obj in scene.objects:
 
-            if (obj.is_instancer):
-                print(obj.instance_collection.name)
-                obj["asset"] = obj.instance_collection.name
-                objs.append(obj.copy())
-
-            if (obj.name == 'land'):
-                land = obj
-              
-
-            if("physics" in obj):
-                temp_obj = obj.copy()
-                temp_obj["asset_name"] = "Asset_RockA"
-                objs_collisions.append(temp_obj)
-                
-                # client_collection.objects.link(land.copy())
-                # print(obj.name)
-        
-        
-        for obj in objs:
-            temp_collection.objects.link(obj)
-
+        process_static(scene,collision_collection,client_collection)
+        process_dynamics(scene,collision_collection)
 
         bpy.ops.object.select_all(action='DESELECT')
-
-        for obj in temp_collection.all_objects:
-            obj.select_set(True)
-
-        bpy.ops.object.duplicates_make_real()
-
-        objs = [obj for obj in temp_collection.all_objects]
-        for obj in objs:
-            # print("spawn_point" in obj)
-            if ("physics" in obj):
-                temp_collection.objects.unlink(obj)
-                collision_collection.objects.link(obj)
-            if (obj.type=="EMPTY"):
-                temp_collection.objects.unlink(obj)
-                client_collection.objects.link(obj)
-
-        collision_collection.objects.link(land.copy())
-        client_collection.objects.link(land.copy())
-
-        for obj in objs_collisions:
-            collision_collection.objects.link(obj)
-
 
         for obj in collision_collection.all_objects:
             obj.select_set(True)
@@ -142,18 +141,73 @@ class ExportScene(bpy.types.Operator):
                 export_extras = True
             )
 
-  
-
-        # remove_collection(collision_collection)
-        # remove_collection(client_collection)
-        # remove_collection(temp_collection)
-
+        remove_collection(collision_collection)
+        remove_collection(client_collection)
 
         return {'FINISHED'}            # Lets Blender know the operator finished successfully.
 
+def process_static(scene, collision_collection,client_collection):
+    temp_collection = bpy.data.collections.new("Temp")
+    scene.collection.children.link(temp_collection)
+    for obj in [obj for obj in scene.objects]:
+        if (obj.is_instancer):
+            if("dynamic" not in obj):
+                obj["asset"] = obj.instance_collection.name
+                temp_collection.objects.link(obj.copy())
+
+        elif (obj.name == 'land'):
+            collision_collection.objects.link(obj.copy())
+            client_collection.objects.link(obj.copy())
+
+    duplicates_make_real(temp_collection)
+
+    for obj in [obj for obj in temp_collection.all_objects]:
+        if ("physics" in obj):
+            temp_collection.objects.unlink(obj)
+            collision_collection.objects.link(obj)
+        if (obj.type=="EMPTY"):
+            temp_collection.objects.unlink(obj)
+            client_collection.objects.link(obj)
+
+    remove_collection(temp_collection)
+
+def process_dynamics(scene, collision_collection):
+
+    temp_collection = bpy.data.collections.new("Temp")
+    scene.collection.children.link(temp_collection)
+
+    objs = [obj for obj in scene.objects]
+
+    for obj in objs:
+        if("dynamic" in obj):
+            if (obj.is_instancer):
+                obj["asset"] = obj.instance_collection.name
+                temp_collection.objects.link(obj.copy())
+            else:
+                collision_collection.objects.link(obj.copy())
+    
+    duplicates_make_real(temp_collection)
+       
+    objs = [obj for obj in temp_collection.all_objects]
+    for obj in objs:
+        if (obj.type=="EMPTY"):
+            temp_collection.objects.unlink(obj)
+            collision_collection.objects.link(obj)
+
+    remove_collection(temp_collection)
+    
+def duplicates_make_real(temp_collection):
+    
+    bpy.ops.object.select_all(action='DESELECT')
+
+    for obj in temp_collection.all_objects:
+        obj.select_set(True)
+
+    bpy.ops.object.duplicates_make_real()
+
 
 def remove_collection(collection):
-    for obj in collection.all_objects:
+    for obj in [obj for obj in collection.all_objects]:
         bpy.data.objects.remove(obj)
     bpy.data.collections.remove(collection)
 
@@ -165,10 +219,10 @@ class TOPBAR_MT_test(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         # self.layout.menu
-        # layout.operator("object.select_all", text="Select/Deselect All").action = 'TOGGLE'
-        # layout.operator("object.select_all", text="Inverse").action = 'INVERT'
         layout.operator("game_export.export", text="Export Scene")
+        layout.operator("game_export.export_assets", text="Export Assets")
         layout.operator("game_export.physics_hull", text="Physics: Hull")
+        layout.operator("game_export.physics_ball", text="Physics: Ball")
     def menu_draw(self, context):
         self.layout.menu("TOPBAR_MT_test")
 
@@ -176,14 +230,18 @@ class TOPBAR_MT_test(bpy.types.Menu):
 def register():
     # auto_load.register()SetPhysicsHull
     bpy.utils.register_class(SetPhysicsHull)
+    bpy.utils.register_class(SetPhysicsBall)
     bpy.utils.register_class(ExportScene)
+    bpy.utils.register_class(ExportAssets)
     bpy.utils.register_class(TOPBAR_MT_test)
     bpy.types.TOPBAR_MT_editor_menus.append(TOPBAR_MT_test.menu_draw)
 
 def unregister():
     bpy.utils.unregister_class(SetPhysicsHull)
+    bpy.utils.unregister_class(SetPhysicsBall)
     bpy.utils.unregister_class(ExportScene)
     bpy.utils.unregister_class(TOPBAR_MT_test)
+    bpy.utils.unregister_class(ExportAssets)
     bpy.types.TOPBAR_MT_editor_menus.remove(TOPBAR_MT_test.menu_draw)
     print("blahh")
     # auto_load.unregister()

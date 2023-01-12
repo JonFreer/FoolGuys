@@ -298,6 +298,8 @@ export class World {
             // this.obstacles[id].set
             // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
             this.obstacles[id].object.setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
+
+            this.obstacles[id].object.scale.set(obstacles[id].scale.x,obstacles[id].scale.y,obstacles[id].scale.z)
         } else {
             
             let obstacle = obstacles[id];

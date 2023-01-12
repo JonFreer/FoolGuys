@@ -17,6 +17,7 @@ impl DynamicObject {
         mut collider: Collider,
         collider_set: &mut ColliderSet,
         asset_name: String,
+        scale:Vector3<f32>
     ) -> Self {
         let pos = node.transform().decomposed().0;
         let rot = node.transform().decomposed().1;
@@ -33,12 +34,13 @@ impl DynamicObject {
         let collider_handle =
             collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
 
-        let object = RigidBodyData::new(
+        let object = RigidBodyData::new_with_scale(
             node.name().unwrap().to_string(),
             rigid_body_handle,
             collider_handle,
             rotation,
-            asset_name
+            asset_name,
+            scale
         );
 
         Self { object }

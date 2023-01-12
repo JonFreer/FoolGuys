@@ -36,7 +36,8 @@ pub struct ObjectUpdate{
     pub name:String,
     pub p:Vec3,
     pub q:Quat,
-    pub asset_name: String
+    pub asset_name: String,
+    pub scale:Vec3
 }
 
 #[derive(Clone, Debug)]

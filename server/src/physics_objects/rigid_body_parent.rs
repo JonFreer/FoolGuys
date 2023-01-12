@@ -1,4 +1,4 @@
-use nalgebra::{Quaternion, Unit};
+use nalgebra::{Quaternion, Unit, Vector3};
 use rapier3d::prelude::*;
 
 use crate::structs::{ObjectUpdate, Quat, Vec3};
@@ -39,23 +39,43 @@ pub struct RigidBodyData {
     pub rigid_body_handle: RigidBodyHandle,
     pub collider_handle: ColliderHandle,
     pub original_rotation: Unit<Quaternion<f32>>,
-    pub asset_name : String
+    pub asset_name : String,
+    pub scale: Vector<f32>
 }
 
 impl RigidBodyData {
-    pub fn new(
+    pub fn new_with_scale(
         name: String,
         rigid_body_handle: RigidBodyHandle,
         collider_handle: ColliderHandle,
         original_rotation: Unit<Quaternion<f32>>,
-        asset_name:String
+        asset_name:String,
+        scale : Vector3<f32>
     ) -> Self {
         Self {
             name,
             rigid_body_handle,
             collider_handle,
             original_rotation,
-            asset_name
+            asset_name,
+            scale
+        }
+    }
+
+    pub fn new(
+        name: String,
+        rigid_body_handle: RigidBodyHandle,
+        collider_handle: ColliderHandle,
+        original_rotation: Unit<Quaternion<f32>>,
+        asset_name:String,
+    ) -> Self {
+        Self {
+            name,
+            rigid_body_handle,
+            collider_handle,
+            original_rotation,
+            asset_name,
+            scale:Vector3::new(1.0,1.0,1.0)
         }
     }
 
@@ -78,11 +98,18 @@ impl RigidBodyData {
             w: rot.w,
         };
 
+        let scale_vec = Vec3{ 
+            x:self.scale.x,
+            y:self.scale.y,
+            z:self.scale.z
+        };
+
         ObjectUpdate {
             name: self.name.clone(),
             p: pos_vec,
             q: rot_quat,
-            asset_name: self.asset_name.clone()
+            asset_name: self.asset_name.clone(),
+            scale:scale_vec
         }
     }
 }
