@@ -6,7 +6,7 @@ use rapier3d::prelude::{Collider, ColliderSet, CollisionEvent, RigidBodyBuilder,
 
 use crate::{
     animation::{Animations, NodesKeyFrame, PlaybackMode},
-    structs::ObjectUpdate, player::Player,
+    structs::ObjectUpdate, player::Player, physics::Physics,
 };
 
 use super::rigid_body_parent::RigidBodyData;
@@ -84,16 +84,14 @@ impl LaunchPad {
 
     pub fn update(
         &mut self,
-        delta_time: f32,
-        rigid_body_set: &mut RigidBodySet,
-        collision_vec: &Vec<CollisionEvent>,
-        players: &mut HashMap<SocketAddr, Player>
+        players: &mut HashMap<SocketAddr, Player>,
+        physics_enigne: &mut Physics
         
     ) {
 
         // let mut collisions = Vec::new();
         let  mut launched = false;
-        for c in collision_vec.iter(){
+        for c in physics_enigne.collision_vec.clone().iter(){
 
             let mut handle= None;
 
@@ -107,7 +105,7 @@ impl LaunchPad {
                 for player in players.iter_mut(){
                     if player.1.collider_handle == handle{
                         //player 
-                        player.1.launch(rigid_body_set,self.launch_dir);
+                        player.1.launch(physics_enigne,self.launch_dir);
                         launched = true;
                     }
                 }
@@ -128,17 +126,17 @@ impl LaunchPad {
         // }
         // let c2 = collisions.map(|x| players.map())
 
-        let NodesKeyFrame(translation, rotation, scale) = self.animations.update(delta_time);
+        let NodesKeyFrame(translation, rotation, scale) = self.animations.update(physics_enigne.get_time_step());
 
         match translation {
             Some(translation) => {
-                rigid_body_set[self.object.rigid_body_handle].set_translation(translation, true)
+                physics_enigne.get_rigid_body(self.object.rigid_body_handle).set_translation(translation, true)
             }
             None => {}
         }
 
         match rotation {
-            Some(rotation) => rigid_body_set[self.object.rigid_body_handle]
+            Some(rotation) => physics_enigne.get_rigid_body(self.object.rigid_body_handle)
                 .set_rotation(UnitQuaternion::from_quaternion(rotation), true),
             None => {}
         }

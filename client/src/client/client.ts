@@ -100,6 +100,12 @@ socket.onmessage = function (event) {
 
         });
 
+        Object.keys(world.obstacles).forEach((id) => {
+            if(data.dynamic_objects[id]==undefined){
+                world.removeObstacle(id)
+            }
+        })
+
 
     }
 

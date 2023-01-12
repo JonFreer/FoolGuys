@@ -16,6 +16,8 @@ mod client;
 mod player;
 mod structs;
 mod world;
+mod physics;
+
 mod physics_objects {
     pub mod launchpad;
     pub mod spin;
@@ -36,7 +38,7 @@ mod character_states {
 
 use rapier3d::{crossbeam, prelude::*};
 
-use crate::{world::{World}, physics_objects::rigid_body_parent::Objects};
+use crate::{world::{World}, physics_objects::rigid_body_parent::Objects, physics::Physics};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
@@ -131,10 +133,13 @@ async fn main() -> Result<(), IoError> {
     // sokcer_handler(state.clone(),listener).await;
     tokio::spawn(sokcer_handler(state.clone(), listener));
 
+    let mut physics_engine = Physics::new();
     //RAPIER BOILERPLATE
     let mut world = World::new(asset_path);
 
-    world.load_world(path);
+    world.load_world(path,&mut physics_engine);
+
+
 
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
@@ -145,25 +150,14 @@ async fn main() -> Result<(), IoError> {
     // let collider = ColliderBuilder::cuboid(10.0, 0.1, 10.0).build();
 
     /* Create other structures necessary for the simulation. */
-    let gravity = vector![0.0, -9.81, 0.0];
-    let integration_parameters = IntegrationParameters::default();
-    let mut physics_pipeline = PhysicsPipeline::new();
-    let mut island_manager = IslandManager::new();
-    let mut broad_phase = BroadPhase::new();
-    let mut narrow_phase = NarrowPhase::new();
-    let mut impulse_joint_set = ImpulseJointSet::new();
-    let mut multibody_joint_set = MultibodyJointSet::new();
-    let mut ccd_solver = CCDSolver::new();
-    let physics_hooks = ();
-    let mut query_pipline= QueryPipeline::new();
+
 
     // let f = query_pipline.flags;
     // let event_handler = ();
 
-    let (collision_send, collision_recv) = crossbeam::channel::unbounded();
-    let (contact_force_send, _contact_force_recv) = crossbeam::channel::unbounded();
 
-    let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
+
+
 
     // // let mut server = Server::bind(ip).unwrap();
     // let mut server = Server::bind(ip).unwrap();
@@ -186,8 +180,8 @@ async fn main() -> Result<(), IoError> {
                     let player = Player::new(
                         // client2,
                         players.len(),
-                        &mut world.rigid_body_set,
-                        &mut world.collider_set,
+                        &mut physics_engine.rigid_body_set,
+                        &mut physics_engine.collider_set,
                         &world.spawn_points
                     );
 
@@ -212,14 +206,7 @@ async fn main() -> Result<(), IoError> {
 
                 if !peers.contains_key(p.0) {
                     // world.collider_set.remove(value.collider_handle, &mut island_manager, &mut world.rigid_body_set, true);
-                    world.rigid_body_set.remove(
-                        p.1.rigid_body_handle,
-                        &mut island_manager,
-                        &mut world.collider_set,
-                        &mut impulse_joint_set,
-                        &mut multibody_joint_set,
-                        true,
-                    );
+                    physics_engine.remove_from_rigid_body_set(p.1.rigid_body_handle);
                     players_to_remove.push(p.0.clone());
                     // players.remove(p.0);
                 }
@@ -238,10 +225,8 @@ async fn main() -> Result<(), IoError> {
 
             for p in players.iter_mut() {
                 p.1.update_physics(
-          
-                    integration_parameters,
-                    &query_pipline,
-                    &mut world
+                    &mut world,
+                    &mut physics_engine
                 );
             }
 
@@ -264,22 +249,8 @@ async fn main() -> Result<(), IoError> {
                 }
             }
 
-            physics_pipeline.step(
-                &gravity,
-                &integration_parameters,
-                &mut island_manager,
-                &mut broad_phase,
-                &mut narrow_phase,
-                &mut world.rigid_body_set,
-                &mut world.collider_set,
-                &mut impulse_joint_set,
-                &mut multibody_joint_set,
-                &mut ccd_solver,
-                &physics_hooks,
-                &event_handler,
-            );
-
-            query_pipline.update( &island_manager,&world.rigid_body_set, &world.collider_set);
+            
+            physics_engine.update();
 
 
 
@@ -298,11 +269,7 @@ async fn main() -> Result<(), IoError> {
             //     &event_handler,
             // );
 
-            let mut collision_vec = Vec::new();
-            
-            while let Ok(collision_event) = collision_recv.try_recv() {
-                collision_vec.push(collision_event as CollisionEvent);
-            }
+           
 
 
 
@@ -359,14 +326,7 @@ async fn main() -> Result<(), IoError> {
             // }
 
                 //Update physics objects
-                for object in world.dynamic_objects.iter_mut() {
-                match object{
-                    Objects::LaunchPad(object)=>{
-                        object.update(1.0/60.0,&mut world.rigid_body_set,&collision_vec, &mut players);
-                    },
-                    _=>{}
-                }
-            }
+            world.update(&mut players,&mut physics_engine);
 
           
             // Send players_info
@@ -376,7 +336,7 @@ async fn main() -> Result<(), IoError> {
             for player in players.iter_mut() {
                 players_info.insert(
                     player.0.to_string(),
-                    player.1.get_info(&mut world.rigid_body_set),
+                    player.1.get_info(&mut physics_engine.rigid_body_set),
                 );
             }
 
@@ -384,7 +344,7 @@ async fn main() -> Result<(), IoError> {
                 .dynamic_objects
                 .iter_mut()
                 .map(|x|
-                     (x.name(), x.get_info(&mut world.rigid_body_set))
+                     (x.name(), x.get_info(&mut physics_engine.rigid_body_set))
                     )
                 .collect();
 

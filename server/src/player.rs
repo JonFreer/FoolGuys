@@ -7,7 +7,7 @@ use rapier3d::control::{CharacterLength, KinematicCharacterController};
 // use serde::{Deserialize, Serialize};
 // use serde_json::{Result, Number};
 
-use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World};
+use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
 use rand::Rng;
 use serde_json::{Value, Error};
 // use websocket::OwnedMessage;
@@ -129,17 +129,28 @@ impl Player {
     pub fn update_physics(
         &mut self,
 
-        integration_parameters: IntegrationParameters,
-        query_pipeline: &QueryPipeline,
-        world: &mut World
+        // integration_parameters: IntegrationParameters,
+        // query_pipeline: &QueryPipeline,
+        world: &mut World,
+        physics_engine: &mut Physics
     ) {
         self.just_jumped = false;
 
 
+        //Example.rs
+        // let rigid_body = &mut physics_engine.rigid_body_set[self.rigid_body_handle];// get_rigid_body(self.rigid_body_handle);
+        // let dt = physics_engine.get_time_step();
 
-        let rigid_body = &mut world.rigid_body_set[self.rigid_body_handle];
+        //Physics.rs
+        // pub fn get_rigid_body(&mut self, rigid_body_handle: RigidBodyHandle) -> &mut RigidBody {
+        //     &mut self.rigid_body_set[rigid_body_handle]
+        // }
+    
+        // pub fn get_time_step(& self) -> f32 {
+        //     self.integration_parameters.dt
+        // }
 
-        let simulated_velocity = rigid_body.linvel().clone();
+        let simulated_velocity = physics_engine.get_rigid_body(self.rigid_body_handle).linvel().clone();
 
         let mut arcade_velocity = Vector3::new(0.0, 0.0, 0.0);
 
@@ -153,7 +164,7 @@ impl Player {
 
             self.target_look_at = rel_camera_movement.normalize().clone();
 
-            arcade_velocity = rel_camera_movement / integration_parameters.dt;
+            arcade_velocity = rel_camera_movement / physics_engine.get_time_step();
         }
 
         let mut new_velocity;// = Vector3::new(0.0, 0.0, 0.0);
@@ -208,32 +219,22 @@ impl Player {
 
 
         if self.on_ground {
-            rigid_body.set_linvel(new_velocity, true);
+            physics_engine.get_rigid_body(self.rigid_body_handle).set_linvel(new_velocity, true);
             self.acrade_veloicty_influencer = Vector3::new(0.05, 0.0, 0.05);
         } else {
-            rigid_body.set_linvel(new_velocity, true);
+            physics_engine.get_rigid_body(self.rigid_body_handle).set_linvel(new_velocity, true);
             self.acrade_veloicty_influencer = Vector3::new(0.01, 0.0, 0.01);
         }
 
-        let mut character_controller = KinematicCharacterController::default();
+        
 
-        let collider = &world.collider_set[self.collider_handle];
+        // let collider = &world.collider_set[self.collider_handle];
  
-        let pos = Vector3::new(0.0, 0.0, 0.0);
-        character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.5));
+
+      
+        // character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.5));
         let mut collisions = vec![];
-        let corrected_movement = character_controller.move_shape(
-            integration_parameters.dt, // The timestep length (can be set to SimulationSettings::dt).
-            &world.rigid_body_set,           // The RigidBodySet.
-            &world.collider_set,             // The ColliderSet.
-            query_pipeline,            // The QueryPipeline.
-            collider.shape(),          // The character’s shape.
-            &collider.position(),      // The character’s initial position.
-            pos.cast::<Real>(),
-            QueryFilter::default()
-                .exclude_rigid_body(self.rigid_body_handle),
-            |c| collisions.push(c), // We don’t care about events in this example.
-        );
+        let corrected_movement = physics_engine.update_characet_controller(self.collider_handle, self.rigid_body_handle, &mut collisions); 
 
 
         if corrected_movement.grounded {
@@ -243,8 +244,8 @@ impl Player {
             self.on_ground = false;
         }
 
-        let rigid_body = &mut world.rigid_body_set[self.rigid_body_handle];
-    
+        let rigid_body =physics_engine.get_rigid_body(self.rigid_body_handle);
+        
 
         if self.to_jump && self.can_jump {
             rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 7.0, 0.0), true);
@@ -272,23 +273,28 @@ impl Player {
         //update char state
 
         match self.character_state.clone(){
-            CharacterState::JumpIdle(_) => JumpIdleState::update(self, integration_parameters.dt),
-            CharacterState::Falling => FallingState::update(self,integration_parameters.dt),
+            CharacterState::JumpIdle(_) => JumpIdleState::update(self, physics_engine.get_time_step()),
+            CharacterState::Falling => FallingState::update(self,physics_engine.get_time_step()),
             _ => {}
         }
 
         if self.to_throw{
 
-            println!("THROWING");
+            println!("THROWING {:?}",self.view_vector);
 
-            let rigid_body = &world.rigid_body_set[self.rigid_body_handle];
+            let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
 
             world.add_dynamic_asset("asset_id".to_string(),
              "Asset_Apple".to_string(),
-              Vector3::new(1.0,1.0,1.0), 
+              Vector3::new(1.0,1.0,1.0)*0.2, 
               rigid_body.translation()+Vector3::new(1.0,2.0,1.0), 
               *rigid_body.rotation(),
-                true);
+                true,
+                self.view_vector * 10.0 + Vector::new(0.0,10.0,0.0),
+                20.0,
+                physics_engine
+                // Vector3::new(10.0,5.0,0.0)
+            );
 
             self.to_throw = false;
         }
@@ -424,8 +430,8 @@ impl Player {
 
     }
 
-    pub fn launch(&mut self, rigid_body_set: &mut RigidBodySet, launch_dir: Vector3<f32>) {
-        let body = &mut rigid_body_set[self.rigid_body_handle];
+    pub fn launch(&mut self, physics_engine: &mut Physics, launch_dir: Vector3<f32>) {
+        let body = physics_engine.get_rigid_body(self.rigid_body_handle);
         let velocity = launch_dir;
         body.set_linvel(velocity, true);
     }

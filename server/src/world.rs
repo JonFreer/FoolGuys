@@ -1,12 +1,15 @@
 use std::collections::HashMap;
 use std::f32::consts::E;
+use std::hash::Hash;
+use std::net::SocketAddr;
 use std::thread::spawn;
 
 use gltf::{Document, Node};
 use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector2, Vector3};
-use rapier3d::prelude::{ColliderSet, RigidBodySet};
+use rapier3d::prelude::{ColliderSet, CollisionEvent, IslandManager, RigidBodySet};
 use serde_json::Value;
 
+use crate::physics::Physics;
 use crate::physics_objects::asset::AssetBase;
 use crate::physics_objects::collision;
 use crate::physics_objects::dynamic::DynamicObject;
@@ -14,10 +17,9 @@ use crate::physics_objects::launchpad::LaunchPad;
 use crate::physics_objects::pivot::PivotObject;
 use crate::physics_objects::rigid_body_parent::Objects;
 use crate::physics_objects::spin::SpinObject;
+use crate::player::Player;
 
 pub struct World {
-    pub rigid_body_set: RigidBodySet,
-    pub collider_set: ColliderSet,
     pub dynamic_objects: Vec<Objects>,
     pub spawn_points: Vec<Vector3<f32>>,
     assets: HashMap<String, AssetBase>,
@@ -27,15 +29,11 @@ pub struct World {
 impl World {
     pub fn new(asset_path: &str) -> Self {
         let mut assets = HashMap::new();
-        let mut rigid_body_set = RigidBodySet::new();
-        let mut collider_set = ColliderSet::new();
         let mut dynamic_objects = Vec::new();
 
         println!("Created world");
 
         Self {
-            rigid_body_set,
-            collider_set,
             dynamic_objects,
             spawn_points: Vec::new(),
             assets,
@@ -43,11 +41,11 @@ impl World {
         }
     }
 
-    pub fn load_world(&mut self, path: &str) {
+    pub fn load_world(&mut self, path: &str, physics_engine: &mut Physics) {
         let (gltf, buffers, _) = gltf::import(path).unwrap();
         for scene in gltf.scenes() {
             for node in scene.nodes() {
-                self.create_object(&node, &buffers, &gltf);
+                self.create_object(&node, &buffers, &gltf, physics_engine);
             }
         }
 
@@ -61,12 +59,12 @@ impl World {
         scale: Vector3<f32>,
         translation: Vector3<f32>,
         roation: Unit<Quaternion<f32>>,
-        recreate:bool //if this asset exists should it be recreated or a new one added
-    ) { 
-
-        if(recreate){
-
-        }
+        recreate: bool, //if this asset exists should it be recreated or a new one added
+        initial_velcoity: Vector3<f32>,
+        lifetime: f32,
+        physics_engine: &mut Physics,
+    ) {
+        if (recreate) {}
 
         if !self.assets.contains_key(&asset_name) {
             let format = format!("{}{}{}", self.asset_path, asset_name, ".glb").replace('"', "");
@@ -79,13 +77,15 @@ impl World {
 
         let obj = DynamicObject::new(
             name + self.dynamic_objects.len().to_string().as_str(),
-            &mut self.rigid_body_set,
+            &mut physics_engine.rigid_body_set,
             asset.get_collider(scale),
-            &mut self.collider_set,
+            &mut physics_engine.collider_set,
             asset_name,
             scale,
             roation,
             translation,
+            initial_velcoity,
+            lifetime,
         );
 
         self.dynamic_objects.push(Objects::Dynamic(obj));
@@ -96,6 +96,7 @@ impl World {
         node: &Node,
         buffers: &Vec<gltf::buffer::Data>,
         gltf: &Document,
+        physics_engine: &mut Physics,
     ) {
         if let Some(_) = node.mesh() {
             let collider_option = collision::new_collider(node, &buffers);
@@ -117,15 +118,17 @@ impl World {
                         println!("dynamic object");
                         let obj = DynamicObject::new(
                             node.name().unwrap().to_string(),
-                            &mut self.rigid_body_set,
+                            &mut physics_engine.rigid_body_set,
                             collider,
-                            &mut self.collider_set,
+                            &mut physics_engine.collider_set,
                             asset_name,
                             Vector3::new(1.0, 1.0, 1.0),
                             UnitQuaternion::from_quaternion(Quaternion::new(
                                 rot[3], rot[0], rot[1], rot[2],
                             )),
                             Vector3::new(pos[0], pos[1], pos[2]),
+                            Vector3::new(0.0, 0.0, 0.0),
+                            0.0,
                         );
 
                         self.dynamic_objects.push(Objects::Dynamic(obj));
@@ -133,18 +136,18 @@ impl World {
                         let obj = SpinObject::new(
                             extras["spin"].to_string(),
                             &node,
-                            &mut self.rigid_body_set,
+                            &mut physics_engine.rigid_body_set,
                             collider,
-                            &mut self.collider_set,
+                            &mut physics_engine.collider_set,
                         );
                         self.dynamic_objects.push(Objects::Spin(obj));
                     } else if extras["pivot"] != Value::Null {
                         let obj = PivotObject::new(
                             extras["pivot"].to_string(),
                             &node,
-                            &mut self.rigid_body_set,
+                            &mut physics_engine.rigid_body_set,
                             collider,
-                            &mut self.collider_set,
+                            &mut physics_engine.collider_set,
                         );
                         self.dynamic_objects.push(Objects::Pivot(obj));
                     } else if extras["launchpad"] != Value::Null {
@@ -152,23 +155,23 @@ impl World {
                         let obj = LaunchPad::new(
                             gltf.animations(),
                             &node,
-                            &mut self.rigid_body_set,
+                            &mut physics_engine.rigid_body_set,
                             collider,
-                            &mut self.collider_set,
+                            &mut physics_engine.collider_set,
                             &buffers,
                             extras["launchpad"].to_string(),
                         );
                         self.dynamic_objects.push(Objects::LaunchPad(obj));
                     } else {
-                        self.collider_set.insert(collider);
+                        physics_engine.collider_set.insert(collider);
                     }
                 } else {
-                    self.collider_set.insert(collider);
+                    physics_engine.collider_set.insert(collider);
                 }
             }
 
             for child in node.children() {
-                self.create_object(&child, buffers, gltf);
+                self.create_object(&child, buffers, gltf, physics_engine);
             }
         } else {
             //if item is an asset empty
@@ -189,7 +192,10 @@ impl World {
                         UnitQuaternion::from_quaternion(Quaternion::new(
                             rot[3], rot[0], rot[1], rot[2],
                         )),
-                        false
+                        false,
+                        Vector3::new(0.0, 0.0, 0.0),
+                        0.0,
+                        physics_engine,
                     );
                     // let name = extras["asset"].to_string();
                     // //check if asset is loaded, if not load the asset
@@ -230,13 +236,47 @@ impl World {
                         gltf::json::deserialize::from_str(extras.get()).unwrap();
                     if extras["spawn_point"] != Value::Null {
                         let translation = node.transform().decomposed().0;
-                        spawn_points.push(Vector3::new(translation[0], translation[1], translation[2]));
+                        spawn_points.push(Vector3::new(
+                            translation[0],
+                            translation[1],
+                            translation[2],
+                        ));
                     }
                 }
             }
         }
         self.spawn_points = spawn_points;
     }
-    
-}
 
+    pub fn update(
+        &mut self,
+        players: &mut HashMap<SocketAddr, Player>,
+        physics_engine: &mut Physics,
+    ) {
+        let mut object_to_remove = Vec::new();
+
+        // for object in self.dynamic_objects.iter_mut() {
+        for i in 0..self.dynamic_objects.len() {
+            if let Some(object) = self.dynamic_objects.get_mut(i) {
+                match object {
+                    Objects::LaunchPad(object) => {
+                        object.update(players, physics_engine);
+                    }
+                    Objects::Dynamic(object) => {
+                        object.update( physics_engine);
+                        if object.lifetime < 0.0 {
+                            object_to_remove.push(i);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        for index in object_to_remove.iter() {
+            self.dynamic_objects.remove(*index);
+        }
+
+        //remove dead objects
+    }
+}

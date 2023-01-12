@@ -4,10 +4,11 @@ use gltf::{Node, json::asset};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3, Unit};
 use rapier3d::prelude::{Collider, ColliderSet, LockedAxes, RigidBodyBuilder, RigidBodySet};
 
-use crate::structs::ObjectUpdate;
+use crate::{structs::ObjectUpdate, world::World, physics::Physics};
 
 pub struct DynamicObject {
     pub object: RigidBodyData,
+    pub lifetime: f32
 }
 
 impl DynamicObject {
@@ -19,16 +20,21 @@ impl DynamicObject {
         asset_name: String,
         scale:Vector3<f32>,
         rotation: Unit<Quaternion<f32>>,
-        translation: Vector3<f32>
+        translation: Vector3<f32>,
+        initial_velcoity: Vector3<f32>,
+        lifetime:f32
     ) -> Self {
 
         let mut platform_body = RigidBodyBuilder::dynamic().build();
 
         platform_body.set_translation(translation, true);
-        
+
+        platform_body.set_linvel(initial_velcoity, true);
+
         collider.set_translation(Vector3::new(0.0, 0.0, 0.0));
 
         let rigid_body_handle = rigid_body_set.insert(platform_body);
+
 
         let collider_handle =
             collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
@@ -42,10 +48,28 @@ impl DynamicObject {
             scale
         );
 
-        Self { object }
+        Self { object , lifetime}
     }
 
     pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> ObjectUpdate {
         self.object.get_info(rigid_body_set)
+    }
+
+    pub fn update(&mut self, physics_engine: &mut Physics){
+        if self.lifetime == 0.0{
+            return;
+        }
+
+        self.lifetime = self.lifetime - physics_engine.get_time_step();
+
+        //decompose if life is over
+        if self.lifetime <= 0.0 {
+            physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
+            // world.rigid_body_set.remove(self.object.rigid_body_handle,&mut world.island_manager,&mut world.collider_set,&mut )
+        }
+    }
+
+    pub fn remove(){
+
     }
 }

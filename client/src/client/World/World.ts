@@ -280,8 +280,17 @@ export class World {
         
     }
 
+    public removeObstacle(id:string){
+        if(this.obstacles[id].object != undefined){
+            this.graphicsWorld.remove(this.obstacles[id].object);
+        }
+
+        delete this.obstacles[id];
+        
+    }
+
     public updateObstacle(id: string, obstacles: any) {
-        console.log(obstacles)
+        // console.log(obstacles)
         if (this.obstacles[id] != undefined) {
 
             new TWEEN.Tween(this.obstacles[id].object.position)
