@@ -157,7 +157,8 @@ async fn main() -> Result<(), IoError> {
                         players.len(),
                         &mut physics_engine.rigid_body_set,
                         &mut physics_engine.collider_set,
-                        &world.spawn_points
+                        &world.spawn_points,
+                        key.clone()
                     );
 
                     value
@@ -198,11 +199,17 @@ async fn main() -> Result<(), IoError> {
                 p.1.read_messages(c);
             }
 
+
+            let players_clone = players.clone();
+
             for p in players.iter_mut() {
+
                 p.1.update_physics(
                     &mut world,
-                    &mut physics_engine
+                    &mut physics_engine,
+                    &players_clone
                 );
+
             }
 
             //Send chat messages

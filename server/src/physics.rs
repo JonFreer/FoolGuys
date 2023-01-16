@@ -7,7 +7,7 @@ use rapier3d::{
         CollisionEvent, ImpulseJointSet, IntegrationParameters, IslandManager, MultibodyJointSet,
         NarrowPhase, PhysicsPipeline, QueryFilter, QueryPipeline, Real, RigidBody, RigidBodyHandle,
         RigidBodySet,
-    },
+    }, parry::query::Ray,
 };
 
 pub struct Physics {
@@ -22,7 +22,7 @@ pub struct Physics {
     multibody_joint_set: MultibodyJointSet,
     ccd_solver: CCDSolver,
     physics_hooks: (),
-    query_pipline: QueryPipeline,
+    query_pipeline: QueryPipeline,
     gravity: Vector3<f32>,
     event_handler: ChannelEventCollector,
     collision_recv: Receiver<CollisionEvent>,
@@ -45,7 +45,7 @@ impl Physics {
         let multibody_joint_set = MultibodyJointSet::new();
         let ccd_solver = CCDSolver::new();
         let physics_hooks = ();
-        let query_pipline = QueryPipeline::new();
+        let query_pipeline = QueryPipeline::new();
         let island_manager = IslandManager::new();
 
         let (collision_send, collision_recv) = crossbeam::channel::unbounded();
@@ -65,7 +65,7 @@ impl Physics {
             multibody_joint_set,
             ccd_solver,
             physics_hooks,
-            query_pipline,
+            query_pipeline,
             gravity,
             event_handler,
             collision_recv,
@@ -100,7 +100,7 @@ impl Physics {
             &self.event_handler,
         );
 
-        self.query_pipline.update(
+        self.query_pipeline.update(
             &self.island_manager,
             &self.rigid_body_set,
             &self.collider_set,
@@ -131,7 +131,7 @@ impl Physics {
             self.integration_parameters.dt, // The timestep length (can be set to SimulationSettings::dt).
             &self.rigid_body_set,           // The RigidBodySet.
             &self.collider_set,             // The ColliderSet.
-            &mut self.query_pipline,        // The QueryPipeline.
+            &mut self.query_pipeline,        // The QueryPipeline.
             collider.shape(),               // The character’s shape.
             &collider.position(),           // The character’s initial position.
             pos.cast::<Real>(),
@@ -150,5 +150,18 @@ impl Physics {
 
     pub fn get_time_step(& self) -> f32 {
         self.integration_parameters.dt
+    }
+
+    pub fn get_translation(& self, rigid_body_handle: RigidBodyHandle) -> Vector3<f32>{
+        self.rigid_body_set[rigid_body_handle].translation().clone()
+    }
+
+    pub fn cast_ray(&mut self, ray: &Ray, max_toi:f32,solid:bool,filter:QueryFilter) -> Option<(ColliderHandle, Real)>{
+
+        self.query_pipeline.cast_ray(
+            &self.rigid_body_set,
+            &self.collider_set, &ray, max_toi, solid, filter
+        ) 
+
     }
 }

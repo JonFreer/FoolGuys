@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::{collections::HashMap, net::SocketAddr};
 use nalgebra::{ Vector1, Vector2, Vector3};
 use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
 use rand::Rng;
@@ -7,7 +7,9 @@ use serde_json::{Value, Error};
 
 use rapier3d::prelude::*;
 
+#[derive(Clone)]
 pub struct Player {
+    pub id: SocketAddr,
     pub name: String,
     pub can_jump: bool,
     pub chat_queue: Vec<String>,
@@ -31,12 +33,14 @@ pub struct Player {
     pub target_look_at: Vector<f32>
 }
 
+
 impl Player {
     pub fn new(
         num_players: usize,
         rigid_body_set: &mut RigidBodySet,
         collider_set: &mut ColliderSet,
-        spawn_points: &Vec<Vector3<f32>>
+        spawn_points: &Vec<Vector3<f32>>,
+        id: SocketAddr
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
 
@@ -104,7 +108,8 @@ impl Player {
             character_state: CharacterState::Idle(IdleState { }),
             just_jumped:false,
             look_at: Vector3::new(1.0,0.0,0.0),
-            target_look_at: Vector3::new(1.0,0.0,0.0)
+            target_look_at: Vector3::new(1.0,0.0,0.0),
+            id
         }
     }
 
@@ -125,7 +130,8 @@ impl Player {
         // integration_parameters: IntegrationParameters,
         // query_pipeline: &QueryPipeline,
         world: &mut World,
-        physics_engine: &mut Physics
+        physics_engine: &mut Physics,
+        players : & HashMap<SocketAddr, Player>
     ) {
         self.just_jumped = false;
 
@@ -292,6 +298,8 @@ impl Player {
             self.to_throw = false;
         }
 
+        self.check_attack(players,physics_engine);
+
 
     }
 
@@ -435,6 +443,31 @@ impl Player {
             CharacterState::Idle(_) => IdleState::on_input_change(self),
             CharacterState::Walk => WalkState::on_input_change(self),
             _ => {}
+        }
+    }
+
+    pub fn get_translation(&mut self,physics_engine: &mut Physics) -> Vector3<f32>{
+        physics_engine.get_translation(self.rigid_body_handle)
+    }
+
+    pub fn check_attack(&mut self, players: &HashMap<SocketAddr, Player>,physics_engine: &mut Physics){
+        
+        let ray = Ray::new(Point::from(self.get_translation(physics_engine)), self.view_vector);
+
+        let max_toi = 4.0;
+        let solid = false;
+        let filter = QueryFilter::default().exclude_rigid_body(self.rigid_body_handle);
+
+        if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter){
+            let hit_point = ray.point_at(toi); // Same as: `ray.origin + ray.dir * toi`
+
+            for (id,player) in players.iter(){
+                if player.collider_handle == handle{
+                    // println!("Collider {:?} hit at point {}", handle, hit_point);
+                }
+            }
+            
+            // ray.point_at(toi)
         }
     }
 

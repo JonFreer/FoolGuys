@@ -69,6 +69,10 @@ impl DynamicObject {
         }
     }
 
+    pub fn get_translation(& self, physics_engine: &mut Physics ) -> Vector3<f32>{
+        physics_engine.get_translation(self.object.rigid_body_handle)
+    }
+
     pub fn remove(){
 
     }

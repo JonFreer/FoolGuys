@@ -233,21 +233,30 @@ impl World {
         // for object in self.dynamic_objects.iter_mut() {
         for i in 0..self.dynamic_objects.len() {
             if let Some(object) = self.dynamic_objects.get_mut(i) {
+
+                //update each object
+
                 match object {
                     Objects::LaunchPad(object) => {
                         object.update(players, physics_engine);
                     }
                     Objects::Dynamic(object) => {
                         object.update( physics_engine);
+
                         if object.lifetime < 0.0 {
                             object_to_remove.push(i);
+                        }else if object.get_translation(physics_engine).y < -10.0{
+                            object_to_remove.push(i);
                         }
+
                     }
                     _ => {}
-                }
+                };
+
             }
         }
 
+    
         for index in object_to_remove.iter() {
             self.dynamic_objects.remove(*index);
         }
