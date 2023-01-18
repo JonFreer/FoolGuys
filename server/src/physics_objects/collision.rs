@@ -1,6 +1,7 @@
 use gltf::{Node, mesh::util::indices};
 use nalgebra::{Vector3, Quaternion, UnitQuaternion};
 use rapier3d::prelude::{ColliderBuilder, Collider, Point, Shape, Cuboid, ConvexPolyhedron, SharedShape, Ball, ShapeType};
+use serde_json::Value;
 
 
 pub fn resize_shared_shape(shape: &SharedShape,scale:Vector3<f32>) -> Option<SharedShape>{
@@ -89,6 +90,7 @@ pub fn  new_collider(node: &Node, buffers: &Vec<gltf::buffer::Data>) -> Option<C
                 Some("hull") => Some(new_hull_collider(node,buffers)),
                 Some("box") => Some(new_box_collider(node)),
                 Some("trimesh") => Some(new_trimesh_collider(node,buffers)),
+                Some("capsule") => Some(new_capsule_collider(node,e)),
                 _ => {println!("None collider {:?}",e); None}
             }
         },
@@ -98,6 +100,23 @@ pub fn  new_collider(node: &Node, buffers: &Vec<gltf::buffer::Data>) -> Option<C
 
     collider
 
+}
+
+fn new_capsule_collider(node: &Node,extras:Value) -> Collider {
+
+    let scale = node.transform().decomposed().2;
+    let pos = node.transform().decomposed().0;
+    let rot = node.transform().decomposed().1;
+
+    let mut collider = ColliderBuilder::capsule_x(extras["half_height"].as_f64().unwrap() as f32*scale[0] , extras["radius"].as_f64().unwrap() as f32*scale[0]).build();
+
+    let rotation = UnitQuaternion::from_quaternion(Quaternion::new(
+        rot[3], rot[0], rot[1], rot[2],
+    ));
+
+    collider.set_rotation(rotation);
+    collider.set_translation(Vector3::new(pos[0], pos[1], pos[2]));
+    collider
 }
 
 fn new_box_collider(node: &Node) -> Collider {

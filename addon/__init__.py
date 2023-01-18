@@ -56,6 +56,59 @@ class SetPhysicsBall(bpy.types.Operator):
         
         return {'FINISHED'}   
 
+class SetPhysicsCapsule(bpy.types.Operator):
+    """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "game_export.physics_capsule"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "Set Physics Capsule"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+
+    def execute(self,context):
+
+
+        for obj in bpy.context.selected_objects:
+            obj["physics"]= "capsule"
+            obj.display_type = "WIRE"
+        
+        return {'FINISHED'}   
+
+class SetJoint(bpy.types.Operator):
+    """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "game_export.set_joint"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "Set Physics Capsule"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+
+    def execute(self,context):
+
+
+        for obj in bpy.context.selected_objects:
+            obj["joint"]= ""
+
+        
+        return {'FINISHED'}   
+
+class ModiferToProperties(bpy.types.Operator):
+    """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "game_export.modifier_to_properties"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "Copy Modifiers to Properites"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+
+    def execute(self,context):
+
+
+        for obj in bpy.context.selected_objects:
+            radius_id = obj.modifiers["GeometryNodes"].node_group.inputs["Radius"].identifier
+            half_height_id = obj.modifiers["GeometryNodes"].node_group.inputs["Half Height"].identifier
+            print (obj.modifiers["GeometryNodes"]["Input_3"])
+            print (obj.modifiers["GeometryNodes"].node_group.inputs["Half Height"].identifier )#["attributeName"].data[0].value
+            # for at in obj.modifiers["GeometryNodes"]:
+            #     print(at)
+            obj["radius"]= obj.modifiers["GeometryNodes"][radius_id]
+            obj["half_height"]= obj.modifiers["GeometryNodes"][half_height_id]
+            # obj["half_height"]= "ball"
+        
+        return {'FINISHED'}   
+
+
 
 class ExportAssets(bpy.types.Operator):
     """My Object Moving Script"""      # Use this as a tooltip for menu items and buttons.
@@ -223,23 +276,31 @@ class TOPBAR_MT_test(bpy.types.Menu):
         layout.operator("game_export.export_assets", text="Export Assets")
         layout.operator("game_export.physics_hull", text="Physics: Hull")
         layout.operator("game_export.physics_ball", text="Physics: Ball")
+        layout.operator("game_export.physics_capsule", text="Physics: Capsule")
+        layout.operator("game_export.set_joint", text="Set Joint")
+        layout.operator("game_export.modifier_to_properties", text="Physics: Properties From Mod")
     def menu_draw(self, context):
         self.layout.menu("TOPBAR_MT_test")
 
 
 def register():
     # auto_load.register()SetPhysicsHull
+    bpy.utils.register_class(ModiferToProperties)
     bpy.utils.register_class(SetPhysicsHull)
     bpy.utils.register_class(SetPhysicsBall)
+    bpy.utils.register_class(SetPhysicsCapsule)
+    bpy.utils.register_class(SetJoint)
     bpy.utils.register_class(ExportScene)
     bpy.utils.register_class(ExportAssets)
     bpy.utils.register_class(TOPBAR_MT_test)
     bpy.types.TOPBAR_MT_editor_menus.append(TOPBAR_MT_test.menu_draw)
-
 def unregister():
+    bpy.utils.unregister_class(ModiferToProperties)
     bpy.utils.unregister_class(SetPhysicsHull)
     bpy.utils.unregister_class(SetPhysicsBall)
+    bpy.utils.unregister_class(SetPhysicsCapsule)
     bpy.utils.unregister_class(ExportScene)
+    bpy.utils.unregister_class(SetJoint)
     bpy.utils.unregister_class(TOPBAR_MT_test)
     bpy.utils.unregister_class(ExportAssets)
     bpy.types.TOPBAR_MT_editor_menus.remove(TOPBAR_MT_test.menu_draw)

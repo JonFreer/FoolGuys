@@ -25,6 +25,7 @@ mod physics_objects {
     pub mod rigid_body_parent;
     pub mod dynamic;
     pub mod asset;
+    pub mod ragdoll;
 }
 
 mod character_states {
@@ -36,7 +37,7 @@ mod character_states {
 }
 
 
-use crate::{world::{World}, physics::Physics};
+use crate::{world::{World}, physics::Physics, physics_objects::ragdoll::Ragdoll};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
@@ -136,6 +137,8 @@ async fn main() -> Result<(), IoError> {
     let mut world = World::new(asset_path);
 
     world.load_world(path,&mut physics_engine);
+
+    let ragdoll = Ragdoll::new("../Blender/character.glb".to_string());
 
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
