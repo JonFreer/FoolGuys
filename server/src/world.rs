@@ -22,6 +22,7 @@ pub struct World {
     pub spawn_points: Vec<Vector3<f32>>,
     assets: HashMap<String, AssetBase>,
     asset_path: String,
+    asset_count: i32
 }
 
 impl World {
@@ -36,6 +37,7 @@ impl World {
             spawn_points: Vec::new(),
             assets,
             asset_path: asset_path.to_string(),
+            asset_count:0
         }
     }
 
@@ -73,8 +75,10 @@ impl World {
 
         let asset = self.assets.get(&asset_name).unwrap();
 
+        self.asset_count += 1;
+
         let obj = DynamicObject::new(
-            name + self.dynamic_objects.len().to_string().as_str(),
+            name + self.asset_count.to_string().as_str(),
             &mut physics_engine.rigid_body_set,
             asset.get_collider(scale),
             &mut physics_engine.collider_set,
@@ -256,6 +260,7 @@ impl World {
             }
         }
 
+        object_to_remove.sort_by(|a, b| b.cmp(a));
     
         for index in object_to_remove.iter() {
             self.dynamic_objects.remove(*index);
