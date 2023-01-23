@@ -138,7 +138,7 @@ async fn main() -> Result<(), IoError> {
 
     world.load_world(path,&mut physics_engine);
 
-    let ragdoll = Ragdoll::new("../Blender/character.glb".to_string());
+    // let ragdoll = Ragdoll::new("../Blender/character.glb".to_string());
 
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
