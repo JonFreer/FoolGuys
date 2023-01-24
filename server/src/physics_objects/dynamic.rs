@@ -64,15 +64,10 @@ impl DynamicObject {
         self.lifetime = self.lifetime - physics_engine.get_time_step();
 
         //decompose if life is over
-        if self.lifetime <= 0.0 {
+        if self.lifetime <= 0.0 || self.get_translation(physics_engine).y < -10.0{
             physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
             self.alive = false;
             // world.rigid_body_set.remove(self.object.rigid_body_handle,&mut world.island_manager,&mut world.collider_set,&mut )
-        }
-
-        if self.get_translation(physics_engine).y < -10.0{
-            physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
-            self.alive = false;
         }
     }
 

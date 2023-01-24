@@ -173,6 +173,14 @@ function join() {
     // document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => { screen.orientation.lock('landscape') })
     world.mobileControls.enable()
 
+    let throw_button = document.getElementById("button_throw") as HTMLDivElement;
+    if (throw_button){
+        throw_button.onclick= ()=>{
+            socket.send(JSON.stringify(['throw', {
+            }]))
+        };
+    }
+
 
 }
 
