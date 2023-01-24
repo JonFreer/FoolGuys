@@ -8,7 +8,8 @@ use crate::{structs::ObjectUpdate, world::World, physics::Physics};
 
 pub struct DynamicObject {
     pub object: RigidBodyData,
-    pub lifetime: f32
+    lifetime: f32,
+    pub alive: bool
 }
 
 impl DynamicObject {
@@ -45,10 +46,10 @@ impl DynamicObject {
             collider_handle,
             rotation,
             asset_name,
-            scale
+            scale,
         );
 
-        Self { object , lifetime}
+        Self { object , lifetime, alive:true}
     }
 
     pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> ObjectUpdate {
@@ -56,7 +57,7 @@ impl DynamicObject {
     }
 
     pub fn update(&mut self, physics_engine: &mut Physics){
-        if self.lifetime == 0.0{
+        if self.lifetime == 0.0 || !self.alive{
             return;
         }
 
@@ -65,7 +66,13 @@ impl DynamicObject {
         //decompose if life is over
         if self.lifetime <= 0.0 {
             physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
+            self.alive = false;
             // world.rigid_body_set.remove(self.object.rigid_body_handle,&mut world.island_manager,&mut world.collider_set,&mut )
+        }
+
+        if self.get_translation(physics_engine).y < -10.0{
+            physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
+            self.alive = false;
         }
     }
 
@@ -73,7 +80,7 @@ impl DynamicObject {
         physics_engine.get_translation(self.object.rigid_body_handle)
     }
 
-    pub fn remove(){
-
+    pub fn remove(& self, physics_engine: &mut Physics){
+        
     }
 }

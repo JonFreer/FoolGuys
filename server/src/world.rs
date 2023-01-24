@@ -247,9 +247,7 @@ impl World {
                     Objects::Dynamic(object) => {
                         object.update( physics_engine);
 
-                        if object.lifetime < 0.0 {
-                            object_to_remove.push(i);
-                        }else if object.get_translation(physics_engine).y < -10.0{
+                        if !object.alive {
                             object_to_remove.push(i);
                         }
 
@@ -268,4 +266,8 @@ impl World {
 
         //remove dead objects
     }
+
+  
 }
+
+
