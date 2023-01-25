@@ -19,7 +19,7 @@ pub struct Physics {
     physics_pipeline: PhysicsPipeline,
     broad_phase: BroadPhase,
     narrow_phase: NarrowPhase,
-    impulse_joint_set: ImpulseJointSet,
+    pub impulse_joint_set: ImpulseJointSet,
     multibody_joint_set: MultibodyJointSet,
     ccd_solver: CCDSolver,
     physics_hooks: (),
@@ -173,6 +173,12 @@ impl Physics {
             joints:self.impulse_joint_set.clone()
         }
     }
+
+    pub fn get_state_update(&mut self) -> PhysicsStateUpdate{
+        PhysicsStateUpdate{
+            bodies:self.rigid_body_set.clone(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)] 
@@ -182,3 +188,10 @@ pub struct PhysicsState {
     pub colliders: ColliderSet,
     pub joints: ImpulseJointSet,
 }
+
+#[derive(Serialize, Deserialize)] 
+#[derive(Clone)]
+pub struct PhysicsStateUpdate {
+    pub bodies: RigidBodySet,
+}
+

@@ -9,7 +9,7 @@ use futures_channel::mpsc::UnboundedReceiver;
 use tokio_tungstenite::tungstenite;
 use tungstenite::protocol::Message;
 
-use crate::{character_states::character_base::CharacterState, physics::PhysicsState};
+use crate::{character_states::character_base::CharacterState, physics::{PhysicsState, PhysicsStateUpdate}};
 
 pub fn message_prep(msg: MessageType) -> Message {
     Message::Text(serde_json::to_string(&msg).unwrap())
@@ -21,7 +21,8 @@ pub enum MessageType{
     Join{name:String,id:String},
     Chat{name:String,message:String},
     WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>},
-    PhysicsUpdate{data:PhysicsState}
+    PhysicsState{data:PhysicsState},
+    PhysicsUpdate{data:PhysicsStateUpdate}
 }
 
 #[derive(Serialize, Deserialize)]

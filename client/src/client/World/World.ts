@@ -19,6 +19,7 @@ import { ToonSky } from './ToonSky';
 import { AssetLoader } from './AssetLoader';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Asset } from './Asset';
+import { Debug } from './Debug';
 
 export class World {
 
@@ -46,6 +47,7 @@ export class World {
     public grass: Grass;
     public floor: Floor | undefined;
     public updatables : Asset[] = [];
+    public debug : Debug;
 
     private global_time :number = 0;
 
@@ -105,7 +107,7 @@ export class World {
         this.sea = new Sea(this);
 
         this.grass = new Grass(this);
-       
+        this.debug = new Debug(this)
         
 
 

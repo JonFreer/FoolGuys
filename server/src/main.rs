@@ -138,7 +138,7 @@ async fn main() -> Result<(), IoError> {
 
     world.load_world(path,&mut physics_engine);
 
-    // let ragdoll = Ragdoll::new("../Blender/character.glb".to_string());
+    let ragdoll = Ragdoll::new("../Blender/character.glb".to_string(),&mut physics_engine);
 
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
@@ -276,10 +276,10 @@ async fn main() -> Result<(), IoError> {
                     .unbounded_send(message_prep(player_update_message.clone()))
                     .unwrap();
 
-                // value
-                //     .tx
-                //     .unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data: physics_engine.get_state() }))
-                //     .unwrap();
+                value
+                    .tx
+                    .unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data: physics_engine.get_state_update() }))
+                    .unwrap();
             }
 
             let duration = Instant::now() - start_time;

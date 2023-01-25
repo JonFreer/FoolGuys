@@ -419,7 +419,7 @@ impl Player {
                 }
 
                 if v[0] == "get_debug" {
-                    c.tx.unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data:physics_engine.get_state()})).unwrap();
+                    c.tx.unbounded_send(message_prep(structs::MessageType::PhysicsState { data:physics_engine.get_state()})).unwrap();
                 }
             }else{
                 println!("Erorr unwrapping message");

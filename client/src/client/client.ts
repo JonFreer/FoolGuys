@@ -125,90 +125,13 @@ socket.onmessage = function (event) {
 
     if (msg["PhysicsUpdate"]) {
         let data = msg["PhysicsUpdate"].data
+        world.debug.update_state(data)
 
-        let colliders = data.colliders.colliders.items
+    }
 
-        let group = new THREE.Group;
-        // console.log(colliders)
-        for (let i = 0; i < colliders.length; i++) {
-
-            let collider = colliders[i]
-            if (collider.Occupied) {
-                console.log(collider.Occupied.value.shape)
-                if (collider.Occupied.value.shape.TriMesh) {
-                    const geometry = new THREE.BufferGeometry();
-                    //collider.Occupied.value.shape.TriMesh.vertices
-                    
-                    let vert_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.TriMesh.vertices.length; i++){
-                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][0])
-                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][1])
-                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][2])
-                    }
-                    const vertices = new Float32Array(vert_array)
-
-                    let indices_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.TriMesh.indices.length; i++){
-                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][0])
-                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][1])
-                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][2])
-                    }
-                    // const indices = new Float32Array(indices_array)
-                    // const vertices = new Float32Array(collider.Occupied.value.shape.TriMesh.vertices);
-
-                    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                    geometry.setIndex( indices_array );
-                    const material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
-                    const mesh = new THREE.LineSegments(geometry, material);
-                    // mesh.position.set(1, 1, 1)
-                    group.add(mesh)
-                    console.log("trimesh")
-                    console.log(collider.Occupied.value.shape.TriMesh)
-                }
-
-                if (collider.Occupied.value.shape.ConvexPolyhedron) {
-                    const geometry = new THREE.BufferGeometry();
-                    //collider.Occupied.value.shape.TriMesh.vertices
-                    
-                    let vert_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.ConvexPolyhedron.points.length; i++){
-                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][0])
-                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][1])
-                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][2])
-                    }
-
-                    let indices_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face.length; i++){
-                        indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i])
-                        // indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i][1])
-                        // indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i][2])
-                    }
-
-
-                    const vertices = new Float32Array(vert_array)
-                    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                    geometry.setIndex( indices_array );
-                    const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
-                    const mesh = new THREE.LineSegments(geometry, material);
-
-                    let pos = collider.Occupied.value.pos.translation;
-                    let rot = collider.Occupied.value.pos.rotation;
-                    mesh.position.set(pos[0],pos[1],pos[2])
-                    mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
-                    group.add(mesh)
-                    console.log("trimesh")
-                    console.log(collider.Occupied.value.pos)
-
-                }
-            }
-
-        }
-
-        world.graphicsWorld.add(group)
-
-
-
-
+    if (msg["PhysicsState"]) {
+        let data = msg["PhysicsState"].data
+        world.debug.load_state(data)
     }
 
     if (type == 'players') {
