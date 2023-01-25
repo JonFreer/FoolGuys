@@ -37,7 +37,7 @@ mod character_states {
 }
 
 
-use crate::{world::{World}, physics::Physics, physics_objects::ragdoll::Ragdoll};
+use crate::{world::{World}, physics::Physics, physics_objects::ragdoll::Ragdoll, structs::message_prep};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
@@ -199,7 +199,7 @@ async fn main() -> Result<(), IoError> {
 
             for p in players.iter_mut() {
                 let c = peers.get_mut(&p.0).unwrap();
-                p.1.read_messages(c);
+                p.1.read_messages(c,&mut physics_engine);
             }
 
 
@@ -275,6 +275,11 @@ async fn main() -> Result<(), IoError> {
                     .tx
                     .unbounded_send(message_prep(player_update_message.clone()))
                     .unwrap();
+
+                // value
+                //     .tx
+                //     .unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data: physics_engine.get_state() }))
+                //     .unwrap();
             }
 
             let duration = Instant::now() - start_time;
@@ -287,6 +292,4 @@ async fn main() -> Result<(), IoError> {
     // Ok(())
 }
 
-fn message_prep(msg: MessageType) -> Message {
-    Message::Text(serde_json::to_string(&msg).unwrap())
-}
+

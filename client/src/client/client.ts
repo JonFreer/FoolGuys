@@ -13,14 +13,14 @@ import { UniformsLib, UniformsUtils } from 'three'
 import { Asset } from './World/Asset'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { Floor } from './World/Floor'
-// import { GUI } from 'dat.gui'
+import { GUI } from 'dat.gui'
 // const scene = new THREE.Scene()
 
 
 const gltfLoader = new GLTFLoader()
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/libs/draco/'); 
-gltfLoader.setDRACOLoader( dracoLoader );
+dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/libs/draco/');
+gltfLoader.setDRACOLoader(dracoLoader);
 
 
 loadGLTF("assets/character.glb", (gltf) => {
@@ -46,9 +46,23 @@ if (hostname != 'localhost') {
     socket = new WebSocket("wss://" + hostname + "/ws");
 } else {
     socket = new WebSocket("ws://" + hostname + ":2865");
+
+    const gui = new GUI()
+    var object4 = {
+        GetDebugState: function () {
+            socket.send(JSON.stringify(['get_debug', {
+            }]))
+        }
+    };
+
+    const debugFolder = gui.addFolder('Debug')
+    // debugFolder.add(cube.rotation, 'x', 0, Math.PI * 2)
+    gui.add(object4, 'GetDebugState');
+    debugFolder.open()
+
 }
 
-const world = new World(socket,"assets/world.glb")
+const world = new World(socket, "assets/world.glb")
 // let time= Date.now()
 socket.onmessage = function (event) {
     // console.log(event.data)
@@ -89,7 +103,7 @@ socket.onmessage = function (event) {
         });
 
         Object.keys(world.players).forEach((id) => {
-            if(data.players[id]==undefined){
+            if (data.players[id] == undefined) {
                 world.removePlayer(id)
             }
         })
@@ -101,10 +115,98 @@ socket.onmessage = function (event) {
         });
 
         Object.keys(world.obstacles).forEach((id) => {
-            if(data.dynamic_objects[id]==undefined){
+            if (data.dynamic_objects[id] == undefined) {
                 world.removeObstacle(id)
             }
         })
+
+
+    }
+
+    if (msg["PhysicsUpdate"]) {
+        let data = msg["PhysicsUpdate"].data
+
+        let colliders = data.colliders.colliders.items
+
+        let group = new THREE.Group;
+        // console.log(colliders)
+        for (let i = 0; i < colliders.length; i++) {
+
+            let collider = colliders[i]
+            if (collider.Occupied) {
+                console.log(collider.Occupied.value.shape)
+                if (collider.Occupied.value.shape.TriMesh) {
+                    const geometry = new THREE.BufferGeometry();
+                    //collider.Occupied.value.shape.TriMesh.vertices
+                    
+                    let vert_array =[]
+                    for( let i =0; i< collider.Occupied.value.shape.TriMesh.vertices.length; i++){
+                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][0])
+                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][1])
+                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][2])
+                    }
+                    const vertices = new Float32Array(vert_array)
+
+                    let indices_array =[]
+                    for( let i =0; i< collider.Occupied.value.shape.TriMesh.indices.length; i++){
+                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][0])
+                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][1])
+                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][2])
+                    }
+                    // const indices = new Float32Array(indices_array)
+                    // const vertices = new Float32Array(collider.Occupied.value.shape.TriMesh.vertices);
+
+                    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                    geometry.setIndex( indices_array );
+                    const material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
+                    const mesh = new THREE.LineSegments(geometry, material);
+                    // mesh.position.set(1, 1, 1)
+                    group.add(mesh)
+                    console.log("trimesh")
+                    console.log(collider.Occupied.value.shape.TriMesh)
+                }
+
+                if (collider.Occupied.value.shape.ConvexPolyhedron) {
+                    const geometry = new THREE.BufferGeometry();
+                    //collider.Occupied.value.shape.TriMesh.vertices
+                    
+                    let vert_array =[]
+                    for( let i =0; i< collider.Occupied.value.shape.ConvexPolyhedron.points.length; i++){
+                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][0])
+                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][1])
+                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][2])
+                    }
+
+                    let indices_array =[]
+                    for( let i =0; i< collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face.length; i++){
+                        indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i])
+                        // indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i][1])
+                        // indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i][2])
+                    }
+
+
+                    const vertices = new Float32Array(vert_array)
+                    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                    geometry.setIndex( indices_array );
+                    const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
+                    const mesh = new THREE.LineSegments(geometry, material);
+
+                    let pos = collider.Occupied.value.pos.translation;
+                    let rot = collider.Occupied.value.pos.rotation;
+                    mesh.position.set(pos[0],pos[1],pos[2])
+                    mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
+                    group.add(mesh)
+                    console.log("trimesh")
+                    console.log(collider.Occupied.value.pos)
+
+                }
+            }
+
+        }
+
+        world.graphicsWorld.add(group)
+
+
 
 
     }
@@ -174,8 +276,8 @@ function join() {
     world.mobileControls.enable()
 
     let throw_button = document.getElementById("button_throw") as HTMLDivElement;
-    if (throw_button){
-        throw_button.onclick= ()=>{
+    if (throw_button) {
+        throw_button.onclick = () => {
             socket.send(JSON.stringify(['throw', {
             }]))
         };
@@ -212,8 +314,8 @@ function onDocumentKey(e: KeyboardEvent) {
         e.preventDefault()
     }
 
-    if(e.type == 'keydown'){
-        if(e.key.toLowerCase() == 'p'){
+    if (e.type == 'keydown') {
+        if (e.key.toLowerCase() == 'p') {
             socket.send(JSON.stringify(['throw', {
             }]))
         }

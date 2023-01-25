@@ -9,7 +9,7 @@ edition = "2021"
 serde_json = "1.0"
 serde = {version = "1.0.150", features = ["derive"]}
 nalgebra = "0.31.4"
-rapier3d = "0.16.1"
+rapier3d = {version = "0.16.1", features = [ "serde-serialize" ] }
 #rapier3d = { path = "../../rapier/crates/rapier3d" }
 
 rand = "0.8.5"

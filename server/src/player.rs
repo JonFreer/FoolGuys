@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr};
 use nalgebra::{ Vector1, Vector2, Vector3};
-use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
+use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
 use rand::Rng;
 use serde_json::{Value, Error};
 
@@ -340,7 +340,7 @@ impl Player {
     }
 
 
-    pub fn read_messages(&mut self, c: &mut Client) {
+    pub fn read_messages(&mut self, c: &mut Client, physics_engine: &mut Physics) {
         loop {
             if let Ok(message) = c.rx.try_next() {
                 let m = message.unwrap();
@@ -416,6 +416,10 @@ impl Player {
 
                 if v[0] == "throw" {
                     self.to_throw = true;
+                }
+
+                if v[0] == "get_debug" {
+                    c.tx.unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data:physics_engine.get_state()})).unwrap();
                 }
             }else{
                 println!("Erorr unwrapping message");

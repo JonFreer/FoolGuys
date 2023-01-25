@@ -1,6 +1,6 @@
-use gltf::{Node, mesh::util::indices};
+use gltf::Node;
 use nalgebra::{Vector3, Quaternion, UnitQuaternion};
-use rapier3d::prelude::{ColliderBuilder, Collider, Point, Shape, Cuboid, ConvexPolyhedron, SharedShape, Ball, ShapeType};
+use rapier3d::prelude::{ColliderBuilder, Collider, Point, Cuboid, ConvexPolyhedron, SharedShape, Ball, ShapeType};
 use serde_json::Value;
 
 
