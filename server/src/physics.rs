@@ -1,4 +1,4 @@
-use nalgebra::{vector, Vector3};
+use nalgebra::{vector, Vector3, Quaternion, Unit};
 use rapier3d::{
     control::{CharacterCollision, EffectiveCharacterMovement, KinematicCharacterController},
     crossbeam::{self, channel::Receiver},
@@ -155,6 +155,10 @@ impl Physics {
 
     pub fn get_translation(& self, rigid_body_handle: RigidBodyHandle) -> Vector3<f32>{
         self.rigid_body_set[rigid_body_handle].translation().clone()
+    }
+
+    pub fn get_rotation(& self, rigid_body_handle: RigidBodyHandle) -> Unit<Quaternion<f32>>{
+        self.rigid_body_set[rigid_body_handle].rotation().clone()
     }
 
     pub fn cast_ray(&mut self, ray: &Ray, max_toi:f32,solid:bool,filter:QueryFilter) -> Option<(ColliderHandle, Real)>{

@@ -98,7 +98,7 @@ socket.onmessage = function (event) {
             // console.log(data.players[p].dir)
             timestamp = Date.now()
             // pingStatsHtml += p + ' ' + (timestamp - data[p].t) + 'ms<br/>'
-            world.updatePlayer(p, data.players)
+            world.updatePlayer(p, data.players, data.ragdolls)
 
         });
 
@@ -121,6 +121,9 @@ socket.onmessage = function (event) {
         })
 
 
+        // console.log(data.ragdolls)
+
+
     }
 
     if (msg["PhysicsUpdate"]) {
@@ -134,29 +137,29 @@ socket.onmessage = function (event) {
         world.debug.load_state(data)
     }
 
-    if (type == 'players') {
-        let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
-        Object.keys(data.players).forEach((p) => {
-            timestamp = Date.now()
-            pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
-            world.updatePlayer(p, data.players)
+    // if (type == 'players') {
+    //     let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
+    //     Object.keys(data.players).forEach((p) => {
+    //         timestamp = Date.now()
+    //         pingStatsHtml += p + ' ' + (timestamp - data.players[p].t) + 'ms<br/>'
+    //         world.updatePlayer(p, data.players)
 
-        });
+    //     });
 
-        Object.keys(data.rollers).forEach((r) => {
-            world.updateObstacle(r, data.rollers);
-        });
-
-
-        (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
+    //     Object.keys(data.rollers).forEach((r) => {
+    //         world.updateObstacle(r, data.rollers);
+    //     });
 
 
+    //     (document.getElementById('pingStats') as HTMLDivElement).innerHTML + pingStatsHtml
 
-    }
 
-    if (type == 'removeClient') { //NOTE::THIS IS REPEATED?
-        world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(data.id) as THREE.Object3D)
-    }
+
+    // }
+
+    // if (type == 'removeClient') { //NOTE::THIS IS REPEATED?
+    //     world.graphicsWorld.remove(world.graphicsWorld.getObjectByName(data.id) as THREE.Object3D)
+    // }
 
 
     if (msg["Chat"]) {

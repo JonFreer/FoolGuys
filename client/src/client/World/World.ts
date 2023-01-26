@@ -178,7 +178,7 @@ export class World {
     
     }
 
-    public updatePlayer(client_id: string, players: any) {
+    public updatePlayer(client_id: string, players: any,ragdolls:any) {
         if(!this.players[client_id]){
 
             let character = new Character(players[client_id],this.assets,this);
@@ -189,16 +189,19 @@ export class World {
             // }
 
         }else{
+
+            this.players[client_id].setRagdoll(ragdolls)
+
             this.players[client_id].name = players[client_id].name.slice(1, -1);
 
             if (players[client_id].p) {
                 this.players[client_id].setPosition(players[client_id].p)
             }
             if (players[client_id].q) {
-                this.players[client_id].setRotation(players[client_id].q)
+                // this.players[client_id].setRotation(players[client_id].q)
             }
 
-            this.players[client_id].setLookVector(players[client_id].dir)
+            //this.players[client_id].setLookVector(players[client_id].dir)
        
            
             this.players[client_id].setState(players[client_id].state)

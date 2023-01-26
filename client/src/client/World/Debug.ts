@@ -14,6 +14,8 @@ export class Debug{
     }
 
     public load_state(data:any){
+
+        console.log(data)
         this.debug_group.clear()
 
         let colliders = data.colliders.colliders.items
@@ -84,13 +86,14 @@ export class Debug{
                 } else if (collider.Occupied.value.shape.Capsule) {
                     let capsule = collider.Occupied.value.shape.Capsule
                     const geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[0]*2, 4, 10 );
+                    geometry.rotateZ(Math.PI/2)
                     console.log(collider.Occupied)
                     const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
                     const mesh = new THREE.LineSegments( geometry, material );
 
                     let pos = collider.Occupied.value.pos.translation;
 
-                    console.log(pos)
+                    // console.log(pos)
 
                     let rot = collider.Occupied.value.pos.rotation;
                     mesh.position.set(pos[0],pos[1],pos[2])
@@ -107,7 +110,7 @@ export class Debug{
 
                     let pos = collider.Occupied.value.pos.translation;
 
-                    console.log(pos)
+                    // console.log(pos)
 
                     let rot = collider.Occupied.value.pos.rotation;
                     mesh.position.set(pos[0],pos[1],pos[2])
@@ -123,6 +126,8 @@ export class Debug{
             }
 
         }
+
+        // for 
 
     }
 
@@ -141,7 +146,7 @@ export class Debug{
                 if(collider){
                     collider.position.set(pos.translation[0],pos.translation[1],pos.translation[2])
                     collider.rotation.setFromQuaternion(new THREE.Quaternion(pos.rotation[0],pos.rotation[1],pos.rotation[2],pos.rotation[3]))
-                    console.log("set pos")
+                    // console.log("set pos")
                 }
 
             }

@@ -264,10 +264,16 @@ async fn main() -> Result<(), IoError> {
                     )
                 .collect();
 
+
+            let ragdoll_info = ragdoll.get_info(&mut physics_engine);        
+            
             let player_update_message = structs::MessageType::WorldUpdate {
                 players: players_info,
                 dynamic_objects: dynamic_objects_info,
+                ragdolls : ragdoll_info
             };
+
+
 
             //send player_update to all players
             for (_, value) in &*peers {
