@@ -210,7 +210,7 @@ impl World {
         for scene in gltf.scenes() {
             for node in scene.nodes() {
                 if let Some(extras) = node.extras() {
-                    println!("{:?}", extras.get());
+                    println!("{:?} {:?}", extras.get(),node.transform().decomposed().0);
                     let extras: gltf::json::Value =
                         gltf::json::deserialize::from_str(extras.get()).unwrap();
                     if extras["spawn_point"] != Value::Null {
