@@ -89,13 +89,14 @@ export class Character {
                 bone.scale.set(0.008,0.008,0.008)
                 this.gltf_scene?.add(bone)
                 bone.position.set(data.p.x, data.p.y, data.p.z)
-                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI/2)));
-                // bone.rotation.setFromQuaternion(quat)
+                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)));
+                bone.rotation.setFromQuaternion(quat)
             }else{
                 console.log(bone.children)
-                // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);;//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,0)));
+                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI,0,0)));
                 // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI/2,0,0));
-                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,0)));
+                // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)));
+                // let quat =new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI/2,0)).multiply( new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w));//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)));
                 bone.rotation.setFromQuaternion(quat)
             }
       
