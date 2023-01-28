@@ -40,13 +40,26 @@ impl Ragdoll {
                         collider.set_translation(Vector3::new(0.0, 0.0, 0.0));
                         let parent_trans = node.transform().decomposed().0;
                         let parent_scale = node.transform().decomposed().2;
-                        let rigid_body = RigidBodyBuilder::dynamic()
+
+                        let mut rigid_body = RigidBodyBuilder::dynamic()
+                        .translation(Vector3::new(
+                            116.5 + parent_trans[0],
+                            2.0 + parent_trans[1],
+                            79.8 + parent_trans[2],
+                        ))
+                        .build();
+                        if node.name().unwrap() == "Chest"{
+                            rigid_body = RigidBodyBuilder::fixed()
                             .translation(Vector3::new(
                                 116.5 + parent_trans[0],
-                                6.0 + parent_trans[1],
+                                2.0 + parent_trans[1],
                                 79.8 + parent_trans[2],
                             ))
+                            .rotation(Vector3::new(0.0,0.0,-1.7))
                             .build();
+                        }
+
+                       
                         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
                         let collider_handle = physics_engine.collider_set.insert_with_parent(
                             collider,
@@ -139,7 +152,7 @@ impl Ragdoll {
             // let mut rot = nalgebra::UnitQuaternion::from_euler_angles(3.141, 3.141, 0.0);//physics_engine.get_rotation(*value)*master_rot.conjugate();
 
             let mut rot = physics_engine.get_rotation(*value)*master_rot.conjugate();
-
+            // let mut rot = master_rot.conjugate() * physics_engine.get_rotation(*value);
             if key == "Chest"{
                 rot = physics_engine.get_rotation(*value);
             }

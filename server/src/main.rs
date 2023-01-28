@@ -178,16 +178,16 @@ async fn main() -> Result<(), IoError> {
 
             //Check for clients which no longer exist
             let mut players_to_remove = Vec::new();
-            for p in players.iter_mut() {
+            for (socket,player) in players.iter_mut() {
 
                 //set the grounded to false
                 // p.1.on_ground = false;
 
-                if !peers.contains_key(p.0) {
+                if !peers.contains_key(socket) {
                     // world.collider_set.remove(value.collider_handle, &mut island_manager, &mut world.rigid_body_set, true);
-                    physics_engine.remove_from_rigid_body_set(p.1.rigid_body_handle);
-                    players_to_remove.push(p.0.clone());
-                    // players.remove(p.0);
+                    physics_engine.remove_from_rigid_body_set(player.rigid_body_handle);
+                    players_to_remove.push(socket.clone());
+
                 }
             }
 
@@ -197,17 +197,17 @@ async fn main() -> Result<(), IoError> {
                 println!("Removed player");
             }
 
-            for p in players.iter_mut() {
-                let c = peers.get_mut(&p.0).unwrap();
-                p.1.read_messages(c,&mut physics_engine);
+            for (socket,player) in players.iter_mut() {
+                let client = peers.get_mut(&socket).unwrap();
+                player.read_messages(client,&mut physics_engine);
             }
 
 
             let players_clone = players.clone();
 
-            for p in players.iter_mut() {
+            for (_socket,player) in players.iter_mut() {
 
-                p.1.update_physics(
+                player.update_physics(
                     &mut world,
                     &mut physics_engine,
                     &players_clone
@@ -216,14 +216,14 @@ async fn main() -> Result<(), IoError> {
             }
 
             //Send chat messages
-            for player in players.iter_mut() {
+            for (_socket,player) in players.iter_mut() {
                 loop {
-                    if player.1.chat_queue.len() == 0 {
+                    if player.chat_queue.len() == 0 {
                         break;
                     }
 
-                    let msg = player.1.chat_queue.pop().unwrap();
-                    let name = player.1.name.clone();
+                    let msg = player.chat_queue.pop().unwrap();
+                    let name = player.name.clone();
                     for (_, p) in &*peers {
                         p.tx.unbounded_send(message_prep(structs::MessageType::Chat {
                             name: name.clone(),
@@ -249,10 +249,10 @@ async fn main() -> Result<(), IoError> {
 
             let mut players_info = HashMap::new();
 
-            for player in players.iter_mut() {
+            for (socket,player) in players.iter_mut() {
                 players_info.insert(
-                    player.0.to_string(),
-                    player.1.get_info(&mut physics_engine.rigid_body_set),
+                    socket.to_string(),
+                    player.get_info(&mut physics_engine.rigid_body_set),
                 );
             }
 
