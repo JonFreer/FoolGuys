@@ -48,16 +48,16 @@ impl Ragdoll {
                             79.8 + parent_trans[2],
                         ))
                         .build();
-                        if node.name().unwrap() == "Chest"{
-                            rigid_body = RigidBodyBuilder::fixed()
-                            .translation(Vector3::new(
-                                116.5 + parent_trans[0],
-                                2.0 + parent_trans[1],
-                                79.8 + parent_trans[2],
-                            ))
-                            .rotation(Vector3::new(0.0,0.0,-1.7))
-                            .build();
-                        }
+                        // if node.name().unwrap() == "Chest"{
+                        //     rigid_body = RigidBodyBuilder::fixed()
+                        //     .translation(Vector3::new(
+                        //         116.5 + parent_trans[0],
+                        //         2.0 + parent_trans[1],
+                        //         79.8 + parent_trans[2],
+                        //     ))
+                        //     .rotation(Vector3::new(0.0,0.0,-1.7))
+                        //     .build();
+                        // }
 
                        
                         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);

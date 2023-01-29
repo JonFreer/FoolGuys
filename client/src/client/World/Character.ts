@@ -3,8 +3,9 @@ import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { AssetLoader } from "./AssetLoader";
 import { World } from "./World";
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
-import { Bone } from "three";
+import { Bone, Euler } from "three";
 import { Body } from "cannon-es";
+import { format } from "path";
 
 enum State {
     Idle,
@@ -53,12 +54,17 @@ export class Character {
         if (this.gltf_scene == undefined) {
 
             return
+           
         }
 
+        this.gltf_scene?.setRotationFromEuler(new THREE.Euler(0,0,0))
         // this.gltf_scene.position.set(0,0,0)
         let keys : { [id: string] : string; }= {
+
+            // "LeftLegLower": "Chara_Low_Rig:GameSkeletonKnee_L",
+            // "RightLegLower": "Chara_Low_Rig:GameSkeletonKnee_R",
             // "LeftLegUpper": "Chara_Low_RigGameSkeletonHip_L",
-            "RightLegUpper": "Chara_Low_RigGameSkeletonHip_R",
+            // "RightLegUpper": "Chara_Low_RigGameSkeletonHip_R",
             "Chest": "Chara_Low_RigGameSkeletonRoot_M",
             // "Head" : "Chara_Low_RigGameSkeletonHead_M"
 
@@ -85,19 +91,42 @@ export class Character {
             console.log("FOUND BONE" ,data.p.x, data.p.y, data.p.z)
             let bone = node as Bone;
             if(name == "Chara_Low_RigGameSkeletonRoot_M"){
-                bone.removeFromParent()
-                bone.scale.set(0.008,0.008,0.008)
-                this.gltf_scene?.add(bone)
-                bone.position.set(data.p.x, data.p.y, data.p.z)
-                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)));
+                // bone.removeFromParent()
+                // bone.scale.set(0.008,0.008,0.008)
+                // this.gltf_scene?.add(bone)
+                // bone.position.set(data.p.x, data.p.y, data.p.z)
+                // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)));
+                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,Math.PI,Math.PI/2)));
+                quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))))
+                quat = new THREE.Quaternion(0.041,-0.76,-0.76 )
                 bone.rotation.setFromQuaternion(quat)
             }else{
                 console.log(bone.children)
-                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI,0,0)));
+                // let quat  =new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).invert()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI,0,0)));
+                // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,-Math.PI)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).invert()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,0)));
+                //x y z w // i j k w
+                let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))));
+
+                // let euler  = new THREE.Euler(0,0,3.141).setFromQuaternion(quat) 
+
+                // euler = euler.
+
+                // if(euler.x > 0 ){
+                //     euler.x = Math.PI/2 + Math.PI/2 - euler.x
+                // }else{
+                //     euler.x = -Math.PI/2 + (-Math.PI/2 - euler.x)
+                // }
+                // euler.z = euler.z + 3.141
+                // euler.z = euler.z + 3.141
+                // euler.x = euler.x + 3.141
+                // console.log(1.7 - euler.x)
+
+                // console.log(euler)
                 // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI/2,0,0));
                 // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)));
                 // let quat =new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI/2,0)).multiply( new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w));//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)));
                 bone.rotation.setFromQuaternion(quat)
+                // bone.rotation.set(euler.x,euler.y,euler.z)
             }
       
             // bone.position.set(data.p.x, data.p.y, data.p.z)
