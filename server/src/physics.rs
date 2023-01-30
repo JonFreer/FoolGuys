@@ -1,4 +1,4 @@
-use nalgebra::{vector, Vector3};
+use nalgebra::{Vector3, Vector2, Vector1};
 use rapier3d::{
     control::{CharacterCollision, EffectiveCharacterMovement, KinematicCharacterController},
     crossbeam::{self, channel::Receiver},
@@ -33,7 +33,7 @@ pub struct Physics {
 
 impl Physics {
     pub fn new() -> Self {
-        let gravity = vector![0.0, -9.81, 0.0];
+        let gravity = Vector3::new(0.0, -9.81, 0.0);
 
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
@@ -98,12 +98,12 @@ impl Physics {
             &mut self.impulse_joint_set,
             &mut self.multibody_joint_set,
             &mut self.ccd_solver,
+            Some(&mut self.query_pipeline),
             &self.physics_hooks,
-            &self.event_handler,
+            &self.event_handler
         );
 
         self.query_pipeline.update(
-            &self.island_manager,
             &self.rigid_body_set,
             &self.collider_set,
         );

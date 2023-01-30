@@ -1,6 +1,7 @@
 use std::{collections::HashMap, net::SocketAddr};
-use nalgebra::{ Vector1, Vector2, Vector3};
+// use nalgebra::{ Vector1, Vector2, Vector3};
 use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
+use nalgebra::{Vector3, Vector2, Vector1};
 use rand::Rng;
 use serde_json::{Value, Error};
 
