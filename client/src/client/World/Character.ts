@@ -58,7 +58,7 @@ export class Character {
         }
 
         this.gltf_scene?.setRotationFromEuler(new THREE.Euler(0,0,0))
-        // this.gltf_scene.position.set(0,0,0)
+        this.gltf_scene.position.set(0,0,0)
         let keys : { [id: string] : string; }= {
 
             // "LeftLegLower": "Chara_Low_Rig:GameSkeletonKnee_L",
@@ -97,8 +97,8 @@ export class Character {
                 // bone.position.set(data.p.x, data.p.y, data.p.z)
                 // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)));
                 let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,Math.PI,Math.PI/2)));
-                quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))))
-                quat = new THREE.Quaternion(0.041,-0.76,-0.76 )
+                quat = quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)))
+                // quat = new THREE.Quaternion(0.041,-0.76,-0.76 )
                 bone.rotation.setFromQuaternion(quat)
             }else{
                 console.log(bone.children)

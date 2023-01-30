@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use futures_util::future::TryMaybeDone;
-use gltf::json::scene::UnitQuaternion;
-use nalgebra::{Vector3, Rotation, Quaternion};
+use gltf::{json::scene::UnitQuaternion, Node};
+use nalgebra::{Quaternion, Rotation, Vector3};
 use rapier3d::prelude::{
     Collider, FixedJointBuilder, Point, RigidBodyBuilder, RigidBodyHandle, SphericalJointBuilder,
 };
@@ -17,8 +17,14 @@ use crate::{
 use super::collision;
 
 pub struct Ragdoll {
-    parts: HashMap<String, RigidBodyHandle>,
+    parts: HashMap<String, RagdollPart>,
 }
+
+struct RagdollPart {
+    rigid_body_handle: RigidBodyHandle,
+    parent_handle: Option<RigidBodyHandle>,
+}
+
 struct JointInfo {
     rigid_body_handle: RigidBodyHandle,
     anchor_pos: Point<f32>,
@@ -28,135 +34,152 @@ impl Ragdoll {
         let (gltf, buffers, _) = gltf::import(path).unwrap();
 
         let mut joints: HashMap<String, JointInfo> = HashMap::new();
-        let mut parts: HashMap<String, RigidBodyHandle> = HashMap::new();
+        let mut parts: HashMap<String, RagdollPart> = HashMap::new();
 
         for scene in gltf.scenes() {
             for node in scene.nodes() {
                 if let Some(_) = node.mesh() {
                     println!("{:?}", node.name());
-                    if let Some(mut collider) = collision::new_collider(&node, &buffers) {
-                        println!("New Collider, {:?}", collider.position());
-
-                        collider.set_translation(Vector3::new(0.0, 0.0, 0.0));
-                        let parent_trans = node.transform().decomposed().0;
-                        let parent_scale = node.transform().decomposed().2;
-
-                        let mut rigid_body = RigidBodyBuilder::dynamic()
-                        .translation(Vector3::new(
-                            116.5 + parent_trans[0],
-                            2.0 + parent_trans[1],
-                            79.8 + parent_trans[2],
-                        ))
-                        .build();
-                        // if node.name().unwrap() == "Chest"{
-                        //     rigid_body = RigidBodyBuilder::fixed()
-                        //     .translation(Vector3::new(
-                        //         116.5 + parent_trans[0],
-                        //         2.0 + parent_trans[1],
-                        //         79.8 + parent_trans[2],
-                        //     ))
-                        //     .rotation(Vector3::new(0.0,0.0,-1.7))
-                        //     .build();
-                        // }
-
-                       
-                        let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
-                        let collider_handle = physics_engine.collider_set.insert_with_parent(
-                            collider,
-                            rigid_body_handle,
-                            &mut physics_engine.rigid_body_set,
-                        );
-
-                        parts.insert(node.name().unwrap().to_string(), rigid_body_handle);
-
-                        for child in node.children() {
-                            if let Some(extras) = child.extras() {
-                                let extras: gltf::json::Value =
-                                    gltf::json::deserialize::from_str(extras.get()).unwrap();
-                                if extras["joint"] != Value::Null {
-                                    println!(
-                                        "Child name: {:?} {:?}",
-                                        child.name(),
-                                        extras["joint"]
-                                    );
-                                    let translation = child.transform().decomposed().0;
-                                    if (joints.contains_key(&extras["joint"].to_string())) {
-                                        println!("FOUND JOINT {:?}", translation);
-                                        let other_joint = &joints[&extras["joint"].to_string()];
-
-                                        let joint = SphericalJointBuilder::new()
-                                            .local_anchor1(other_joint.anchor_pos)
-                                            .local_anchor2(Point::new(
-                                                translation[0] * parent_scale[0],
-                                                translation[1] * parent_scale[1],
-                                                translation[2] * parent_scale[2],
-                                            ));
-
-                                        println!("Joint {:?}", joint);
-                                        physics_engine.impulse_joint_set.insert(
-                                            other_joint.rigid_body_handle,
-                                            rigid_body_handle,
-                                            joint,
-                                            true,
-                                        );
-                                    } else {
-                                        joints.insert(
-                                            extras["joint"].clone().to_string(),
-                                            JointInfo {
-                                                rigid_body_handle,
-                                                // anchor_pos:Point::new(translation[0]-parent_trans[0],translation[1]-parent_trans[1],translation[2]-parent_trans[2])
-                                                anchor_pos: Point::new(
-                                                    translation[0] * parent_scale[0],
-                                                    translation[1] * parent_scale[1],
-                                                    translation[2] * parent_scale[2],
-                                                ),
-                                            },
-                                        );
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // if let Some(extras) = node.extras() {
-                    //     let extras: gltf::json::Value =
-                    //         gltf::json::deserialize::from_str(extras.get()).unwrap();
-                    //         println!("{:?}",extras);
-
-                    // }
-                    // println!("{:?}",node);
-                }
+                    Ragdoll::recersive_add_part(&node,&buffers,None,&mut joints,&mut parts,physics_engine);
             }
         }
+    }
 
         Self { parts }
     }
 
-    pub fn get_info(& self, physics_engine: &mut Physics) -> RagdollUpdate {
+    fn recersive_add_part(
+        node: &Node,
+        buffers: &Vec<gltf::buffer::Data>,
+        parent_handle: Option<RigidBodyHandle>,
+        joints: &mut HashMap<String, JointInfo>,
+        parts: &mut HashMap<String, RagdollPart>,
+        physics_engine: &mut Physics
+    ) {
+        if let Some(_) = node.mesh() {
+        if let Some(mut collider) = collision::new_collider(&node, &buffers) {
+            println!("New Collider, {:?}", collider.position());
+
+            collider.set_translation(Vector3::new(0.0, 0.0, 0.0));
+            let parent_trans = node.transform().decomposed().0;
+            let parent_scale = node.transform().decomposed().2;
+
+            let mut rigid_body = RigidBodyBuilder::dynamic()
+                .translation(Vector3::new(
+                    116.5 + parent_trans[0],
+                    2.0 + parent_trans[1],
+                    79.8 + parent_trans[2],
+                ))
+                .build();
+            // if node.name().unwrap() == "Chest"{
+            //     rigid_body = RigidBodyBuilder::fixed()
+            //     .translation(Vector3::new(
+            //         116.5 + parent_trans[0],
+            //         2.0 + parent_trans[1],
+            //         79.8 + parent_trans[2],
+            //     ))
+            //     .rotation(Vector3::new(0.0,0.0,-1.7))
+            //     .build();
+            // }
+
+            let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
+            let collider_handle = physics_engine.collider_set.insert_with_parent(
+                collider,
+                rigid_body_handle,
+                &mut physics_engine.rigid_body_set,
+            );
+
+            parts.insert(node.name().unwrap().to_string(), RagdollPart{rigid_body_handle, parent_handle });
+
+            for child in node.children() {
+
+                Ragdoll::recersive_add_part(&child, buffers, Some(rigid_body_handle), joints, parts, physics_engine);
+
+                if let Some(extras) = child.extras() {
+                    let extras: gltf::json::Value =
+                        gltf::json::deserialize::from_str(extras.get()).unwrap();
+                    if extras["joint"] != Value::Null {
+                        println!(
+                            "Child name: {:?} {:?}",
+                            child.name(),
+                            extras["joint"]
+                        );
+                        let translation = child.transform().decomposed().0;
+                        if (joints.contains_key(&extras["joint"].to_string())) {
+                            println!("FOUND JOINT {:?}", translation);
+                            let other_joint = &joints[&extras["joint"].to_string()];
+
+                            let joint = SphericalJointBuilder::new()
+                                .local_anchor1(other_joint.anchor_pos)
+                                .local_anchor2(Point::new(
+                                    translation[0] * parent_scale[0],
+                                    translation[1] * parent_scale[1],
+                                    translation[2] * parent_scale[2],
+                                ));
+
+                            println!("Joint {:?}", joint);
+                            physics_engine.impulse_joint_set.insert(
+                                other_joint.rigid_body_handle,
+                                rigid_body_handle,
+                                joint,
+                                true,
+                            );
+                        } else {
+                            joints.insert(
+                                extras["joint"].clone().to_string(),
+                                JointInfo {
+                                    rigid_body_handle,
+                                    // anchor_pos:Point::new(translation[0]-parent_trans[0],translation[1]-parent_trans[1],translation[2]-parent_trans[2])
+                                    anchor_pos: Point::new(
+                                        translation[0] * parent_scale[0],
+                                        translation[1] * parent_scale[1],
+                                        translation[2] * parent_scale[2],
+                                    ),
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+        // if let Some(extras) = node.extras() {
+        //     let extras: gltf::json::Value =
+        //         gltf::json::deserialize::from_str(extras.get()).unwrap();
+        //         println!("{:?}",extras);
+
+        // }
+        // println!("{:?}",node);
+    }
+
+    
+
+    pub fn get_info(&self, physics_engine: &mut Physics) -> RagdollUpdate {
+
         let mut update: RagdollUpdate = HashMap::new();
 
 
-        let master_pos = physics_engine.get_translation(self.parts["Chest"]);
-       
-        let master_rot = physics_engine.get_rotation(self.parts["Chest"]);
-        
+
+   
+
         for (key, value) in &self.parts {
 
-            let mut pos = physics_engine.get_translation(*value);
+            let rot;
+            let mut pos;
 
-            pos = pos - master_pos;
+            if let Some(parent_handle) = value.parent_handle{
 
-            // let rotation = Rotation::from(master_rot);
+                let master_pos = physics_engine.get_translation(parent_handle);
+                let master_rot = physics_engine.get_rotation(parent_handle);
+                pos = physics_engine.get_translation(value.rigid_body_handle);
+                pos = pos - master_pos;
 
-            // pos = rotation * pos;
+                rot = physics_engine.get_rotation(value.rigid_body_handle) * master_rot.conjugate();
 
-            // let mut rot = nalgebra::UnitQuaternion::from_euler_angles(3.141, 3.141, 0.0);//physics_engine.get_rotation(*value)*master_rot.conjugate();
-
-            let mut rot = physics_engine.get_rotation(*value)*master_rot.conjugate();
-            // let mut rot = master_rot.conjugate() * physics_engine.get_rotation(*value);
-            if key == "Chest"{
-                rot = physics_engine.get_rotation(*value);
+            }else{
+                rot = physics_engine.get_rotation(value.rigid_body_handle);
+                pos = physics_engine.get_translation(value.rigid_body_handle);
             }
-            
 
             update.insert(
                 key.to_string(),
