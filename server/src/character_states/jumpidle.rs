@@ -1,11 +1,12 @@
 use crate::character_states::character_base::CharacterState::JumpIdle;
 use crate::player::Player;
-
+use ts_rs::TS;
 use super::{character_base::CharacterState, idle::IdleState};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[ts(export)]
+#[derive(Serialize, Deserialize, Clone, Debug,TS)]
 pub struct JumpIdleState {
     already_jumped: bool,
     timer: f32,

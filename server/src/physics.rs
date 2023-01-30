@@ -10,6 +10,7 @@ use rapier3d::{
     }, parry::query::Ray,
 };
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 pub struct Physics {
     pub rigid_body_set: RigidBodySet,
@@ -175,10 +176,11 @@ impl Physics {
     }
 }
 
-#[derive(Serialize, Deserialize)] 
+#[ts(export)]
+#[derive(Serialize, Deserialize,TS)] 
 #[derive(Clone)]
 pub struct PhysicsState {
-    pub bodies: RigidBodySet,
-    pub colliders: ColliderSet,
-    pub joints: ImpulseJointSet,
+    #[ts(type = "any")] pub bodies:   RigidBodySet,
+    #[ts(type = "any")] pub colliders: ColliderSet,
+    #[ts(type = "any")] pub joints: ImpulseJointSet,
 }

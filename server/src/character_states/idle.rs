@@ -1,10 +1,11 @@
 use crate::player::Player;
-
+use ts_rs::TS;
 use super::{character_base::CharacterState, jumpidle::JumpIdleState};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
-#[derive(Clone, Debug)]pub struct IdleState{}
+#[ts(export)]
+#[derive(Serialize, Deserialize,TS,Clone, Debug)]
+pub struct IdleState{}
 
 impl IdleState{
     pub fn new()->Self {
