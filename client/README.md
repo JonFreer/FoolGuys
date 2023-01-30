@@ -2,10 +2,6 @@
 
 ```npm run dev```
 
-game at : localhost:8080
+## To Build
 
-
-# Todo
-- Gameplay
-- Dynamic Objects
-- Player spawned objects
+```npm run build```

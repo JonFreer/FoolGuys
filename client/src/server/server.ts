@@ -1,19 +1,16 @@
 import express from 'express'
 import path from 'path'
 import http from 'http'
-import { Server, Socket } from 'socket.io'
-import * as THREE from 'three'
-import Physics from './physics'
-import Game from './game'
+import { Server } from 'socket.io'
+
+
 const port: number = 3000
 
 class App {
     private server: http.Server
     private port: number
-    public physics: Physics
+
     private io: Server
-    // private clients: {[id:string]:Client} = {
-// }
 
     constructor(port: number) {
         this.port = port
@@ -24,7 +21,7 @@ class App {
 
         this.io = new Server(this.server)
 
-        // new Game(this.io)
+
 
     }
 
