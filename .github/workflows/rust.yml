@@ -13,11 +13,13 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    working-directory: ./server
+
     steps:
 
     - uses: actions/checkout@v3
     - name: Build
+      working-directory: ./app
       run: cargo build --verbose
     - name: Run tests
+      working-directory: ./app
       run: cargo test --verbose
