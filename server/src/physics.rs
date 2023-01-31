@@ -1,17 +1,19 @@
-use nalgebra::{vector, Quaternion, Unit, Vector3};
+
+use nalgebra::{Vector3, Vector2, Vector1, Quaternion, Unit};
+
 use rapier3d::{
     control::{CharacterCollision, EffectiveCharacterMovement, KinematicCharacterController},
     crossbeam::{self, channel::Receiver},
     parry::query::Ray,
     prelude::{
         BroadPhase, CCDSolver, ChannelEventCollector, Collider, ColliderHandle, ColliderSet,
-        CollisionEvent, DebugRenderBackend, DebugRenderMode, DebugRenderObject,
-        DebugRenderPipeline, DebugRenderStyle, ImpulseJointSet, IntegrationParameters,
+        CollisionEvent, ImpulseJointSet, IntegrationParameters,
         IslandManager, MultibodyJointSet, NarrowPhase, PhysicsPipeline, Point, QueryFilter,
         QueryPipeline, Real, RigidBody, RigidBodyHandle, RigidBodySet, Vector, Isometry,
     },
 };
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 pub struct Physics {
     pub rigid_body_set: RigidBodySet,
@@ -30,13 +32,13 @@ pub struct Physics {
     event_handler: ChannelEventCollector,
     collision_recv: Receiver<CollisionEvent>,
     pub collision_vec: Vec<CollisionEvent>,
-    pub debug_render_pipeline: DebugRenderPipeline,
-    pub debug_state: DebugState,
+    // pub debug_render_pipeline: DebugRenderPipeline,
+    // pub debug_state: DebugState,
 }
 
 impl Physics {
     pub fn new() -> Self {
-        let gravity = vector![0.0, -9.81, 0.0];
+        let gravity = Vector3::new(0.0, -9.81, 0.0);
 
         let rigid_body_set = RigidBodySet::new();
         let collider_set = ColliderSet::new();
@@ -58,7 +60,7 @@ impl Physics {
 
         let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
-        let debug_render_style = DebugRenderStyle::default();
+        // let debug_render_style = DebugRenderStyle::default();
 
         Self {
             rigid_body_set,
@@ -77,11 +79,11 @@ impl Physics {
             event_handler,
             collision_recv,
             collision_vec: Vec::new(),
-            debug_render_pipeline: DebugRenderPipeline::new(
-                debug_render_style,
-                DebugRenderMode::COLLIDER_SHAPES,
-            ),
-            debug_state: DebugState {},
+            // debug_render_pipeline: DebugRenderPipeline::new(
+            //     debug_render_style,
+            //     DebugRenderMode::COLLIDER_SHAPES,
+            // ),
+            // debug_state: DebugState {},
         }
     }
 
@@ -108,12 +110,12 @@ impl Physics {
             &mut self.impulse_joint_set,
             &mut self.multibody_joint_set,
             &mut self.ccd_solver,
+            Some(&mut self.query_pipeline),
             &self.physics_hooks,
-            &self.event_handler,
+            &self.event_handler
         );
 
         self.query_pipeline.update(
-            &self.island_manager,
             &self.rigid_body_set,
             &self.collider_set,
         );
@@ -203,61 +205,65 @@ impl Physics {
         }
     }
 
-    pub fn debug_render(&mut self) {
-        self.debug_render_pipeline.render(
-            &mut self.debug_state,
-            &mut self.rigid_body_set,
-            &mut self.collider_set,
-            &mut self.impulse_joint_set,
-            &mut self.multibody_joint_set,
-            &self.narrow_phase,
-        );
-    }
+    // pub fn debug_render(&mut self) {
+    //     self.debug_render_pipeline.render(
+    //         &mut self.debug_state,
+    //         &mut self.rigid_body_set,
+    //         &mut self.collider_set,
+    //         &mut self.impulse_joint_set,
+    //         &mut self.multibody_joint_set,
+    //         &self.narrow_phase,
+    //     );
+    // }
 }
 
-pub struct DebugState {}
+// pub struct DebugState {}
 
-impl DebugRenderBackend for DebugState {
-    fn draw_line(
-        &mut self,
-        object: DebugRenderObject<'_>,
-        a: Point<Real>,
-        b: Point<Real>,
-        color: [f32; 4],
-    ) {
-    }
+// impl DebugRenderBackend for DebugState {
+//     fn draw_line(
+//         &mut self,
+//         object: DebugRenderObject<'_>,
+//         a: Point<Real>,
+//         b: Point<Real>,
+//         color: [f32; 4],
+//     ) {
+//     }
 
-    fn draw_polyline(
-        &mut self,
-        object: DebugRenderObject<'_>,
-        vertices: &[Point<Real>],
-        indices: &[[u32; 2]],
-        transform: &Isometry<Real>,
-        scale: &Vector<Real>,
-        color: [f32; 4],
-    ) {
-    }
+//     fn draw_polyline(
+//         &mut self,
+//         object: DebugRenderObject<'_>,
+//         vertices: &[Point<Real>],
+//         indices: &[[u32; 2]],
+//         transform: &Isometry<Real>,
+//         scale: &Vector<Real>,
+//         color: [f32; 4],
+//     ) {
+//     }
 
-    fn draw_line_strip(
-        &mut self,
-        object: DebugRenderObject<'_>,
-        vertices: &[Point<Real>],
-        transform: &Isometry<Real>,
-        scale: &Vector<Real>,
-        color: [f32; 4],
-        closed: bool,
-    ) {
-    }
-}
+//     fn draw_line_strip(
+//         &mut self,
+//         object: DebugRenderObject<'_>,
+//         vertices: &[Point<Real>],
+//         transform: &Isometry<Real>,
+//         scale: &Vector<Real>,
+//         color: [f32; 4],
+//         closed: bool,
+//     ) {
+//     }
+// }
 
-#[derive(Serialize, Deserialize, Clone)]
+
+#[ts(export)]
+#[derive(Serialize, Deserialize,TS)] 
+#[derive(Clone)]
 pub struct PhysicsState {
-    pub bodies: RigidBodySet,
-    pub colliders: ColliderSet,
-    pub joints: ImpulseJointSet,
+    #[ts(type = "any")] pub bodies:   RigidBodySet,
+    #[ts(type = "any")] pub colliders: ColliderSet,
+    #[ts(type = "any")] pub joints: ImpulseJointSet,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[ts(export)]
+#[derive(Serialize, Deserialize, Clone,TS)]
 pub struct PhysicsStateUpdate {
-    pub bodies: RigidBodySet,
+    #[ts(type = "any")] pub bodies: RigidBodySet,
 }

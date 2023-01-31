@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use ts_rs::TS;
 use futures_util::future::TryMaybeDone;
 use gltf::{json::scene::UnitQuaternion, Node};
 use nalgebra::{Quaternion, Rotation, Vector3};
@@ -203,10 +203,13 @@ impl Ragdoll {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[ts(export)]
+#[derive(Serialize, Deserialize, Clone, Debug,TS)]
 pub struct Translation {
     pub p: Vec3,
     pub q: Quat,
 }
 
+// #[ts(export)]
+// #[derive(Serialize, Deserialize, Clone, Debug,TS)]
 pub type RagdollUpdate = HashMap<String, Translation>;

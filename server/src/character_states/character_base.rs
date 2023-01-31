@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
-
+use ts_rs::TS;
 use super::{idle::IdleState, jumpidle::JumpIdleState};
 
-#[derive(Serialize, Deserialize)]
-#[derive(Clone, Debug)]
+#[ts(export)]
+#[derive(Serialize, Deserialize,TS,Clone, Debug)]
 pub enum CharacterState{
     Idle(IdleState),
     Walk,

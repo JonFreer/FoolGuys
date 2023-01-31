@@ -20,6 +20,7 @@ import { AssetLoader } from './AssetLoader';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Asset } from './Asset';
 import { Debug } from './Debug';
+import { ObjectUpdate, PlayerUpdate, Translation } from 'backend';
 
 export class World {
 
@@ -178,45 +179,41 @@ export class World {
     
     }
 
-    public updatePlayer(client_id: string, players: any,ragdolls:any) {
+    public updatePlayer(client_id: string, update: PlayerUpdate, ragdolls:Record<string, Translation>) {
+
+        // const update = players[client_id];
+
         if(!this.players[client_id]){
 
-            let character = new Character(players[client_id],this.assets,this);
-
-            // if(character.mesh != undefined){
-                // this.graphicsWorld.add(character.gltf);
-                this.players[client_id]= character;
-            // }
-
+            this.players[client_id]= new Character(update,this.assets,this);
+           
         }else{
 
-            this.players[client_id].setRagdoll(ragdolls)
+            // const update = players[client_id];
 
-            this.players[client_id].name = players[client_id].name.slice(1, -1);
+            this.players[client_id].name = update.name.slice(1, -1);
 
-            if (players[client_id].p) {
-                this.players[client_id].setPosition(players[client_id].p)
+            if (update.p) {
+                this.players[client_id].setPosition(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
             }
-            if (players[client_id].q) {
-                // this.players[client_id].setRotation(players[client_id].q)
+            if (update.q) {
+                this.players[client_id].setRotation(update.q)
             }
 
-            //this.players[client_id].setLookVector(players[client_id].dir)
+            this.players[client_id].setLookVector(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
        
            
-            this.players[client_id].setState(players[client_id].state)
+            this.players[client_id].setState(update.state)
         }
 
+        this.players[client_id].setRagdoll(ragdolls)
+
         if (!this.clientCubes[client_id]) {
-
-         
-
-            
 
             // let labelsDiv = document.querySelector('#labels');
             const geometry = new THREE.BoxGeometry();
 
-            let col = players[client_id].colour
+            let col = update.colour
             const material = new THREE.MeshStandardMaterial({
                 color: new THREE.Color("rgb(" + col.r + "," + col.g + "," + col.b + ")"),
                 wireframe: false,
@@ -224,7 +221,7 @@ export class World {
             })
 
             this.clientCubes[client_id] = new THREE.Mesh(geometry, material)
-            this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
+            this.clientCubes[client_id].name = update.name.slice(1, -1)
             this.clientCubes[client_id].castShadow = true
             this.clientCubes[client_id].receiveShadow = true
             // this.graphicsWorld.add(this.clientCubes[client_id])
@@ -233,14 +230,14 @@ export class World {
         } else {
 
 
-            this.clientCubes[client_id].name = players[client_id].name.slice(1, -1)
-            if (players[client_id].p) {
+            this.clientCubes[client_id].name = update.name.slice(1, -1)
+            if (update.p) {
                 new TWEEN.Tween(this.clientCubes[client_id].position)
                     .to(
                         {
-                            x: players[client_id].p.x,
-                            y: players[client_id].p.y,
-                            z: players[client_id].p.z,
+                            x: update.p.x,
+                            y: update.p.y,
+                            z: update.p.z,
                         },
                         0//50
                     )
@@ -248,7 +245,7 @@ export class World {
 
                 // this.clientCubes[client_id].set
             }
-            if (players[client_id].q) {
+            if (update.q) {
                 // new TWEEN.Tween(clientCubes[p].rotation)
                 //     .to(
                 //         new THREE.Quaternion(players[p].q.x,players[p].q.y,players[p].q.z,players[p].q.w),
@@ -257,21 +254,17 @@ export class World {
                 //     .start()
 
 
-                this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(players[client_id].q.i, players[client_id].q.j, players[client_id].q.k, players[client_id].q.w),)
+                this.clientCubes[client_id].setRotationFromQuaternion(new THREE.Quaternion(update.q.i, update.q.j, update.q.k, update.q.w),)
             }
 
-            // if (players[client_id].p) {
 
             let look_vector = new THREE.Vector3(
-                this.clientCubes[client_id].position.x +players[client_id].dir.x,
-                this.clientCubes[client_id].position.y + players[client_id].dir.y,
-                this.clientCubes[client_id].position.z + players[client_id].dir.z
+                this.clientCubes[client_id].position.x + update.dir.x,
+                this.clientCubes[client_id].position.y + update.dir.y,
+                this.clientCubes[client_id].position.z + update.dir.z
             )
 
-
             this.clientCubes[client_id].lookAt(look_vector);
-
-
 
         }
     }
@@ -294,30 +287,43 @@ export class World {
         
     }
 
-    public updateObstacle(id: string, obstacles: any) {
+    public updateObstacles(updates:Record<string, ObjectUpdate>){
+
+        Object.keys(updates).forEach((r) => {
+            this.updateObstacle(r, updates[r]);
+        });
+
+        Object.keys(this.obstacles).forEach((id) => {
+            if (updates[id] == undefined) {
+                this.removeObstacle(id)
+            }
+        })
+    }
+
+    private updateObstacle(id: string, update: ObjectUpdate) {
         // console.log(obstacles)
         if (this.obstacles[id] != undefined) {
 
             new TWEEN.Tween(this.obstacles[id].object.position)
                 .to(
                     {
-                        x: obstacles[id].p.x,
-                        y: obstacles[id].p.y,
-                        z: obstacles[id].p.z,
+                        x: update.p.x,
+                        y: update.p.y,
+                        z: update.p.z,
                     },
                     0
                 )
                 .start()
             // this.obstacles[id].set
             // this.obstacles[id].position = new THREE.Vector3(obstacles[id].p.x,obstacles[id].p.y,obstacles[id].p.z)
-            this.obstacles[id].object.setRotationFromQuaternion(new THREE.Quaternion(obstacles[id].q.i, obstacles[id].q.j, obstacles[id].q.k, obstacles[id].q.w))
+            this.obstacles[id].object.setRotationFromQuaternion(new THREE.Quaternion(update.q.i, update.q.j, update.q.k, update.q.w))
 
-            this.obstacles[id].object.scale.set(obstacles[id].scale.x,obstacles[id].scale.y,obstacles[id].scale.z)
+            this.obstacles[id].object.scale.set(update.scale.x,update.scale.y,update.scale.z)
         } else {
             
-            let obstacle = obstacles[id];
+            // let obstacle = obstacles[id];
             
-            let name = obstacle["asset_name"].replaceAll('"','');
+            let name = update.asset_name.replaceAll('"','');
             // console.log(obstacle,name)
             if(this.assets.assets[name] != undefined){
                 let asset = new Asset(this.assets.assets[name],this);

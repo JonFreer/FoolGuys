@@ -92,19 +92,14 @@ async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: Socke
     peer_map.lock().unwrap().remove(&addr);
 }
 
-async fn sokcer_handler(peer_map: PeerMap, listener: TcpListener) {
+async fn socket_handler(peer_map: PeerMap, listener: TcpListener) {
     while let Ok((stream, addr)) = listener.accept().await {
-        // println!("connection")
         tokio::spawn(handle_connection(peer_map.clone(), stream, addr));
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), IoError> {
-
-    // let (gltf, buffers, _) = gltf::import("../client/dist/client/assets/assets/Asset_Apple2.glb").unwrap();
-    // Ok()
-    // return;
 
     let path;
     let asset_path;
@@ -130,7 +125,7 @@ async fn main() -> Result<(), IoError> {
     let listener = try_socket.expect("Failed to bind");
     println!("Listening on: {}", addr);
     // sokcer_handler(state.clone(),listener).await;
-    tokio::spawn(sokcer_handler(state.clone(), listener));
+    tokio::spawn(socket_handler(state.clone(), listener));
 
     let mut physics_engine = Physics::new();
 
