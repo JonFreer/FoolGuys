@@ -74,6 +74,15 @@ socket.onmessage = function (event) {
     if (msg.kind == 'Chat'){
         world.chatManager.newMessage(msg.name.slice(1, -1), msg.message.slice(1, -1))
     }
+
+    if (msg.kind == "PhysicsUpdate") {
+        world.debug.update_state(msg.data)
+
+    }
+
+    if (msg.kind == "PhysicsState") {
+        world.debug.load_state(msg.data)
+    }
 }
 
 document.addEventListener('keydown', onDocumentKey, false)

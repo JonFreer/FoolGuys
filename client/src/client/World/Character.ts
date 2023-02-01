@@ -6,6 +6,7 @@ import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { Bone, Euler } from "three";
 import { Body } from "cannon-es";
 import { format } from "path";
+import { GUI } from "dat.gui";
 
 enum State {
     Idle,
@@ -26,6 +27,7 @@ export class Character {
     public is_ragdoll: boolean = false;
 
     private state: State = State.Jumping;
+    private rotation_offset : THREE.Euler = new THREE.Euler(180,0,0)
     // private: loaded
     // private action : any;
 
@@ -43,6 +45,16 @@ export class Character {
 
         })
 
+        console.log("creating character")
+
+        const gui = new GUI()
+
+        const debugFolder = gui.addFolder('Rotation')
+        gui.add(this.rotation_offset, 'x');
+        gui.add(this.rotation_offset, 'y');
+        gui.add(this.rotation_offset, 'z');
+        // debugFolder.open()
+
         this.name = player_data.name;
 
     }
@@ -58,13 +70,13 @@ export class Character {
         }
 
         this.gltf_scene?.setRotationFromEuler(new THREE.Euler(0,0,0))
-        this.gltf_scene.position.set(0,0,0)
+        this.gltf_scene.position.set(2,1.5,2)
         let keys : { [id: string] : string; }= {
 
             // "LeftLegLower": "Chara_Low_Rig:GameSkeletonKnee_L",
             // "RightLegLower": "Chara_Low_Rig:GameSkeletonKnee_R",
-            // "LeftLegUpper": "Chara_Low_RigGameSkeletonHip_L",
-            // "RightLegUpper": "Chara_Low_RigGameSkeletonHip_R",
+            "LeftLegUpper": "Chara_Low_RigGameSkeletonHip_L",
+            "RightLegUpper": "Chara_Low_RigGameSkeletonHip_R",
             "Chest": "Chara_Low_RigGameSkeletonRoot_M",
             // "Head" : "Chara_Low_RigGameSkeletonHead_M"
 
@@ -88,7 +100,7 @@ export class Character {
     find_and_set(name: String, node: any, data: any) {
         
         if (node.name == name) {
-            console.log("FOUND BONE" ,data.p.x, data.p.y, data.p.z)
+            // console.log("FOUND BONE" ,data.p.x, data.p.y, data.p.z)
             let bone = node as Bone;
             if(name == "Chara_Low_RigGameSkeletonRoot_M"){
                 // bone.removeFromParent()
@@ -98,14 +110,15 @@ export class Character {
                 // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)));
                 let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,Math.PI,Math.PI/2)));
                 quat = quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)))
-                // quat = new THREE.Quaternion(0.041,-0.76,-0.76 )
+                // quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))));
+                // quat = new THREE.Quaternion(0.00,-0.0,-0.0 )
                 bone.rotation.setFromQuaternion(quat)
             }else{
-                console.log(bone.children)
+                // console.log(bone.children)
                 // let quat  =new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).invert()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI,0,0)));
                 // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,-Math.PI)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).invert()).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,0)));
                 //x y z w // i j k w
-                let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))));
+                // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))));
 
                 // let euler  = new THREE.Euler(0,0,3.141).setFromQuaternion(quat) 
 
@@ -125,7 +138,22 @@ export class Character {
                 // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI/2,0,0));
                 // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)));
                 // let quat =new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI/2,0)).multiply( new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w));//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)));
-                bone.rotation.setFromQuaternion(quat)
+                
+                let quat = new THREE.Quaternion(-data.q.k, -data.q.j, data.q.i, data.q.w);//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(this.rotation_offset.x/(2*Math.PI),this.rotation_offset.y/(2*Math.PI),this.rotation_offset.z/(2*Math.PI))));
+                // quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);
+                // let quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))));
+                
+                // if(euler.x > 0 ){
+                //     euler.x = Math.PI/2 + Math.PI/2 - euler.x
+                // }else{
+                //     euler.x = -Math.PI/2 + (-Math.PI/2 - euler.x)
+                // }
+                
+                
+                
+                bone.rotation.setFromQuaternion(quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler((this.rotation_offset.x/360)*(2*Math.PI),
+                (this.rotation_offset.y/360)*(2*Math.PI),
+                (this.rotation_offset.z/360)*(2*Math.PI)))))
                 // bone.rotation.set(euler.x,euler.y,euler.z)
             }
       

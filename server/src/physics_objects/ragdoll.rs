@@ -40,7 +40,7 @@ impl Ragdoll {
             for node in scene.nodes() {
                 if let Some(_) = node.mesh() {
                     println!("{:?}", node.name());
-                    Ragdoll::recersive_add_part(&node,&buffers,None,&mut joints,&mut parts,physics_engine);
+                    Ragdoll::recursive_add_part(&node,&buffers,None,&mut joints,&mut parts,physics_engine);
             }
         }
     }
@@ -48,7 +48,7 @@ impl Ragdoll {
         Self { parts }
     }
 
-    fn recersive_add_part(
+    fn recursive_add_part(
         node: &Node,
         buffers: &Vec<gltf::buffer::Data>,
         parent_handle: Option<RigidBodyHandle>,
@@ -93,7 +93,7 @@ impl Ragdoll {
 
             for child in node.children() {
 
-                Ragdoll::recersive_add_part(&child, buffers, Some(rigid_body_handle), joints, parts, physics_engine);
+                Ragdoll::recursive_add_part(&child, buffers, Some(rigid_body_handle), joints, parts, physics_engine);
 
                 if let Some(extras) = child.extras() {
                     let extras: gltf::json::Value =
@@ -171,10 +171,15 @@ impl Ragdoll {
 
                 let master_pos = physics_engine.get_translation(parent_handle);
                 let master_rot = physics_engine.get_rotation(parent_handle);
+
+                // let master_pos = physics_engine.get_translation(self.parts["Chest"].rigid_body_handle);
+       
+                // let master_rot = physics_engine.get_rotation(self.parts["Chest"].rigid_body_handle);
+                
                 pos = physics_engine.get_translation(value.rigid_body_handle);
                 pos = pos - master_pos;
 
-                rot = physics_engine.get_rotation(value.rigid_body_handle) * master_rot.conjugate();
+                rot =  physics_engine.get_rotation(value.rigid_body_handle)* master_rot.conjugate();
 
             }else{
                 rot = physics_engine.get_rotation(value.rigid_body_handle);
