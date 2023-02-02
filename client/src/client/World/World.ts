@@ -179,7 +179,7 @@ export class World {
     
     }
 
-    public updatePlayer(client_id: string, update: PlayerUpdate, ragdolls:Record<string, Translation>) {
+    public updatePlayer(client_id: string, update: PlayerUpdate) {
 
         // const update = players[client_id];
 
@@ -191,22 +191,12 @@ export class World {
 
             // const update = players[client_id];
 
-            this.players[client_id].name = update.name.slice(1, -1);
 
-            if (update.p) {
-                this.players[client_id].setPosition(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
-            }
-            if (update.q) {
-                this.players[client_id].setRotation(update.q)
-            }
 
-            this.players[client_id].setLookVector(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
-       
-           
-            this.players[client_id].setState(update.state)
+            this.players[client_id].updateCharacter(update)
         }
 
-        this.players[client_id].setRagdoll(ragdolls)
+        
 
         if (!this.clientCubes[client_id]) {
 

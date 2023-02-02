@@ -2,6 +2,7 @@
 import type { CharacterState } from "./CharacterState";
 import type { Colour } from "./Colour";
 import type { Quat } from "./Quat";
+import type { Translation } from "./Translation";
 import type { Vec3 } from "./Vec3";
 
-export interface PlayerUpdate { name: string, p: Vec3, q: Quat, colour: Colour, state: CharacterState, dir: Vec3, }
+export interface PlayerUpdate { name: string, p: Vec3, q: Quat, colour: Colour, state: CharacterState, dir: Vec3, is_ragdoll: boolean, ragdoll_info: Record<string, Translation>, }

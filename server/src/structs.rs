@@ -21,7 +21,7 @@ pub fn message_prep(msg: MessageType) -> Message {
 pub enum MessageType{
     Join{name:String,id:String},
     Chat{name:String,message:String},
-    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>, ragdolls:HashMap<String, Translation>},
+    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>, },
     PhysicsState{data:PhysicsState},
     PhysicsUpdate{data:PhysicsStateUpdate}
 
@@ -36,7 +36,9 @@ pub struct PlayerUpdate{
     pub q:Quat,
     pub colour:Colour,
     pub state: CharacterState,
-    pub dir: Vec3
+    pub dir: Vec3,
+    pub is_ragdoll: bool,
+    pub ragdoll_info: HashMap<String, Translation>
 }
 
 #[ts(export)]

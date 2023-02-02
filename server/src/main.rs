@@ -133,7 +133,7 @@ async fn main() -> Result<(), IoError> {
 
     world.load_world(path,&mut physics_engine);
 
-    let ragdoll = Ragdoll::new("../Blender/character.glb".to_string(),&mut physics_engine);
+    // let ragdoll = 
 
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
@@ -153,10 +153,9 @@ async fn main() -> Result<(), IoError> {
                     let player = Player::new(
                         // client2,
                         players.len(),
-                        &mut physics_engine.rigid_body_set,
-                        &mut physics_engine.collider_set,
                         &world.spawn_points,
-                        key.clone()
+                        key.clone(),
+                        &mut physics_engine
                     );
 
                     value
@@ -179,8 +178,9 @@ async fn main() -> Result<(), IoError> {
                 // p.1.on_ground = false;
 
                 if !peers.contains_key(socket) {
+                    player.remove_self(&mut physics_engine);
                     // world.collider_set.remove(value.collider_handle, &mut island_manager, &mut world.rigid_body_set, true);
-                    physics_engine.remove_from_rigid_body_set(player.rigid_body_handle);
+                    
                     players_to_remove.push(socket.clone());
 
                 }
@@ -247,7 +247,7 @@ async fn main() -> Result<(), IoError> {
             for (socket,player) in players.iter_mut() {
                 players_info.insert(
                     socket.to_string(),
-                    player.get_info(&mut physics_engine.rigid_body_set),
+                    player.get_info(&mut physics_engine),
                 );
             }
 
@@ -260,12 +260,12 @@ async fn main() -> Result<(), IoError> {
                 .collect();
 
 
-            let ragdoll_info = ragdoll.get_info(&mut physics_engine);        
+            // let ragdoll_info = ragdoll.get_info(&mut physics_engine);        
             
             let player_update_message = structs::MessageType::WorldUpdate {
                 players: players_info,
                 dynamic_objects: dynamic_objects_info,
-                ragdolls : ragdoll_info
+                // ragdolls : ragdoll_info
             };
 
 

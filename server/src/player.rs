@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr};
 // use nalgebra::{ Vector1, Vector2, Vector3};
-use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
+use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics, physics_objects::ragdoll::Ragdoll};
 use nalgebra::{Vector3, Vector2, Vector1};
 use rand::Rng;
 use serde_json::{Value, Error};
@@ -31,17 +31,19 @@ pub struct Player {
     pub character_state : CharacterState,
     pub just_jumped : bool,
     pub look_at: Vector3<f32>,
-    pub target_look_at: Vector<f32>
+    pub target_look_at: Vector<f32>,
+    pub is_ragdoll:bool,
+    ragdoll :Ragdoll
+
 }
 
 
 impl Player {
     pub fn new(
         num_players: usize,
-        rigid_body_set: &mut RigidBodySet,
-        collider_set: &mut ColliderSet,
         spawn_points: &Vec<Vector3<f32>>,
-        id: SocketAddr
+        id: SocketAddr,
+        physics_engine: &mut Physics
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
 
@@ -67,7 +69,7 @@ impl Player {
 
         // rigid_body.set_locked_axes(LockedAxes::ROTATION_LOCKED, true);
 
-        let rigid_body_handle = rigid_body_set.insert(rigid_body);
+        let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
         let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5)
             //  ColliderBuilder::capsule_y(0.3, 0.15)
@@ -78,7 +80,7 @@ impl Player {
             .build();
 
         let collider_handle =
-            collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
+        physics_engine.collider_set.insert_with_parent(collider, rigid_body_handle, &mut physics_engine.rigid_body_set);
 
         let mut rng = rand::thread_rng();
 
@@ -110,7 +112,9 @@ impl Player {
             just_jumped:false,
             look_at: Vector3::new(1.0,0.0,0.0),
             target_look_at: Vector3::new(1.0,0.0,0.0),
-            id
+            id,
+            is_ragdoll:true,
+            ragdoll: Ragdoll::new("../Blender/character.glb".to_string(),physics_engine)
         }
     }
 
@@ -306,15 +310,22 @@ impl Player {
 
  
 
-    pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> PlayerUpdate {
-        let rigid_body = &rigid_body_set[self.rigid_body_handle];
-        let pos = rigid_body.translation();
+    pub fn get_info(&mut self, physics_engine: &mut Physics) -> PlayerUpdate {
+
+
+        let mut pos = physics_engine.get_translation(self.rigid_body_handle);
+
+        if(self.is_ragdoll){
+            //get the position of center
+            pos = self.ragdoll.get_pos(physics_engine);
+        }
+
         let pos_vec = Vec3 {
             x: pos.x,
             y: pos.y,
             z: pos.z,
         };
-        let rot = rigid_body.rotation();
+        let rot = physics_engine.get_rotation(self.rigid_body_handle);
         // rot.
         let rot_quat = Quat {
             i: rot.i,
@@ -329,13 +340,17 @@ impl Player {
             z:self.look_at.z
         };
 
+
+
         PlayerUpdate {
             name: self.name.to_string(),
             p: pos_vec,
             q: rot_quat,
             colour: self.colour.clone(),
             state:self.character_state.clone(),
-            dir:look_at
+            dir:look_at,
+            is_ragdoll: self.is_ragdoll,
+            ragdoll_info: self.ragdoll.get_info(physics_engine)
         }
 
     }
@@ -474,6 +489,11 @@ impl Player {
             
             // ray.point_at(toi)
         }
+    }
+
+    pub fn remove_self(&mut self, physics_engine: &mut Physics){
+        self.ragdoll.remove_self( physics_engine);
+        physics_engine.remove_from_rigid_body_set(self.rigid_body_handle);
     }
 
 }

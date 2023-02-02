@@ -4,7 +4,7 @@ use futures_util::future::TryMaybeDone;
 use gltf::{json::scene::UnitQuaternion, Node};
 use nalgebra::{Quaternion, Rotation, Vector3};
 use rapier3d::prelude::{
-    Collider, FixedJointBuilder, Point, RigidBodyBuilder, RigidBodyHandle, SphericalJointBuilder,
+    Collider, FixedJointBuilder, Point, RigidBodyBuilder, RigidBodyHandle, SphericalJointBuilder, JointAxesMask, GenericJointBuilder,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -16,10 +16,12 @@ use crate::{
 
 use super::collision;
 
+#[derive(Clone)]
 pub struct Ragdoll {
     parts: HashMap<String, RagdollPart>,
 }
 
+#[derive(Clone)]
 struct RagdollPart {
     rigid_body_handle: RigidBodyHandle,
     parent_handle: Option<RigidBodyHandle>,
@@ -109,7 +111,7 @@ impl Ragdoll {
                             println!("FOUND JOINT {:?}", translation);
                             let other_joint = &joints[&extras["joint"].to_string()];
 
-                            let joint = SphericalJointBuilder::new()
+                            let joint = GenericJointBuilder::new(JointAxesMask::LOCKED_SPHERICAL_AXES|JointAxesMask::ANG_X)
                                 .local_anchor1(other_joint.anchor_pos)
                                 .local_anchor2(Point::new(
                                     translation[0] * parent_scale[0],
@@ -152,15 +154,13 @@ impl Ragdoll {
         // println!("{:?}",node);
     }
 
-    
+    pub fn get_pos(&self, physics_engine: &mut Physics) -> Vector3<f32>{
+         physics_engine.get_translation(self.parts["Chest"].rigid_body_handle)
+    }
 
     pub fn get_info(&self, physics_engine: &mut Physics) -> RagdollUpdate {
 
         let mut update: RagdollUpdate = HashMap::new();
-
-
-
-   
 
         for (key, value) in &self.parts {
 
@@ -169,17 +169,20 @@ impl Ragdoll {
 
             if let Some(parent_handle) = value.parent_handle{
 
-                let master_pos = physics_engine.get_translation(parent_handle);
-                let master_rot = physics_engine.get_rotation(parent_handle);
+                // let master_pos = physics_engine.get_translation(parent_handle);
+                // let master_rot = physics_engine.get_rotation(parent_handle);
 
-                // let master_pos = physics_engine.get_translation(self.parts["Chest"].rigid_body_handle);
+                let master_pos = physics_engine.get_translation(self.parts["Chest"].rigid_body_handle);
        
-                // let master_rot = physics_engine.get_rotation(self.parts["Chest"].rigid_body_handle);
+                let master_rot = physics_engine.get_rotation(self.parts["Chest"].rigid_body_handle);
                 
                 pos = physics_engine.get_translation(value.rigid_body_handle);
                 pos = pos - master_pos;
 
-                rot =  physics_engine.get_rotation(value.rigid_body_handle)* master_rot.conjugate();
+                // rot =  physics_engine.get_rotation(value.rigid_body_handle)* master_rot.conjugate();
+
+                rot = physics_engine.get_rotation(value.rigid_body_handle);
+                
 
             }else{
                 rot = physics_engine.get_rotation(value.rigid_body_handle);
@@ -205,6 +208,12 @@ impl Ragdoll {
         }
 
         update
+    }
+
+    pub fn remove_self(&mut self, physics_engine: &mut Physics){
+        for(_name,part) in &self.parts{
+            physics_engine.remove_from_rigid_body_set(part.rigid_body_handle);
+        }
     }
 }
 

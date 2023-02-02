@@ -57,7 +57,7 @@ socket.onmessage = function (event) {
         Object.keys(data.players).forEach((p) => {
 
             timestamp = Date.now()
-            world.updatePlayer(p, data.players[p],data.ragdolls)
+            world.updatePlayer(p, data.players[p])
 
         });
 

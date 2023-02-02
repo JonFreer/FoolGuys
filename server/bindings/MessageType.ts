@@ -3,6 +3,5 @@ import type { ObjectUpdate } from "./ObjectUpdate";
 import type { PhysicsState } from "./PhysicsState";
 import type { PhysicsStateUpdate } from "./PhysicsStateUpdate";
 import type { PlayerUpdate } from "./PlayerUpdate";
-import type { Translation } from "./Translation";
 
-export type MessageType = { kind: "Join", name: string, id: string, } | { kind: "Chat", name: string, message: string, } | { kind: "WorldUpdate", players: Record<string, PlayerUpdate>, dynamic_objects: Record<string, ObjectUpdate>, ragdolls: Record<string, Translation>, } | { kind: "PhysicsState", data: PhysicsState, } | { kind: "PhysicsUpdate", data: PhysicsStateUpdate, };
+export type MessageType = { kind: "Join", name: string, id: string, } | { kind: "Chat", name: string, message: string, } | { kind: "WorldUpdate", players: Record<string, PlayerUpdate>, dynamic_objects: Record<string, ObjectUpdate>, } | { kind: "PhysicsState", data: PhysicsState, } | { kind: "PhysicsUpdate", data: PhysicsStateUpdate, };
