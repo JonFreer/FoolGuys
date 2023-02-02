@@ -13,6 +13,7 @@ use crate::physics_objects::collision;
 use crate::physics_objects::dynamic::DynamicObject;
 use crate::physics_objects::launchpad::LaunchPad;
 use crate::physics_objects::pivot::PivotObject;
+use crate::physics_objects::ragdoll::RagdollTemplate;
 use crate::physics_objects::rigid_body_parent::Objects;
 use crate::physics_objects::spin::SpinObject;
 use crate::player::Player;
@@ -22,14 +23,15 @@ pub struct World {
     pub spawn_points: Vec<Vector3<f32>>,
     assets: HashMap<String, AssetBase>,
     asset_path: String,
-    asset_count: i32
+    asset_count: i32,
+    pub character_ragdoll_template:RagdollTemplate
 }
 
 impl World {
     pub fn new(asset_path: &str) -> Self {
         let assets = HashMap::new();
         let dynamic_objects = Vec::new();
-
+        
         println!("Created world");
 
         Self {
@@ -37,7 +39,8 @@ impl World {
             spawn_points: Vec::new(),
             assets,
             asset_path: asset_path.to_string(),
-            asset_count:0
+            asset_count:0,
+            character_ragdoll_template:RagdollTemplate::new("../Blender/character.glb".to_string())
         }
     }
 

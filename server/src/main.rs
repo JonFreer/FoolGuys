@@ -151,11 +151,11 @@ async fn main() -> Result<(), IoError> {
             for (key, value) in &*peers {
                 if !players.contains_key(key) {
                     let player = Player::new(
-                        // client2,
                         players.len(),
                         &world.spawn_points,
                         key.clone(),
-                        &mut physics_engine
+                        &mut physics_engine,
+                        world.character_ragdoll_template.clone()
                     );
 
                     value

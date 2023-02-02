@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr};
 // use nalgebra::{ Vector1, Vector2, Vector3};
-use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics, physics_objects::ragdoll::Ragdoll};
+use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics, physics_objects::ragdoll::{Ragdoll, RagdollTemplate, self, RagdollUpdate}};
 use nalgebra::{Vector3, Vector2, Vector1};
 use rand::Rng;
 use serde_json::{Value, Error};
@@ -33,7 +33,8 @@ pub struct Player {
     pub look_at: Vector3<f32>,
     pub target_look_at: Vector<f32>,
     pub is_ragdoll:bool,
-    ragdoll :Ragdoll
+    ragdoll :Option<Ragdoll>,
+    ragdoll_template :RagdollTemplate
 
 }
 
@@ -43,7 +44,8 @@ impl Player {
         num_players: usize,
         spawn_points: &Vec<Vector3<f32>>,
         id: SocketAddr,
-        physics_engine: &mut Physics
+        physics_engine: &mut Physics,
+        ragdoll_template: RagdollTemplate
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
 
@@ -114,7 +116,8 @@ impl Player {
             target_look_at: Vector3::new(1.0,0.0,0.0),
             id,
             is_ragdoll:true,
-            ragdoll: Ragdoll::new("../Blender/character.glb".to_string(),physics_engine)
+            ragdoll_template,
+            ragdoll: None
         }
     }
 
@@ -315,9 +318,16 @@ impl Player {
 
         let mut pos = physics_engine.get_translation(self.rigid_body_handle);
 
+        let mut ragdoll_info : RagdollUpdate =  HashMap::new();
+        
         if self.is_ragdoll {
-            //get the position of center
-            pos = self.ragdoll.get_pos(physics_engine);
+            if let Some(ragdoll) = &self.ragdoll {
+                //get the position of center
+                pos = ragdoll.get_pos(physics_engine);
+
+                ragdoll_info = ragdoll.get_info(physics_engine);
+
+            }
         }
 
         let pos_vec = Vec3 {
@@ -354,7 +364,7 @@ impl Player {
             state:state,
             dir:look_at,
             is_ragdoll: self.is_ragdoll,
-            ragdoll_info: self.ragdoll.get_info(physics_engine)
+            ragdoll_info 
         }
 
     }
@@ -443,7 +453,7 @@ impl Player {
                 }
 
                 if v[0] == "is_ragdoll" {
-                    self.is_ragdoll = !self.is_ragdoll;
+                    self.toggle_ragdoll(physics_engine);
                 }
 
             }else{
@@ -458,6 +468,20 @@ impl Player {
 
         self.on_input_change();
 
+    }
+
+    pub fn toggle_ragdoll(&mut self, physics_engine: &mut Physics){
+        self.is_ragdoll = !self.is_ragdoll;
+
+        if self.is_ragdoll{
+            self.ragdoll = Some(Ragdoll::new(self.ragdoll_template.clone(),physics_engine.get_translation(self.rigid_body_handle),physics_engine));
+        }else{
+            if let Some(ragdoll) = &mut self.ragdoll{
+                ragdoll.remove_self(physics_engine);
+                self.ragdoll=None;
+            }
+        }
+        
     }
 
     pub fn launch(&mut self, physics_engine: &mut Physics, launch_dir: Vector3<f32>) {
@@ -501,7 +525,11 @@ impl Player {
     }
 
     pub fn remove_self(&mut self, physics_engine: &mut Physics){
-        self.ragdoll.remove_self( physics_engine);
+
+        if let Some(ragdoll) = &mut self.ragdoll{
+            ragdoll.remove_self( physics_engine);
+        }
+      
         physics_engine.remove_from_rigid_body_set(self.rigid_body_handle);
     }
 
