@@ -41,7 +41,6 @@ impl Ragdoll {
         for scene in gltf.scenes() {
             for node in scene.nodes() {
                 if let Some(_) = node.mesh() {
-                    println!("{:?}", node.name());
                     Ragdoll::recursive_add_part(&node,&buffers,None,&mut joints,&mut parts,physics_engine);
             }
         }

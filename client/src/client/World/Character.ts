@@ -33,21 +33,29 @@ export class Character {
     private rotation_offset_2 : THREE.Euler = new THREE.Euler(180,0,0)
     private arrowHelper : THREE.ArrowHelper;
     private arrowHelper2 : THREE.ArrowHelper;
+
+    private ragdoll = new THREE.Group
     // private: loaded
     // private action : any;
 
     constructor(player_data: any, assetLoader: AssetLoader, world: World) {
 
-        assetLoader.loadGLTF('assets/character.glb', (model) => {
+        assetLoader.loadGLTF('assets/character.glb', (gltf:GLTF) => {
 
             console.log("Loaded Character Model")
-            this.readCharacterData(model);
-            this.gltf_scene = model.scene;
+            this.readCharacterData(gltf);
 
-            const helper = new THREE.SkeletonHelper( model.scene );
+            this.gltf_scene = gltf.scene;
+
+            world.graphicsWorld.add(gltf.scene);
+
+        })
+
+        assetLoader.loadGLTF('assets/character.glb', (gltf:GLTF) => {
+            this.ragdoll = gltf.scene;
+            const helper = new THREE.SkeletonHelper(this.ragdoll);
             world.graphicsWorld.add(helper)
-            world.graphicsWorld.add(model.scene);
-
+            world.graphicsWorld.add(this.ragdoll)
         })
 
         console.log("creating character")
@@ -99,20 +107,15 @@ export class Character {
     }
 
     public setRagdoll(ragdoll_data: any) {  
-        // console.log(ragdoll_data)
 
-        // console.log(this.gltf_scene?.children)
-        // this.setPosition(new THREE.Vector3(0,0,0))
-        if (this.gltf_scene == undefined) {
+        if (this.ragdoll == undefined) {
 
             return
            
         }
 
-        this.gltf_scene?.setRotationFromEuler(new THREE.Euler(0,0,0))
-        // this.gltf_scene.position.set(2,1.5,2)
+        this.ragdoll?.setRotationFromEuler(new THREE.Euler(0,0,0))
 
-        // this.arrowHelper.position.set(116,2,79)
         let keys : { [id: string] : string; }= {
 
             "LeftLegLower": "Chara_Low_RigGameSkeletonKnee_L",
@@ -136,13 +139,9 @@ export class Character {
             let value = ragdoll_data[key];
             let quat = new THREE.Quaternion(ragdoll_data["Chest"].q.i, ragdoll_data["Chest"].q.j, ragdoll_data["Chest"].q.k, ragdoll_data["Chest"].q.w);
             if( key in keys){
-                
-                    this.find_and_set(keys[key], this.gltf_scene, value,quat)
-                
+                    this.find_and_set(keys[key], this.ragdoll, value,quat)
             }
-           
-           
-            // Use `key` and `value`
+
         }
     }
 
@@ -155,24 +154,19 @@ export class Character {
             if(name == "Chara_Low_RigGameSkeletonRoot_M"){
                 bone.removeFromParent()
                 bone.scale.set(0.008,0.008,0.008)
-                this.gltf_scene?.add(bone)
-                // bone.position.set(data.p.x, data.p.y, data.p.z)
+                this.ragdoll?.add(bone)
                 bone.position.set(0, 0, 0)
-                // let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)));
-                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);//.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,Math.PI,Math.PI/2)));
+                let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);
                 quat = quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)))
-                // quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)).multiply(new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI))));
-                // quat = new THREE.Quaternion(0.00,-0.0,-0.0 )
                 bone.rotation.setFromQuaternion(quat)
                  
             }else{
                
                 
                 bone.removeFromParent()
-                this.gltf_scene?.add(bone)
+                this.ragdoll?.add(bone)
                 bone.scale.set(0.008,0.008,0.008)
                 bone.position.set(data.p.x, data.p.y, data.p.z)
-                // bone.position.set(0, 0, 0)
                 let custom_rot = new THREE.Quaternion().setFromEuler(new THREE.Euler((this.rotation_offset.x/360)*(2*Math.PI),
                 (this.rotation_offset.y/360)*(2*Math.PI),
                 (this.rotation_offset.z/360)*(2*Math.PI)))
@@ -208,23 +202,44 @@ export class Character {
             this.setRotation(update.q)
         }
 
-        this.setLookVector(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
+        this.setLookVector(new THREE.Vector3(update.dir.x,update.dir.y,update.dir.z))
    
        
         this.setState(update.state)
-
+        console.log(update.state)
         
 
         if(this.is_ragdoll){
             this.setRagdoll(update.ragdoll_info)
+            if(this.gltf_scene){
+                this.gltf_scene.visible = false;
+            }
+            this.ragdoll.visible = true;
+        }else{
+            if(this.gltf_scene){
+                this.gltf_scene.visible = true;
+            }
+            this.ragdoll.visible = false;
         }
         
     }
 
     public setPosition(position: THREE.Vector3): void {
         let offset = 0.5
+
         if(this.is_ragdoll){
             offset = 0.0
+            new TWEEN.Tween(this.ragdoll.position)
+                .to(
+                    {
+                        x: position.x,
+                        y: position.y - offset,
+                        z: position.z,
+                    },
+                    0
+                )
+                .start()
+            return
         }
 
         if (this.gltf_scene != undefined) {
@@ -266,7 +281,7 @@ export class Character {
     }
 
     public setState(state: any): void {
-        state = "Ragdoll"
+        // state = "Ragdoll"
 
         if (this.gltf_scene == undefined) {
             return
@@ -365,3 +380,4 @@ export class Character {
         // if (this.action !== undefined) console.log(this.action.isRunning());
     }
 }
+

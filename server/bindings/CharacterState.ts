@@ -2,4 +2,4 @@
 import type { IdleState } from "./IdleState";
 import type { JumpIdleState } from "./JumpIdleState";
 
-export type CharacterState = { Idle: IdleState } | "Walk" | "Falling" | { JumpIdle: JumpIdleState } | "JumpWalking";
+export type CharacterState = { Idle: IdleState } | "Walk" | "Falling" | { JumpIdle: JumpIdleState } | "JumpWalking" | "Ragdoll";

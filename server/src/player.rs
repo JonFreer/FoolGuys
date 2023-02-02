@@ -315,7 +315,7 @@ impl Player {
 
         let mut pos = physics_engine.get_translation(self.rigid_body_handle);
 
-        if(self.is_ragdoll){
+        if self.is_ragdoll {
             //get the position of center
             pos = self.ragdoll.get_pos(physics_engine);
         }
@@ -340,6 +340,10 @@ impl Player {
             z:self.look_at.z
         };
 
+        let mut state = self.character_state.clone();
+        if self.is_ragdoll{
+            state = CharacterState::Ragdoll;
+        }
 
 
         PlayerUpdate {
@@ -347,7 +351,7 @@ impl Player {
             p: pos_vec,
             q: rot_quat,
             colour: self.colour.clone(),
-            state:self.character_state.clone(),
+            state:state,
             dir:look_at,
             is_ragdoll: self.is_ragdoll,
             ragdoll_info: self.ragdoll.get_info(physics_engine)
@@ -437,6 +441,11 @@ impl Player {
                 if v[0] == "get_debug" {
                     c.tx.unbounded_send(message_prep(structs::MessageType::PhysicsState { data:physics_engine.get_state()})).unwrap();
                 }
+
+                if v[0] == "is_ragdoll" {
+                    self.is_ragdoll = !self.is_ragdoll;
+                }
+
             }else{
                 println!("Erorr unwrapping message");
             }

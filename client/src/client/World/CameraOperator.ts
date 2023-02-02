@@ -26,7 +26,7 @@ export class CameraOperator implements IInputReceiver
 	public onMouseDownPosition: THREE.Vector2;
 	public onMouseDownTheta: any;
 	public onMouseDownPhi: any;
-	public targetRadius: number = 6;
+	public targetRadius: number = 4;
 	public viewVector:Vector3;
 
 	public movementSpeed: number;

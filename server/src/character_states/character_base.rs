@@ -9,6 +9,7 @@ pub enum CharacterState{
     Walk,
     Falling,
     JumpIdle(JumpIdleState),
-    JumpWalking
+    JumpWalking,
+    Ragdoll
 }
 

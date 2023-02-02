@@ -157,6 +157,11 @@ function onDocumentKey(e: KeyboardEvent) {
             socket.send(JSON.stringify(['throw', {
             }]))
         }
+
+        if (e.key.toLowerCase() == 'o') {
+            socket.send(JSON.stringify(['is_ragdoll', {
+            }]))
+        }
     }
 
 }
