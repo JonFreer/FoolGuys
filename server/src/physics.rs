@@ -170,6 +170,10 @@ impl Physics {
         self.rigid_body_set[rigid_body_handle].translation().clone()
     }
 
+    pub fn get_linvel(&self, rigid_body_handle: RigidBodyHandle) -> Vector3<f32> {
+        self.rigid_body_set[rigid_body_handle].linvel().clone()
+    }
+
     pub fn get_rotation(&self, rigid_body_handle: RigidBodyHandle) -> Unit<Quaternion<f32>> {
         self.rigid_body_set[rigid_body_handle].rotation().clone()
     }

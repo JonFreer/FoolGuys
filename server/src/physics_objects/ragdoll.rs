@@ -28,7 +28,7 @@ struct RagdollPart {
 }
 
 impl Ragdoll {
-    pub fn new(template : RagdollTemplate , position: Vector3<f32> , physics_engine: &mut Physics ) -> Self {
+    pub fn new(template : RagdollTemplate , position: Vector3<f32>,lin_vel:Vector3<f32> , physics_engine: &mut Physics ) -> Self {
 
         let mut parts: HashMap<String, RagdollPart> = HashMap::new();
 
@@ -40,7 +40,7 @@ impl Ragdoll {
                 position.x + template_part.translation.x,
                 position.y + template_part.translation.y,
                 position.z + template_part.translation.z,
-            ))
+            )).linvel(lin_vel)
             .build();
 
             let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
@@ -60,12 +60,16 @@ impl Ragdoll {
             .local_anchor1(joint_info.anchor_pos1)
             .local_anchor2(joint_info.anchor_pos2.unwrap());
 
-            physics_engine.impulse_joint_set.insert(
+            let impulse_joint_handle = physics_engine.impulse_joint_set.insert(
                 parts[&joint_info.name1].rigid_body_handle,
                 parts[&joint_info.name2.unwrap()].rigid_body_handle,
                 joint,
                 true,
             );
+
+            let impulse_joint = physics_engine.impulse_joint_set.get(impulse_joint_handle).unwrap();
+
+            let local_anchor = impulse_joint.data.local_anchor1();
 
         }
 
@@ -75,6 +79,8 @@ impl Ragdoll {
     pub fn get_pos(&self, physics_engine: &mut Physics) -> Vector3<f32> {
         physics_engine.get_translation(self.parts["Chest"].rigid_body_handle)
     }
+
+    
 
     pub fn get_info(&self, physics_engine: &mut Physics) -> RagdollUpdate {
         let mut update: RagdollUpdate = HashMap::new();
@@ -174,15 +180,16 @@ impl RagdollTemplate {
 
         for scene in gltf.scenes() {
             for node in scene.nodes() {
-                if let Some(_) = node.mesh() {
+                // if let Some(_) = node.mesh() {
                     RagdollTemplate::recursive_add_part(
+                        None,
                         &node,
                         &buffers,
                         None,
                         &mut joints,
                         &mut parts,
                     );
-                }
+                // }
             }
         }
 
@@ -190,6 +197,7 @@ impl RagdollTemplate {
     }
 
     fn recursive_add_part(
+        parent_node:Option<&Node>,
         node: &Node,
         buffers: &Vec<gltf::buffer::Data>,
         parent_name: Option<String>,
@@ -198,11 +206,56 @@ impl RagdollTemplate {
     ) {
         if let Some(_) = node.mesh() {
             if let Some(mut collider) = collision::new_collider(&node, &buffers) {
+                
                 println!("New Collider, {:?}", collider.position());
 
                 collider.set_translation(Vector3::new(0.0, 0.0, 0.0));
+
                 let t = node.transform().decomposed().0;
                 let s = node.transform().decomposed().2;
+
+
+                //If the current mesh has a parent, this is a joint. Offset the position of the collider with repect to this joint
+                if let Some(parent) = parent_node{
+                    if let Some(extras) = parent.extras() {
+
+                        let extras: gltf::json::Value =
+                            gltf::json::deserialize::from_str(extras.get()).unwrap();
+                        if extras["joint"] != Value::Null {
+                            let translation = parent.transform().decomposed().0;
+                            if joints.contains_key(&extras["joint"].to_string()) {
+                                let mut joint =  joints[&extras["joint"].to_string()].clone();
+
+                                joint.name2 = Some(node.name().unwrap().to_string());
+                                joint.anchor_pos2 = Some(Point::new(
+                                    translation[0] * s[0],
+                                    translation[1] * s[1],
+                                    translation[2] * s[2],
+                                ));
+
+                                joints.insert(extras["joint"].to_string() , joint);
+
+                            } else {
+                                joints.insert(
+                                    extras["joint"].clone().to_string(),
+                                    JointInfo {
+                                        name1: node.name().unwrap().to_string(),
+                                        anchor_pos1: Point::new(
+                                            translation[0] * s[0],
+                                            translation[1] * s[1],
+                                            translation[2] * s[2],
+                                        ),
+                                        name2: None,
+                                        anchor_pos2: None,
+                                    },
+                                );
+                            }
+
+                            collider.set_translation(Vector3::new(translation[0],translation[1],translation[2]));
+
+                        }
+                    }
+                }
 
                 parts.insert(
                     node.name().unwrap().to_string(),
@@ -214,14 +267,12 @@ impl RagdollTemplate {
                     },
                 );
 
+
+
+                //TODO:: Check if parent is an empty and make that cheif joint also offset collider
+
                 for child in node.children() {
-                    RagdollTemplate::recursive_add_part(
-                        &child,
-                        buffers,
-                        Some(node.name().unwrap().to_string()),
-                        joints,
-                        parts,
-                    );
+              
 
                     if let Some(extras) = child.extras() {
                         let extras: gltf::json::Value =
@@ -257,7 +308,19 @@ impl RagdollTemplate {
                         }
                     }
                 }
+
             }
+        }
+
+        for child in node.children() {
+            RagdollTemplate::recursive_add_part(
+                Some(node),
+                &child,
+                buffers,
+                Some(node.name().unwrap().to_string()),
+                joints,
+                parts,
+            );
         }
     }
 }
