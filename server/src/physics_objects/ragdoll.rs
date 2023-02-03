@@ -2,7 +2,7 @@ use gltf::{ Node};
 use nalgebra::{Vector3};
 use rapier3d::prelude::{
     Collider, GenericJointBuilder, JointAxesMask, Point, RigidBodyBuilder,
-    RigidBodyHandle,
+    RigidBodyHandle, ImpulseJointHandle,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -25,8 +25,10 @@ pub struct Ragdoll {
 struct RagdollPart {
     rigid_body_handle: RigidBodyHandle,
     parent_name: Option<String>,
+    joint: Option<ImpulseJointHandle>
 }
 
+//TODO :: JUST SEND JOINT LOCATIONS & RIGID BODY ROTATIONS
 impl Ragdoll {
     pub fn new(template : RagdollTemplate , position: Vector3<f32>,lin_vel:Vector3<f32> , physics_engine: &mut Physics ) -> Self {
 
@@ -50,19 +52,19 @@ impl Ragdoll {
                 &mut physics_engine.rigid_body_set,
             );
 
-            parts.insert(name, RagdollPart { rigid_body_handle, parent_name: template_part.parent_name });
+            parts.insert(name, RagdollPart { rigid_body_handle, parent_name: template_part.parent_name, joint:None });
         }
 
         for (_joint_name,joint_info) in template.joints{
             let joint = GenericJointBuilder::new(
                 JointAxesMask::LOCKED_SPHERICAL_AXES | JointAxesMask::ANG_X,
             )
-            .local_anchor1(joint_info.anchor_pos1)
-            .local_anchor2(joint_info.anchor_pos2.unwrap());
+            .local_anchor1(joint_info.anchor_pos_parent.unwrap())
+            .local_anchor2(joint_info.anchor_pos_child.unwrap());
 
             let impulse_joint_handle = physics_engine.impulse_joint_set.insert(
-                parts[&joint_info.name1].rigid_body_handle,
-                parts[&joint_info.name2.unwrap()].rigid_body_handle,
+                parts[&joint_info.name_parent.unwrap()].rigid_body_handle,
+                parts[&joint_info.name_child.unwrap()].rigid_body_handle,
                 joint,
                 true,
             );
@@ -71,6 +73,14 @@ impl Ragdoll {
 
             let local_anchor = impulse_joint.data.local_anchor1();
 
+            let translation = physics_engine.get_rigid_body(parts["Chest"].rigid_body_handle).position().to_matrix();//.mul_to(rhs, out);
+            // let new_point  = local_anchor.coords.to_homogeneous()*translation;
+            let pos = physics_engine.get_rigid_body(parts["Chest"].rigid_body_handle);
+
+            let p =  pos.position().to_matrix()*local_anchor.xyz().to_homogeneous();
+
+            println!("coords joint: {:?} {:?} {:?}",local_anchor.xyz(),translation,p);
+            
         }
 
         Self { parts }
@@ -79,8 +89,6 @@ impl Ragdoll {
     pub fn get_pos(&self, physics_engine: &mut Physics) -> Vector3<f32> {
         physics_engine.get_translation(self.parts["Chest"].rigid_body_handle)
     }
-
-    
 
     pub fn get_info(&self, physics_engine: &mut Physics) -> RagdollUpdate {
         let mut update: RagdollUpdate = HashMap::new();
@@ -164,10 +172,10 @@ pub struct RagdollTemplatePart {
 
 #[derive(Clone)]
 struct JointInfo {
-    name1: String,
-    anchor_pos1: Point<f32>,
-    name2: Option<String>,
-    anchor_pos2: Option<Point<f32>>,
+    name_parent: Option<String>,
+    anchor_pos_parent: Option<Point<f32>>,
+    name_child: Option<String>,
+    anchor_pos_child: Option<Point<f32>>,
 }
 
 
@@ -226,8 +234,8 @@ impl RagdollTemplate {
                             if joints.contains_key(&extras["joint"].to_string()) {
                                 let mut joint =  joints[&extras["joint"].to_string()].clone();
 
-                                joint.name2 = Some(node.name().unwrap().to_string());
-                                joint.anchor_pos2 = Some(Point::new(
+                                joint.name_parent = Some(node.name().unwrap().to_string());
+                                joint.anchor_pos_parent = Some(Point::new(
                                     translation[0] * s[0],
                                     translation[1] * s[1],
                                     translation[2] * s[2],
@@ -239,14 +247,14 @@ impl RagdollTemplate {
                                 joints.insert(
                                     extras["joint"].clone().to_string(),
                                     JointInfo {
-                                        name1: node.name().unwrap().to_string(),
-                                        anchor_pos1: Point::new(
+                                        name_parent: Some(node.name().unwrap().to_string()),
+                                        anchor_pos_parent: Some(Point::new(
                                             translation[0] * s[0],
                                             translation[1] * s[1],
                                             translation[2] * s[2],
-                                        ),
-                                        name2: None,
-                                        anchor_pos2: None,
+                                        )),
+                                        name_child: None,
+                                        anchor_pos_child: None,
                                     },
                                 );
                             }
@@ -282,8 +290,8 @@ impl RagdollTemplate {
                             if joints.contains_key(&extras["joint"].to_string()) {
                                 let mut joint =  joints[&extras["joint"].to_string()].clone();
 
-                                joint.name2 = Some(node.name().unwrap().to_string());
-                                joint.anchor_pos2 = Some(Point::new(
+                                joint.name_child = Some(node.name().unwrap().to_string());
+                                joint.anchor_pos_child = Some(Point::new(
                                     translation[0] * s[0],
                                     translation[1] * s[1],
                                     translation[2] * s[2],
@@ -294,14 +302,14 @@ impl RagdollTemplate {
                                 joints.insert(
                                     extras["joint"].clone().to_string(),
                                     JointInfo {
-                                        name1: node.name().unwrap().to_string(),
-                                        anchor_pos1: Point::new(
+                                        name_child: Some(node.name().unwrap().to_string()),
+                                        anchor_pos_child: Some(Point::new(
                                             translation[0] * s[0],
                                             translation[1] * s[1],
                                             translation[2] * s[2],
-                                        ),
-                                        name2: None,
-                                        anchor_pos2: None,
+                                        )),
+                                        name_parent: None,
+                                        anchor_pos_parent: None,
                                     },
                                 );
                             }
