@@ -19,6 +19,7 @@ use super::collision;
 #[derive(Clone)]
 pub struct Ragdoll {
     parts: HashMap<String, RagdollPart>,
+    joints: HashMap<String, ImpulseJointHandle>
 }
 
 #[derive(Clone)]
@@ -28,12 +29,13 @@ struct RagdollPart {
     joint: Option<ImpulseJointHandle>
 }
 
-//TODO :: JUST SEND JOINT LOCATIONS & RIGID BODY ROTATIONS
+
+
 impl Ragdoll {
     pub fn new(template : RagdollTemplate , position: Vector3<f32>,lin_vel:Vector3<f32> , physics_engine: &mut Physics ) -> Self {
 
         let mut parts: HashMap<String, RagdollPart> = HashMap::new();
-
+        let mut joints: HashMap<String, ImpulseJointHandle> = HashMap::new();
         //Create and place rigid bodies
 
         for (name,template_part) in template.parts{
@@ -61,9 +63,10 @@ impl Ragdoll {
             )
             .local_anchor1(joint_info.anchor_pos_parent.unwrap())
             .local_anchor2(joint_info.anchor_pos_child.unwrap());
+            let parent_name  = joint_info.name_parent.unwrap();
 
             let impulse_joint_handle = physics_engine.impulse_joint_set.insert(
-                parts[&joint_info.name_parent.unwrap()].rigid_body_handle,
+                parts[&parent_name].rigid_body_handle,
                 parts[&joint_info.name_child.unwrap()].rigid_body_handle,
                 joint,
                 true,
@@ -81,9 +84,11 @@ impl Ragdoll {
 
             println!("coords joint: {:?} {:?} {:?}",local_anchor.xyz(),translation,p);
             
+            joints.insert(parent_name, impulse_joint_handle);
+
         }
 
-        Self { parts }
+        Self { parts,joints }
     }
 
     pub fn get_pos(&self, physics_engine: &mut Physics) -> Vector3<f32> {
@@ -93,32 +98,46 @@ impl Ragdoll {
     pub fn get_info(&self, physics_engine: &mut Physics) -> RagdollUpdate {
         let mut update: RagdollUpdate = HashMap::new();
 
-        for (key, value) in &self.parts {
-            let rot;
-            let mut pos;
 
-            if let Some(parent_handle) = value.parent_name.clone() {
-                // let master_pos = physics_engine.get_translation(parent_handle);
-                // let master_rot = physics_engine.get_rotation(parent_handle);
+        //find master
+        let master_pos = physics_engine.get_translation(self.parts["Chest"].rigid_body_handle);
+        let master_rot = physics_engine.get_rotation(self.parts["Chest"].rigid_body_handle);
 
-                let master_pos =
-                    physics_engine.get_translation(self.parts["Chest"].rigid_body_handle);
+        update.insert(
+            "Chest".to_string(),
+            Translation {
+                p: Vec3 {
+                    x: master_pos.x,
+                    y: master_pos.y,
+                    z: master_pos.z,
+                },
+                q: Quat {
+                    i: master_rot.i,
+                    j: master_rot.j,
+                    k: master_rot.k,
+                    w: master_rot.w,
+                },
+            },
+        );
+        
 
-                let master_rot = physics_engine.get_rotation(self.parts["Chest"].rigid_body_handle);
+        //TODO::If the rigid body does not have a master, send the location of that rigid body. Idea: Mark in blender
 
-                pos = physics_engine.get_translation(value.rigid_body_handle);
-                pos = pos - master_pos;
+        for (name,impulse_joint_handle) in &self.joints{
 
-                // rot =  physics_engine.get_rotation(value.rigid_body_handle)* master_rot.conjugate();
+            let joint = physics_engine.impulse_joint_set.get(*impulse_joint_handle).unwrap();
 
-                rot = physics_engine.get_rotation(value.rigid_body_handle);
-            } else {
-                rot = physics_engine.get_rotation(value.rigid_body_handle);
-                pos = physics_engine.get_translation(value.rigid_body_handle);
-            }
+            let rigid_body_handle = joint.body1;
+            let joint_loc = joint.data.local_anchor1().xyz().to_homogeneous();
+
+            let joint_world_loc = physics_engine.get_rigid_body(rigid_body_handle).position().to_matrix() * joint_loc;
+
+            let rot = physics_engine.get_rigid_body(rigid_body_handle).rotation();
+
+            let pos = joint_world_loc.xyz() - master_pos;
 
             update.insert(
-                key.to_string(),
+                name.to_string(),
                 Translation {
                     p: Vec3 {
                         x: pos.x,
@@ -133,7 +152,11 @@ impl Ragdoll {
                     },
                 },
             );
+
         }
+
+
+     
 
         update
     }
