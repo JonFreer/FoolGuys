@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 
 
+use gltf::json::Path;
 use gltf::{Document, Node};
 use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
 use serde_json::Value;
@@ -28,7 +29,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(asset_path: &str) -> Self {
+    pub fn new(asset_path: &str,path:&str) -> Self {
         let assets = HashMap::new();
         let dynamic_objects = Vec::new();
         
@@ -40,12 +41,12 @@ impl World {
             assets,
             asset_path: asset_path.to_string(),
             asset_count:0,
-            character_ragdoll_template:RagdollTemplate::new("../Blender/character.glb".to_string())
+            character_ragdoll_template:RagdollTemplate::new(path.to_string()+"character.glb")
         }
     }
 
     pub fn load_world(&mut self, path: &str, physics_engine: &mut Physics) {
-        let (gltf, buffers, _) = gltf::import(path).unwrap();
+        let (gltf, buffers, _) = gltf::import(path.to_string()+"collision.glb").unwrap();
         for scene in gltf.scenes() {
             for node in scene.nodes() {
                 self.create_object(&node, &buffers, &gltf, physics_engine);

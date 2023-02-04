@@ -124,7 +124,7 @@ impl Player {
             look_at: Vector3::new(1.0, 0.0, 0.0),
             target_look_at: Vector3::new(1.0, 0.0, 0.0),
             id,
-            is_ragdoll: true,
+            is_ragdoll: false,
             ragdoll_template,
             ragdoll: None,
         }

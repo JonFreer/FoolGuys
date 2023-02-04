@@ -82,7 +82,7 @@ class SetJoint(bpy.types.Operator):
 
         for obj in bpy.context.selected_objects:
             obj["joint"]= ""
-
+            obj["joint_main"]= False
         
         return {'FINISHED'}   
 

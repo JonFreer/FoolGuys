@@ -108,7 +108,8 @@ export class World {
         this.sea = new Sea(this);
 
         this.grass = new Grass(this);
-        this.debug = new Debug(this)
+        
+        this.debug = new Debug(this);
         
 
 

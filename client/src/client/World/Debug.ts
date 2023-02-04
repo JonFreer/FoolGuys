@@ -9,7 +9,11 @@ export class Debug{
     constructor(world:World){
 
         this.debug_group= new THREE.Group()
-        world.graphicsWorld.add(this.debug_group)
+
+
+        if (location.hostname == 'localhost') {
+            world.graphicsWorld.add(this.debug_group)
+        }
 
     }
 

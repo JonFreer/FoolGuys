@@ -1,4 +1,3 @@
-
 use std::{
     collections::HashMap,
     env,
@@ -12,32 +11,33 @@ use std::time::Instant;
 
 mod animation;
 mod client;
+mod physics;
 mod player;
 mod structs;
 mod world;
-mod physics;
 
 mod physics_objects {
-    pub mod launchpad;
-    pub mod spin;
-    pub mod collision;
-    pub mod pivot;
-    pub mod rigid_body_parent;
-    pub mod dynamic;
     pub mod asset;
+    pub mod collision;
+    pub mod dynamic;
+    pub mod launchpad;
+    pub mod pivot;
     pub mod ragdoll;
+    pub mod rigid_body_parent;
+    pub mod spin;
 }
 
 mod character_states {
     pub mod character_base;
-    pub mod idle;
-    pub mod walk;
-    pub mod jumpidle;
     pub mod falling;
+    pub mod idle;
+    pub mod jumpidle;
+    pub mod walk;
 }
 
-
-use crate::{world::{World}, physics::Physics, physics_objects::ragdoll::Ragdoll, structs::message_prep};
+use crate::{
+    physics::Physics, physics_objects::ragdoll::Ragdoll, structs::message_prep, world::World,
+};
 use crate::{player::Player, structs::ObjectUpdate};
 
 use futures_channel::mpsc::unbounded;
@@ -100,19 +100,21 @@ async fn socket_handler(peer_map: PeerMap, listener: TcpListener) {
 
 #[tokio::main]
 async fn main() -> Result<(), IoError> {
-
     let path;
     let asset_path;
     let ip;
+    let debug: bool;
     if cfg!(debug_assertions) {
+        debug = true;
         println!("Running debug server");
         // path = "../client/dist/client/assets/world.glb";
-        path = "../Blender/collision.glb";
+        path = "../Blender/";
         asset_path = "../client/dist/client/assets/unoptimized/";
         ip = "127.0.0.1:2865";
     } else {
+        debug = false;
         println!("Running Prod Server");
-        path = "/assets/collision.glb";
+        path = "/assets/";//collision.glb"
         asset_path = "/assets_unoptimized/"; //TODO
         ip = "0.0.0.0:2865"
     }
@@ -129,11 +131,11 @@ async fn main() -> Result<(), IoError> {
 
     let mut physics_engine = Physics::new();
 
-    let mut world = World::new(asset_path);
+    let mut world = World::new(asset_path,path);
 
-    world.load_world(path,&mut physics_engine);
+    world.load_world(path, &mut physics_engine);
 
-    // let ragdoll = 
+    // let ragdoll =
 
     let mut time_since_last = Instant::now();
     let mut wait_time = 0;
@@ -155,7 +157,7 @@ async fn main() -> Result<(), IoError> {
                         &world.spawn_points,
                         key.clone(),
                         &mut physics_engine,
-                        world.character_ragdoll_template.clone()
+                        world.character_ragdoll_template.clone(),
                     );
 
                     value
@@ -172,17 +174,15 @@ async fn main() -> Result<(), IoError> {
 
             //Check for clients which no longer exist
             let mut players_to_remove = Vec::new();
-            for (socket,player) in players.iter_mut() {
-
+            for (socket, player) in players.iter_mut() {
                 //set the grounded to false
                 // p.1.on_ground = false;
 
                 if !peers.contains_key(socket) {
                     player.remove_self(&mut physics_engine);
                     // world.collider_set.remove(value.collider_handle, &mut island_manager, &mut world.rigid_body_set, true);
-                    
-                    players_to_remove.push(socket.clone());
 
+                    players_to_remove.push(socket.clone());
                 }
             }
 
@@ -192,26 +192,19 @@ async fn main() -> Result<(), IoError> {
                 println!("Removed player");
             }
 
-            for (socket,player) in players.iter_mut() {
+            for (socket, player) in players.iter_mut() {
                 let client = peers.get_mut(&socket).unwrap();
-                player.read_messages(client,&mut physics_engine);
+                player.read_messages(client, &mut physics_engine);
             }
-
 
             let players_clone = players.clone();
 
-            for (_socket,player) in players.iter_mut() {
-
-                player.update_physics(
-                    &mut world,
-                    &mut physics_engine,
-                    &players_clone
-                );
-
+            for (_socket, player) in players.iter_mut() {
+                player.update_physics(&mut world, &mut physics_engine, &players_clone);
             }
 
             //Send chat messages
-            for (_socket,player) in players.iter_mut() {
+            for (_socket, player) in players.iter_mut() {
                 loop {
                     if player.chat_queue.len() == 0 {
                         break;
@@ -229,58 +222,47 @@ async fn main() -> Result<(), IoError> {
                 }
             }
 
-            
             physics_engine.update();
 
+            //Update physics objects
+            world.update(&mut players, &mut physics_engine);
 
-
-            
-
-                //Update physics objects
-            world.update(&mut players,&mut physics_engine);
-
-          
             // Send players_info
 
             let mut players_info = HashMap::new();
 
-            for (socket,player) in players.iter_mut() {
-                players_info.insert(
-                    socket.to_string(),
-                    player.get_info(&mut physics_engine),
-                );
+            for (socket, player) in players.iter_mut() {
+                players_info.insert(socket.to_string(), player.get_info(&mut physics_engine));
             }
 
             let dynamic_objects_info: HashMap<String, ObjectUpdate> = world
                 .dynamic_objects
                 .iter_mut()
-                .map(|x|
-                     (x.name(), x.get_info(&mut physics_engine.rigid_body_set))
-                    )
+                .map(|x| (x.name(), x.get_info(&mut physics_engine.rigid_body_set)))
                 .collect();
 
+            // let ragdoll_info = ragdoll.get_info(&mut physics_engine);
+            if debug {
+                let player_update_message = structs::MessageType::WorldUpdate {
+                    players: players_info,
+                    dynamic_objects: dynamic_objects_info,
+                    // ragdolls : ragdoll_info
+                };
 
-            // let ragdoll_info = ragdoll.get_info(&mut physics_engine);        
-            
-            let player_update_message = structs::MessageType::WorldUpdate {
-                players: players_info,
-                dynamic_objects: dynamic_objects_info,
-                // ragdolls : ragdoll_info
-            };
+                //send player_update to all players
+                for (_, value) in &*peers {
+                    value
+                        .tx
+                        .unbounded_send(message_prep(player_update_message.clone()))
+                        .unwrap();
 
-
-
-            //send player_update to all players
-            for (_, value) in &*peers {
-                value
-                    .tx
-                    .unbounded_send(message_prep(player_update_message.clone()))
-                    .unwrap();
-
-                value
-                    .tx
-                    .unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data: physics_engine.get_state_update() }))
-                    .unwrap();
+                    value
+                        .tx
+                        .unbounded_send(message_prep(structs::MessageType::PhysicsUpdate {
+                            data: physics_engine.get_state_update(),
+                        }))
+                        .unwrap();
+                }
             }
 
             let duration = Instant::now() - start_time;
@@ -292,5 +274,3 @@ async fn main() -> Result<(), IoError> {
 
     // Ok(())
 }
-
-

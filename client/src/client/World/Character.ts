@@ -31,8 +31,8 @@ export class Character {
     private state: State = State.Jumping;
     private rotation_offset : THREE.Euler = new THREE.Euler(0,0,270)
     private rotation_offset_2 : THREE.Euler = new THREE.Euler(180,0,0)
-    private arrowHelper : THREE.ArrowHelper;
-    private arrowHelper2 : THREE.ArrowHelper;
+    // private arrowHelper : THREE.ArrowHelper;
+    // private arrowHelper2 : THREE.ArrowHelper;
 
     private ragdoll = new THREE.Group
     // private: loaded
@@ -53,61 +53,72 @@ export class Character {
 
         assetLoader.loadGLTF('assets/character.glb', (gltf:GLTF) => {
             this.ragdoll = gltf.scene;
-            const helper = new THREE.SkeletonHelper(this.ragdoll);
-            world.graphicsWorld.add(helper)
+            gltf.scene.traverse((object: any) => {
+
+                if (object.isMesh && object.name == "Body") {
+    
+                    object.castShadow = true;
+                    object.receiveShadow = true;
+                    object.material.side = THREE.FrontSide;
+                    object.geometry.computeVertexNormals(true)
+                }
+    
+            });
+            // const helper = new THREE.SkeletonHelper(this.ragdoll);
+            // world.graphicsWorld.add(helper)
             world.graphicsWorld.add(this.ragdoll)
         })
 
         console.log("creating character")
 
-        const gui = new GUI()
+        // const gui = new GUI()
 
-        const debugFolder = gui.addFolder('Rotation')
-        gui.add(this.rotation_offset, 'x');
-        gui.add(this.rotation_offset, 'y');
-        gui.add(this.rotation_offset, 'z');
-        gui.add(this.rotation_offset_2, 'x');
-        gui.add(this.rotation_offset_2, 'y');
-        gui.add(this.rotation_offset_2, 'z');
-        // debugFolder.open()
+        // const debugFolder = gui.addFolder('Rotation')
+        // gui.add(this.rotation_offset, 'x');
+        // gui.add(this.rotation_offset, 'y');
+        // gui.add(this.rotation_offset, 'z');
+        // gui.add(this.rotation_offset_2, 'x');
+        // gui.add(this.rotation_offset_2, 'y');
+        // gui.add(this.rotation_offset_2, 'z');
+        // // debugFolder.open()
 
         this.name = player_data.name;
 
 
-        const dir = new THREE.Vector3( 0  , 1, 0 );
+        // const dir = new THREE.Vector3( 0  , 1, 0 );
 
-        //normalize the direction vector (convert to vector of length 1)
-        dir.normalize();
+        // //normalize the direction vector (convert to vector of length 1)
+        // dir.normalize();
 
-        const origin = new THREE.Vector3( 116,2,79 );
-        const length = 1;
-        let hex = 0xff0000;
+        // const origin = new THREE.Vector3( 116,2,79 );
+        // const length = 1;
+        // let hex = 0xff0000;
 
-        this.arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+        // this.arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
 
-        world.graphicsWorld.add(this.arrowHelper)
+        // world.graphicsWorld.add(this.arrowHelper)
 
   
 
-        //normalize the direction vector (convert to vector of length 1)
+        // //normalize the direction vector (convert to vector of length 1)
        
-        hex = 0xFF00;
+        // hex = 0xFF00;
 
 
-        this.arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
+        // this.arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex );
 
-        world.graphicsWorld.add(this.arrowHelper)
+        // world.graphicsWorld.add(this.arrowHelper)
 
-        hex = 0x0000FF;
+        // hex = 0x0000FF;
 
 
-        this.arrowHelper2 = new THREE.ArrowHelper( dir, origin, length, hex );
+        // this.arrowHelper2 = new THREE.ArrowHelper( dir, origin, length, hex );
 
-        world.graphicsWorld.add(this.arrowHelper2)
+        // world.graphicsWorld.add(this.arrowHelper2)
     }
 
     public setRagdoll(ragdoll_data: any) {  
-
+        console.log(ragdoll_data)
         if (this.ragdoll == undefined) {
 
             return
@@ -129,7 +140,7 @@ export class Character {
             "RightArmLower": "Chara_Low_RigGameSkeletonElbow_R",
 
             "Chest": "Chara_Low_RigGameSkeletonRoot_M",
-            "Head" : "Chara_Low_RigGameSkeletonChest_M"
+            // "Head" : "Chara_Low_RigGameSkeletonChest_M"
 
         }
 
@@ -160,7 +171,14 @@ export class Character {
                 quat = quat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI,0,Math.PI/2)))
                 bone.rotation.setFromQuaternion(quat)
                  
-            }else{
+            }
+            
+            // else if(name == "Chara_Low_RigGameSkeletonElbow_L"){
+
+            // }
+
+            
+            else{
                
                 
                 bone.removeFromParent()
@@ -303,7 +321,7 @@ export class Character {
 
         if (state == "Ragdoll" && this.state != State.Ragdoll) {
             this.state = State.Ragdoll
-            this.action.stop();
+            // this.action.stop();
         }
 
     }
