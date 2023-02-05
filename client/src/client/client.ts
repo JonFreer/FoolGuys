@@ -45,7 +45,7 @@ const world = new World(socket, "assets/world.glb")
 socket.onmessage = function (event) {
 
     const msg = JSON.parse(event.data) as MessageType
- 
+    console.log(msg)
     if (msg.kind == 'Join') {
         world.player_id = msg.id
     }
