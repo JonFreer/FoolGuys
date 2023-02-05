@@ -45,7 +45,7 @@ const world = new World(socket, "assets/world.glb")
 socket.onmessage = function (event) {
 
     const msg = JSON.parse(event.data) as MessageType
- 
+    console.log(msg)
     if (msg.kind == 'Join') {
         world.player_id = msg.id
     }
@@ -73,6 +73,15 @@ socket.onmessage = function (event) {
 
     if (msg.kind == 'Chat'){
         world.chatManager.newMessage(msg.name.slice(1, -1), msg.message.slice(1, -1))
+    }
+
+    if (msg.kind == "PhysicsUpdate") {
+        world.debug.update_state(msg.data)
+
+    }
+
+    if (msg.kind == "PhysicsState") {
+        world.debug.load_state(msg.data)
     }
 }
 
@@ -146,6 +155,11 @@ function onDocumentKey(e: KeyboardEvent) {
     if (e.type == 'keydown') {
         if (e.key.toLowerCase() == 'p') {
             socket.send(JSON.stringify(['throw', {
+            }]))
+        }
+
+        if (e.key.toLowerCase() == 'o') {
+            socket.send(JSON.stringify(['is_ragdoll', {
             }]))
         }
     }

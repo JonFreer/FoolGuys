@@ -19,7 +19,8 @@ import { ToonSky } from './ToonSky';
 import { AssetLoader } from './AssetLoader';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Asset } from './Asset';
-import { ObjectUpdate, PlayerUpdate } from 'backend';
+import { Debug } from './Debug';
+import { ObjectUpdate, PlayerUpdate, Translation } from 'backend';
 
 export class World {
 
@@ -47,6 +48,7 @@ export class World {
     public grass: Grass;
     public floor: Floor | undefined;
     public updatables : Asset[] = [];
+    public debug : Debug;
 
     private global_time :number = 0;
 
@@ -106,7 +108,8 @@ export class World {
         this.sea = new Sea(this);
 
         this.grass = new Grass(this);
-       
+        
+        this.debug = new Debug(this);
         
 
 
@@ -189,20 +192,12 @@ export class World {
 
             // const update = players[client_id];
 
-            this.players[client_id].name = update.name.slice(1, -1);
 
-            if (update.p) {
-                this.players[client_id].setPosition(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
-            }
-            if (update.q) {
-                this.players[client_id].setRotation(update.q)
-            }
 
-            this.players[client_id].setLookVector(new THREE.Vector3(update.p.x,update.p.y,update.p.z))
-       
-           
-            this.players[client_id].setState(update.state)
+            this.players[client_id].updateCharacter(update)
         }
+
+        
 
         if (!this.clientCubes[client_id]) {
 

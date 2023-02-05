@@ -1,10 +1,18 @@
 use std::{collections::HashMap, net::SocketAddr};
 // use nalgebra::{ Vector1, Vector2, Vector3};
-use crate::{structs::{Client, Colour, PlayerUpdate, Quat, Vec3, self, message_prep}, character_states::{character_base::CharacterState, idle::IdleState, walk::WalkState, jumpidle::JumpIdleState, falling::FallingState}, world::World, physics::Physics};
-use nalgebra::{Vector3, Vector2, Vector1};
+use crate::{
+    character_states::{
+        character_base::CharacterState, falling::FallingState, idle::IdleState,
+        jumpidle::JumpIdleState, walk::WalkState,
+    },
+    physics::Physics,
+    physics_objects::ragdoll::{self, Ragdoll, RagdollTemplate, RagdollUpdate},
+    structs::{self, message_prep, Client, Colour, PlayerUpdate, Quat, Vec3},
+    world::World,
+};
+use nalgebra::{Vector1, Vector2, Vector3};
 use rand::Rng;
-use serde_json::{Value, Error};
-
+use serde_json::{Error, Value};
 
 use rapier3d::prelude::*;
 
@@ -28,20 +36,22 @@ pub struct Player {
     pub on_ground: bool,
     // pub on_ground_2: bool,
     pub acrade_veloicty_influencer: Vector3<f32>, // pub lin_vel: Vector3<f32>,
-    pub character_state : CharacterState,
-    pub just_jumped : bool,
+    pub character_state: CharacterState,
+    pub just_jumped: bool,
     pub look_at: Vector3<f32>,
-    pub target_look_at: Vector<f32>
+    pub target_look_at: Vector<f32>,
+    pub is_ragdoll: bool,
+    ragdoll: Option<Ragdoll>,
+    ragdoll_template: RagdollTemplate,
 }
-
 
 impl Player {
     pub fn new(
         num_players: usize,
-        rigid_body_set: &mut RigidBodySet,
-        collider_set: &mut ColliderSet,
         spawn_points: &Vec<Vector3<f32>>,
-        id: SocketAddr
+        id: SocketAddr,
+        physics_engine: &mut Physics,
+        ragdoll_template: RagdollTemplate,
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
 
@@ -67,7 +77,7 @@ impl Player {
 
         // rigid_body.set_locked_axes(LockedAxes::ROTATION_LOCKED, true);
 
-        let rigid_body_handle = rigid_body_set.insert(rigid_body);
+        let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
         let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5)
             //  ColliderBuilder::capsule_y(0.3, 0.15)
@@ -77,8 +87,11 @@ impl Player {
             // .mass(10.0)
             .build();
 
-        let collider_handle =
-            collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
+        let collider_handle = physics_engine.collider_set.insert_with_parent(
+            collider,
+            rigid_body_handle,
+            &mut physics_engine.rigid_body_set,
+        );
 
         let mut rng = rand::thread_rng();
 
@@ -101,16 +114,19 @@ impl Player {
             collider_handle,
             key_map: HashMap::new(),
             to_jump: false,
-            to_throw:false,
+            to_throw: false,
             colour: colour,
-            on_ground:false,
+            on_ground: false,
             // on_ground_2: false,
             acrade_veloicty_influencer: Vector3::new(0.2, 0.0, 0.2), // lin_vel: Vector3::new(0.0, 0.0, 0.0),
-            character_state: CharacterState::Idle(IdleState { }),
-            just_jumped:false,
-            look_at: Vector3::new(1.0,0.0,0.0),
-            target_look_at: Vector3::new(1.0,0.0,0.0),
-            id
+            character_state: CharacterState::Idle(IdleState {}),
+            just_jumped: false,
+            look_at: Vector3::new(1.0, 0.0, 0.0),
+            target_look_at: Vector3::new(1.0, 0.0, 0.0),
+            id,
+            is_ragdoll: false,
+            ragdoll_template,
+            ragdoll: None,
         }
     }
 
@@ -118,12 +134,11 @@ impl Player {
         Vector3::new(a.x * b.z + a.z * b.x, b.y, a.z * b.z + -a.x * b.x)
     }
 
-    pub fn respawn(spawn_points: &Vec<Vector3<f32>> , rigid_body :&mut RigidBody){
+    pub fn respawn(spawn_points: &Vec<Vector3<f32>>, rigid_body: &mut RigidBody) {
         rigid_body.set_translation(spawn_points[0], true);
         rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
         rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
     }
-
 
     pub fn update_physics(
         &mut self,
@@ -132,10 +147,9 @@ impl Player {
         // query_pipeline: &QueryPipeline,
         world: &mut World,
         physics_engine: &mut Physics,
-        players : & HashMap<SocketAddr, Player>
+        players: &HashMap<SocketAddr, Player>,
     ) {
         self.just_jumped = false;
-
 
         //Example.rs
         // let rigid_body = &mut physics_engine.rigid_body_set[self.rigid_body_handle];// get_rigid_body(self.rigid_body_handle);
@@ -145,12 +159,15 @@ impl Player {
         // pub fn get_rigid_body(&mut self, rigid_body_handle: RigidBodyHandle) -> &mut RigidBody {
         //     &mut self.rigid_body_set[rigid_body_handle]
         // }
-    
+
         // pub fn get_time_step(& self) -> f32 {
         //     self.integration_parameters.dt
         // }
 
-        let simulated_velocity = physics_engine.get_rigid_body(self.rigid_body_handle).linvel().clone();
+        let simulated_velocity = physics_engine
+            .get_rigid_body(self.rigid_body_handle)
+            .linvel()
+            .clone();
 
         let mut arcade_velocity = Vector3::new(0.0, 0.0, 0.0);
 
@@ -167,7 +184,7 @@ impl Player {
             arcade_velocity = rel_camera_movement / physics_engine.get_time_step();
         }
 
-        let mut new_velocity;// = Vector3::new(0.0, 0.0, 0.0);
+        let mut new_velocity; // = Vector3::new(0.0, 0.0, 0.0);
         let add = true;
         if add {
             // newVelocity.copy(simulatedVelocity);
@@ -175,17 +192,20 @@ impl Player {
 
             let add = arcade_velocity.component_mul(&self.acrade_veloicty_influencer);
 
-            if simulated_velocity.x.abs() < arcade_velocity.x.abs() || simulated_velocity.x * arcade_velocity.x < 0.0
+            if simulated_velocity.x.abs() < arcade_velocity.x.abs()
+                || simulated_velocity.x * arcade_velocity.x < 0.0
             {
                 new_velocity.x += add.x;
             }
 
-            if simulated_velocity.y.abs() < arcade_velocity.y.abs() || simulated_velocity.y * arcade_velocity.y < 0.0
+            if simulated_velocity.y.abs() < arcade_velocity.y.abs()
+                || simulated_velocity.y * arcade_velocity.y < 0.0
             {
                 new_velocity.y += add.y;
             }
 
-            if simulated_velocity.z.abs() < arcade_velocity.z.abs() || simulated_velocity.z * arcade_velocity.z < 0.0
+            if simulated_velocity.z.abs() < arcade_velocity.z.abs()
+                || simulated_velocity.z * arcade_velocity.z < 0.0
             {
                 new_velocity.z += add.z;
             }
@@ -217,25 +237,27 @@ impl Player {
         //     simulated_velocity, new_velocity, arcade_velocity
         // );
 
-
         if self.on_ground {
-            physics_engine.get_rigid_body(self.rigid_body_handle).set_linvel(new_velocity, true);
+            physics_engine
+                .get_rigid_body(self.rigid_body_handle)
+                .set_linvel(new_velocity, true);
             self.acrade_veloicty_influencer = Vector3::new(0.05, 0.0, 0.05);
         } else {
-            physics_engine.get_rigid_body(self.rigid_body_handle).set_linvel(new_velocity, true);
+            physics_engine
+                .get_rigid_body(self.rigid_body_handle)
+                .set_linvel(new_velocity, true);
             self.acrade_veloicty_influencer = Vector3::new(0.01, 0.0, 0.01);
         }
 
-        
-
         // let collider = &world.collider_set[self.collider_handle];
- 
 
-      
         // character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.5));
         let mut collisions = vec![];
-        let corrected_movement = physics_engine.update_characet_controller(self.collider_handle, self.rigid_body_handle, &mut collisions); 
-
+        let corrected_movement = physics_engine.update_characet_controller(
+            self.collider_handle,
+            self.rigid_body_handle,
+            &mut collisions,
+        );
 
         if corrected_movement.grounded {
             self.can_jump = true;
@@ -244,14 +266,12 @@ impl Player {
             self.on_ground = false;
         }
 
-        let rigid_body =physics_engine.get_rigid_body(self.rigid_body_handle);
-        
+        let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
 
         if self.to_jump && self.can_jump {
             rigid_body.set_linvel(rigid_body.linvel() + Vector3::new(0.0, 7.0, 0.0), true);
             self.can_jump = false;
             self.just_jumped = true;
-            
         }
 
         self.to_jump = false;
@@ -264,57 +284,64 @@ impl Player {
             //     true,
             // );
             // rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
-            Player::respawn(&world.spawn_points,rigid_body);
+            Player::respawn(&world.spawn_points, rigid_body);
         }
 
         self.look_at = self.look_at.lerp(&self.target_look_at, 0.05);
 
-
         //update char state
 
-        match self.character_state.clone(){
-            CharacterState::JumpIdle(_) => JumpIdleState::update(self, physics_engine.get_time_step()),
-            CharacterState::Falling => FallingState::update(self,physics_engine.get_time_step()),
+        match self.character_state.clone() {
+            CharacterState::JumpIdle(_) => {
+                JumpIdleState::update(self, physics_engine.get_time_step())
+            }
+            CharacterState::Falling => FallingState::update(self, physics_engine.get_time_step()),
             _ => {}
         }
 
-        if self.to_throw{
-
-            println!("THROWING {:?}",self.view_vector);
+        if self.to_throw {
+            println!("THROWING {:?}", self.view_vector);
 
             let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
 
-            world.add_dynamic_asset("asset_id".to_string(),
-             "Asset_Apple".to_string(),
-              Vector3::new(1.0,1.0,1.0)*0.2, 
-              rigid_body.translation()+Vector3::new(1.0,2.0,1.0), 
-              *rigid_body.rotation(),
+            world.add_dynamic_asset(
+                "asset_id".to_string(),
+                "Asset_Apple".to_string(),
+                Vector3::new(1.0, 1.0, 1.0) * 0.2,
+                rigid_body.translation() + Vector3::new(1.0, 2.0, 1.0),
+                *rigid_body.rotation(),
                 true,
-                self.view_vector * 10.0 + Vector::new(0.0,10.0,0.0),
+                self.view_vector * 10.0 + Vector::new(0.0, 10.0, 0.0),
                 20.0,
-                physics_engine
-                // Vector3::new(10.0,5.0,0.0)
+                physics_engine, // Vector3::new(10.0,5.0,0.0)
             );
 
             self.to_throw = false;
         }
 
-        self.check_attack(players,physics_engine);
-
-
+        self.check_attack(players, physics_engine);
     }
 
- 
+    pub fn get_info(&mut self, physics_engine: &mut Physics) -> PlayerUpdate {
+        let mut pos = physics_engine.get_translation(self.rigid_body_handle);
 
-    pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> PlayerUpdate {
-        let rigid_body = &rigid_body_set[self.rigid_body_handle];
-        let pos = rigid_body.translation();
+        let mut ragdoll_info: RagdollUpdate = HashMap::new();
+
+        if self.is_ragdoll {
+            if let Some(ragdoll) = &self.ragdoll {
+                //get the position of center
+                pos = ragdoll.get_pos(physics_engine);
+
+                ragdoll_info = ragdoll.get_info(physics_engine);
+            }
+        }
+
         let pos_vec = Vec3 {
             x: pos.x,
             y: pos.y,
             z: pos.z,
         };
-        let rot = rigid_body.rotation();
+        let rot = physics_engine.get_rotation(self.rigid_body_handle);
         // rot.
         let rot_quat = Quat {
             i: rot.i,
@@ -323,108 +350,120 @@ impl Player {
             w: rot.w,
         };
 
-        let look_at = Vec3{
-            x:self.look_at.x,
-            y:self.look_at.y,
-            z:self.look_at.z
+        let look_at = Vec3 {
+            x: self.look_at.x,
+            y: self.look_at.y,
+            z: self.look_at.z,
         };
+
+        let mut state = self.character_state.clone();
+        if self.is_ragdoll {
+            state = CharacterState::Ragdoll;
+        }
 
         PlayerUpdate {
             name: self.name.to_string(),
             p: pos_vec,
             q: rot_quat,
             colour: self.colour.clone(),
-            state:self.character_state.clone(),
-            dir:look_at
+            state: state,
+            dir: look_at,
+            is_ragdoll: self.is_ragdoll,
+            ragdoll_info,
         }
-
     }
-
 
     pub fn read_messages(&mut self, c: &mut Client, physics_engine: &mut Physics) {
         loop {
             if let Ok(message) = c.rx.try_next() {
                 let m = message.unwrap();
                 // println!("{}", m.to_string());
-                
-                let msg_content:Result<Value,Error> = serde_json::from_str(&m.to_string()); //.unwrap();
-                if let Ok(v) = msg_content{
-                // println!("{} {}", msg, v[0]);
 
-                if v[0] == "name" {
-                    self.name = v[1].to_string();
-                }
+                let msg_content: Result<Value, Error> = serde_json::from_str(&m.to_string()); //.unwrap();
+                if let Ok(v) = msg_content {
+                    // println!("{} {}", msg, v[0]);
 
-                if v[0] == "chat" {
-                    self.chat_queue.push(v[1].to_string());
-                }
-
-                if v[0] == "update_view" {
-                    let vec = v[1]["viewVector"].clone();
-                    self.view_vector = Vector3::new(
-                        vec["x"].as_f64().unwrap() as f32,
-                        vec["y"].as_f64().unwrap() as f32,
-                        vec["z"].as_f64().unwrap() as f32,
-                    );
-                }
-
-                if v[0] == "update" {
-                    let vec = v[1]["viewVector"].clone();
-                    self.view_vector = Vector3::new(
-                        vec["x"].as_f64().unwrap() as f32,
-                        vec["y"].as_f64().unwrap() as f32,
-                        vec["z"].as_f64().unwrap() as f32,
-                    );
-
-                    let move_vec = v[1]["moveVector"].clone();
-                    self.client_move_vec = Vector2::new(
-                        move_vec["x"].as_f64().unwrap() as f32,
-                        move_vec["y"].as_f64().unwrap() as f32,
-                    );
-
-                    self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
-                    self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
-
-                    let key_map = v[1]["keyMap"].clone();
-                    self.key_map = HashMap::new();
-
-                    for (key, value) in key_map.as_object().unwrap() {
-                        self.key_map
-                            .insert(key.to_string(), value.as_bool().unwrap());
+                    if v[0] == "name" {
+                        self.name = v[1].to_string();
                     }
 
-                    if self.key_map.contains_key(" ") {
-                        if self.key_map[" "]{
-                            self.to_jump = true;
+                    if v[0] == "chat" {
+                        self.chat_queue.push(v[1].to_string());
+                    }
+
+                    if v[0] == "update_view" {
+                        let vec = v[1]["viewVector"].clone();
+                        self.view_vector = Vector3::new(
+                            vec["x"].as_f64().unwrap() as f32,
+                            vec["y"].as_f64().unwrap() as f32,
+                            vec["z"].as_f64().unwrap() as f32,
+                        );
+                    }
+
+                    if v[0] == "update" {
+                        let vec = v[1]["viewVector"].clone();
+                        self.view_vector = Vector3::new(
+                            vec["x"].as_f64().unwrap() as f32,
+                            vec["y"].as_f64().unwrap() as f32,
+                            vec["z"].as_f64().unwrap() as f32,
+                        );
+
+                        let move_vec = v[1]["moveVector"].clone();
+                        self.client_move_vec = Vector2::new(
+                            move_vec["x"].as_f64().unwrap() as f32,
+                            move_vec["y"].as_f64().unwrap() as f32,
+                        );
+
+                        self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+                        self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+
+                        let key_map = v[1]["keyMap"].clone();
+                        self.key_map = HashMap::new();
+
+                        for (key, value) in key_map.as_object().unwrap() {
+                            self.key_map
+                                .insert(key.to_string(), value.as_bool().unwrap());
+                        }
+
+                        if self.key_map.contains_key(" ") {
+                            if self.key_map[" "] {
+                                self.to_jump = true;
+                            }
                         }
                     }
-                }
 
-                if v[0] == "update_move" {
-                    let move_vec = v[1]["moveVector"].clone();
-                    self.client_move_vec = Vector2::new(
-                        move_vec["x"].as_f64().unwrap() as f32,
-                        move_vec["y"].as_f64().unwrap() as f32,
-                    );
+                    if v[0] == "update_move" {
+                        let move_vec = v[1]["moveVector"].clone();
+                        self.client_move_vec = Vector2::new(
+                            move_vec["x"].as_f64().unwrap() as f32,
+                            move_vec["y"].as_f64().unwrap() as f32,
+                        );
 
-                    self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
-                    self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
-                }
+                        self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
+                        self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+                    }
 
-                if v[0] == "update_jump" {
-                    self.to_jump = true;
-                }
+                    if v[0] == "update_jump" {
+                        self.to_jump = true;
+                    }
 
-                if v[0] == "throw" {
-                    self.to_throw = true;
-                }
+                    if v[0] == "throw" {
+                        self.to_throw = true;
+                    }
 
-                if v[0] == "get_debug" {
-                    c.tx.unbounded_send(message_prep(structs::MessageType::PhysicsUpdate { data:physics_engine.get_state()})).unwrap();
+                    if v[0] == "get_debug" {
+                        c.tx.unbounded_send(message_prep(structs::MessageType::PhysicsState {
+                            data: physics_engine.get_state(),
+                        }))
+                        .unwrap();
+                    }
+
+                    if v[0] == "is_ragdoll" {
+                        self.toggle_ragdoll(physics_engine);
+                    }
+                } else {
+                    println!("Erorr unwrapping message");
                 }
-            }else{
-                println!("Erorr unwrapping message");
-            }
 
                 // p.tx.unbounded_send(m);
             } else {
@@ -433,7 +472,34 @@ impl Player {
         }
 
         self.on_input_change();
+    }
 
+    pub fn toggle_ragdoll(&mut self, physics_engine: &mut Physics) {
+        self.is_ragdoll = !self.is_ragdoll;
+
+        if self.is_ragdoll {
+            let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
+            rigid_body.set_enabled(false);
+            self.ragdoll = Some(Ragdoll::new(
+                self.ragdoll_template.clone(),
+                physics_engine.get_translation(self.rigid_body_handle),
+                physics_engine.get_linvel(self.rigid_body_handle),
+                physics_engine,
+            ));
+        } else {
+            if let Some(ragdoll) = &mut self.ragdoll {
+                let pos = ragdoll.get_pos(physics_engine);
+
+                ragdoll.remove_self(physics_engine);
+
+                let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
+                rigid_body.set_translation(pos, true);
+                rigid_body.set_linvel(Vector3::new(0.0,0.0,0.0), true);
+                rigid_body.set_enabled(true);
+
+                self.ragdoll = None;
+            }
+        }
     }
 
     pub fn launch(&mut self, physics_engine: &mut Physics, launch_dir: Vector3<f32>) {
@@ -442,38 +508,50 @@ impl Player {
         body.set_linvel(velocity, true);
     }
 
-    pub fn on_input_change(&mut self){
-
-        match self.character_state.clone(){
+    pub fn on_input_change(&mut self) {
+        match self.character_state.clone() {
             CharacterState::Idle(_) => IdleState::on_input_change(self),
             CharacterState::Walk => WalkState::on_input_change(self),
             _ => {}
         }
     }
 
-    pub fn get_translation(&mut self,physics_engine: &mut Physics) -> Vector3<f32>{
+    pub fn get_translation(&mut self, physics_engine: &mut Physics) -> Vector3<f32> {
         physics_engine.get_translation(self.rigid_body_handle)
     }
 
-    pub fn check_attack(&mut self, players: &HashMap<SocketAddr, Player>,physics_engine: &mut Physics){
-        
-        let ray = Ray::new(Point::from(self.get_translation(physics_engine)), self.view_vector);
+    pub fn check_attack(
+        &mut self,
+        players: &HashMap<SocketAddr, Player>,
+        physics_engine: &mut Physics,
+    ) {
+        let ray = Ray::new(
+            Point::from(self.get_translation(physics_engine)),
+            self.view_vector,
+        );
 
         let max_toi = 4.0;
         let solid = false;
         let filter = QueryFilter::default().exclude_rigid_body(self.rigid_body_handle);
 
-        if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter){
+        if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
             let hit_point = ray.point_at(toi); // Same as: `ray.origin + ray.dir * toi`
 
-            for (id,player) in players.iter(){
-                if player.collider_handle == handle{
+            for (id, player) in players.iter() {
+                if player.collider_handle == handle {
                     // println!("Collider {:?} hit at point {}", handle, hit_point);
                 }
             }
-            
+
             // ray.point_at(toi)
         }
     }
 
+    pub fn remove_self(&mut self, physics_engine: &mut Physics) {
+        if let Some(ragdoll) = &mut self.ragdoll {
+            ragdoll.remove_self(physics_engine);
+        }
+
+        physics_engine.remove_from_rigid_body_set(self.rigid_body_handle);
+    }
 }

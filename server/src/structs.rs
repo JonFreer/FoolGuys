@@ -7,7 +7,7 @@ use futures_channel::mpsc::UnboundedReceiver;
 use tokio_tungstenite::tungstenite;
 use tungstenite::protocol::Message;
 
-use crate::{character_states::character_base::CharacterState, physics::PhysicsState};
+use crate::{character_states::character_base::CharacterState, physics::{PhysicsState, PhysicsStateUpdate}, physics_objects::ragdoll::{RagdollUpdate, Translation}};
 
 pub fn message_prep(msg: MessageType) -> Message {
     Message::Text(serde_json::to_string(&msg).unwrap())
@@ -21,8 +21,10 @@ pub fn message_prep(msg: MessageType) -> Message {
 pub enum MessageType{
     Join{name:String,id:String},
     Chat{name:String,message:String},
-    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>},
-    PhysicsUpdate{data: PhysicsState}
+    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>, },
+    PhysicsState{data:PhysicsState},
+    PhysicsUpdate{data:PhysicsStateUpdate}
+
 }
 
 #[ts(export)]
@@ -34,7 +36,9 @@ pub struct PlayerUpdate{
     pub q:Quat,
     pub colour:Colour,
     pub state: CharacterState,
-    pub dir: Vec3
+    pub dir: Vec3,
+    pub is_ragdoll: bool,
+    pub ragdoll_info: HashMap<String, Translation>
 }
 
 #[ts(export)]

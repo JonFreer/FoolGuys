@@ -1,13 +1,16 @@
-use nalgebra::{Vector3, Vector2, Vector1};
+
+use nalgebra::{Vector3, Vector2, Vector1, Quaternion, Unit};
+
 use rapier3d::{
     control::{CharacterCollision, EffectiveCharacterMovement, KinematicCharacterController},
     crossbeam::{self, channel::Receiver},
+    parry::query::Ray,
     prelude::{
         BroadPhase, CCDSolver, ChannelEventCollector, Collider, ColliderHandle, ColliderSet,
-        CollisionEvent, ImpulseJointSet, IntegrationParameters, IslandManager, MultibodyJointSet,
-        NarrowPhase, PhysicsPipeline, QueryFilter, QueryPipeline, Real, RigidBody, RigidBodyHandle,
-        RigidBodySet,
-    }, parry::query::Ray,
+        CollisionEvent, ImpulseJointSet, IntegrationParameters,
+        IslandManager, MultibodyJointSet, NarrowPhase, PhysicsPipeline, Point, QueryFilter,
+        QueryPipeline, Real, RigidBody, RigidBodyHandle, RigidBodySet, Vector, Isometry,
+    },
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -20,7 +23,7 @@ pub struct Physics {
     physics_pipeline: PhysicsPipeline,
     broad_phase: BroadPhase,
     narrow_phase: NarrowPhase,
-    impulse_joint_set: ImpulseJointSet,
+    pub impulse_joint_set: ImpulseJointSet,
     multibody_joint_set: MultibodyJointSet,
     ccd_solver: CCDSolver,
     physics_hooks: (),
@@ -29,6 +32,8 @@ pub struct Physics {
     event_handler: ChannelEventCollector,
     collision_recv: Receiver<CollisionEvent>,
     pub collision_vec: Vec<CollisionEvent>,
+    // pub debug_render_pipeline: DebugRenderPipeline,
+    // pub debug_state: DebugState,
 }
 
 impl Physics {
@@ -55,6 +60,8 @@ impl Physics {
 
         let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
+        // let debug_render_style = DebugRenderStyle::default();
+
         Self {
             rigid_body_set,
             collider_set,
@@ -72,6 +79,11 @@ impl Physics {
             event_handler,
             collision_recv,
             collision_vec: Vec::new(),
+            // debug_render_pipeline: DebugRenderPipeline::new(
+            //     debug_render_style,
+            //     DebugRenderMode::COLLIDER_SHAPES,
+            // ),
+            // debug_state: DebugState {},
         }
     }
 
@@ -133,7 +145,7 @@ impl Physics {
             self.integration_parameters.dt, // The timestep length (can be set to SimulationSettings::dt).
             &self.rigid_body_set,           // The RigidBodySet.
             &self.collider_set,             // The ColliderSet.
-            &mut self.query_pipeline,        // The QueryPipeline.
+            &mut self.query_pipeline,       // The QueryPipeline.
             collider.shape(),               // The character’s shape.
             &collider.position(),           // The character’s initial position.
             pos.cast::<Real>(),
@@ -142,7 +154,7 @@ impl Physics {
         )
     }
 
-    pub fn get_collider(& self, collider_handle: ColliderHandle) -> &Collider {
+    pub fn get_collider(&self, collider_handle: ColliderHandle) -> &Collider {
         &self.collider_set[collider_handle]
     }
 
@@ -150,31 +162,100 @@ impl Physics {
         &mut self.rigid_body_set[rigid_body_handle]
     }
 
-    pub fn get_time_step(& self) -> f32 {
+    pub fn get_time_step(&self) -> f32 {
         self.integration_parameters.dt
     }
 
-    pub fn get_translation(& self, rigid_body_handle: RigidBodyHandle) -> Vector3<f32>{
+    pub fn get_translation(&self, rigid_body_handle: RigidBodyHandle) -> Vector3<f32> {
         self.rigid_body_set[rigid_body_handle].translation().clone()
     }
 
-    pub fn cast_ray(&mut self, ray: &Ray, max_toi:f32,solid:bool,filter:QueryFilter) -> Option<(ColliderHandle, Real)>{
+    pub fn get_linvel(&self, rigid_body_handle: RigidBodyHandle) -> Vector3<f32> {
+        self.rigid_body_set[rigid_body_handle].linvel().clone()
+    }
 
+    pub fn get_rotation(&self, rigid_body_handle: RigidBodyHandle) -> Unit<Quaternion<f32>> {
+        self.rigid_body_set[rigid_body_handle].rotation().clone()
+    }
+
+    pub fn cast_ray(
+        &mut self,
+        ray: &Ray,
+        max_toi: f32,
+        solid: bool,
+        filter: QueryFilter,
+    ) -> Option<(ColliderHandle, Real)> {
         self.query_pipeline.cast_ray(
             &self.rigid_body_set,
-            &self.collider_set, &ray, max_toi, solid, filter
-        ) 
-
+            &self.collider_set,
+            &ray,
+            max_toi,
+            solid,
+            filter,
+        )
     }
 
-    pub fn get_state(&mut self) -> PhysicsState{
-        PhysicsState{
-            bodies:self.rigid_body_set.clone(),
-            colliders:self.collider_set.clone(),
-            joints:self.impulse_joint_set.clone()
+    pub fn get_state(&mut self) -> PhysicsState {
+        PhysicsState {
+            bodies: self.rigid_body_set.clone(),
+            colliders: self.collider_set.clone(),
+            joints: self.impulse_joint_set.clone(),
         }
     }
+
+    pub fn get_state_update(&mut self) -> PhysicsStateUpdate {
+        PhysicsStateUpdate {
+            bodies: self.rigid_body_set.clone(),
+        }
+    }
+
+    // pub fn debug_render(&mut self) {
+    //     self.debug_render_pipeline.render(
+    //         &mut self.debug_state,
+    //         &mut self.rigid_body_set,
+    //         &mut self.collider_set,
+    //         &mut self.impulse_joint_set,
+    //         &mut self.multibody_joint_set,
+    //         &self.narrow_phase,
+    //     );
+    // }
 }
+
+// pub struct DebugState {}
+
+// impl DebugRenderBackend for DebugState {
+//     fn draw_line(
+//         &mut self,
+//         object: DebugRenderObject<'_>,
+//         a: Point<Real>,
+//         b: Point<Real>,
+//         color: [f32; 4],
+//     ) {
+//     }
+
+//     fn draw_polyline(
+//         &mut self,
+//         object: DebugRenderObject<'_>,
+//         vertices: &[Point<Real>],
+//         indices: &[[u32; 2]],
+//         transform: &Isometry<Real>,
+//         scale: &Vector<Real>,
+//         color: [f32; 4],
+//     ) {
+//     }
+
+//     fn draw_line_strip(
+//         &mut self,
+//         object: DebugRenderObject<'_>,
+//         vertices: &[Point<Real>],
+//         transform: &Isometry<Real>,
+//         scale: &Vector<Real>,
+//         color: [f32; 4],
+//         closed: bool,
+//     ) {
+//     }
+// }
+
 
 #[ts(export)]
 #[derive(Serialize, Deserialize,TS)] 
@@ -183,4 +264,10 @@ pub struct PhysicsState {
     #[ts(type = "any")] pub bodies:   RigidBodySet,
     #[ts(type = "any")] pub colliders: ColliderSet,
     #[ts(type = "any")] pub joints: ImpulseJointSet,
+}
+
+#[ts(export)]
+#[derive(Serialize, Deserialize, Clone,TS)]
+pub struct PhysicsStateUpdate {
+    #[ts(type = "any")] pub bodies: RigidBodySet,
 }
