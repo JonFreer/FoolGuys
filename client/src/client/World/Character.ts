@@ -164,7 +164,7 @@ export class Character {
       
             if(name == "Chara_Low_RigGameSkeletonRoot_M"){
                 bone.removeFromParent()
-                bone.scale.set(0.008,0.008,0.008)
+                bone.scale.set(0.005,0.005,0.005)
                 this.ragdoll?.add(bone)
                 bone.position.set(0, 0, 0)
                 let quat = new THREE.Quaternion(data.q.i, data.q.j, data.q.k, data.q.w);
@@ -183,7 +183,7 @@ export class Character {
                 
                 bone.removeFromParent()
                 this.ragdoll?.add(bone)
-                bone.scale.set(0.008,0.008,0.008)
+                bone.scale.set(0.005,0.005,0.005)
                 bone.position.set(data.p.x, data.p.y, data.p.z)
                 let custom_rot = new THREE.Quaternion().setFromEuler(new THREE.Euler((this.rotation_offset.x/360)*(2*Math.PI),
                 (this.rotation_offset.y/360)*(2*Math.PI),

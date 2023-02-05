@@ -44,7 +44,7 @@ impl Ragdoll {
             let mut rigid_body = RigidBodyBuilder::dynamic()
                 .translation(Vector3::new(
                     position.x + template_part.translation.x,
-                    position.y + template_part.translation.y,
+                    position.y + template_part.translation.y -0.5,
                     position.z + template_part.translation.z,
                 ))
                 .linvel(lin_vel)
