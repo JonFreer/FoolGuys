@@ -114,7 +114,7 @@ async fn main() -> Result<(), IoError> {
     } else {
         debug = false;
         println!("Running Prod Server");
-        path = "/assets/";//collision.glb"
+        path = "/assets/"; //collision.glb"
         asset_path = "/assets_unoptimized/"; //TODO
         ip = "0.0.0.0:2865"
     }
@@ -131,7 +131,7 @@ async fn main() -> Result<(), IoError> {
 
     let mut physics_engine = Physics::new();
 
-    let mut world = World::new(asset_path,path);
+    let mut world = World::new(asset_path, path);
 
     world.load_world(path, &mut physics_engine);
 
@@ -242,20 +242,23 @@ async fn main() -> Result<(), IoError> {
                 .collect();
 
             // let ragdoll_info = ragdoll.get_info(&mut physics_engine);
+
+            let player_update_message = structs::MessageType::WorldUpdate {
+                players: players_info,
+                dynamic_objects: dynamic_objects_info,
+                // ragdolls : ragdoll_info
+            };
+
+            //send player_update to all players
+            for (_, value) in &*peers {
+                value
+                    .tx
+                    .unbounded_send(message_prep(player_update_message.clone()))
+                    .unwrap();
+            }
+
             if debug {
-                let player_update_message = structs::MessageType::WorldUpdate {
-                    players: players_info,
-                    dynamic_objects: dynamic_objects_info,
-                    // ragdolls : ragdoll_info
-                };
-
-                //send player_update to all players
                 for (_, value) in &*peers {
-                    value
-                        .tx
-                        .unbounded_send(message_prep(player_update_message.clone()))
-                        .unwrap();
-
                     value
                         .tx
                         .unbounded_send(message_prep(structs::MessageType::PhysicsUpdate {
