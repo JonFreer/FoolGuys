@@ -6,11 +6,11 @@ use crate::{
         jumpidle::JumpIdleState, walk::WalkState,
     },
     physics::Physics,
-    physics_objects::ragdoll::{ Ragdoll, RagdollTemplate, RagdollUpdate},
+    physics_objects::ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate},
     structs::{self, message_prep, Client, Colour, PlayerUpdate, Quat, Vec3},
     world::World,
 };
-use nalgebra::{Vector1, Vector2, Vector3};
+use nalgebra::{Isometry3, Quaternion, Unit, Vector1, Vector2, Vector3};
 use rand::Rng;
 use serde_json::{Error, Value};
 
@@ -23,6 +23,7 @@ pub struct Player {
     pub can_jump: bool,
     pub chat_queue: Vec<String>,
     pub position: Vector3<f32>,
+    pub rotation: Unit<Quaternion<f32>>,
     pub view_vector: Vector3<f32>,
     pub client_move_vec: Vector2<f32>,
     pub speed: f32,
@@ -59,11 +60,10 @@ impl Player {
             .build();
 
         Player::respawn(spawn_points, &mut rigid_body);
- 
 
         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
-        let collider =  ColliderBuilder::capsule_y(0.3, 0.3)
+        let collider = ColliderBuilder::capsule_y(0.3, 0.3)
             .active_events(ActiveEvents::COLLISION_EVENTS)
             // .friction(1.0)
             // .restitution(0.7)
@@ -89,6 +89,7 @@ impl Player {
             can_jump: true,
             chat_queue: Vec::new(),
             position: Vector3::new(0.0, 0.0, 0.0),
+            rotation: Unit::from_quaternion(Quaternion::new(0.0, 0.0, 0.0, 0.0)),
             view_vector: Vector3::new(0.0, 0.0, 0.0),
             client_move_vec: Vector2::new(0.0, 0.0),
             speed: 0.1,
@@ -161,6 +162,19 @@ impl Player {
                 Player::appply_vector_matrix_x(self.view_vector, rel_direction) * self.speed;
 
             self.target_look_at = rel_camera_movement.normalize().clone();
+
+            let t = self.target_look_at;
+
+            // let r = Isometry3::look_at_rh(&Point::new(0.0,0.0,0.0),&Point::new(t.x,t.y,t.z),&Vector3::new(0.0,0.0,0.0)).rotation;
+
+            // let v2 = Vector3::new(0.0,1.0,0.0);
+            // let mut v1   = self.target_look_at;
+            // // v2.y = 1.0;
+            // let c = v1.cross(&v2);
+            // let w = v1.dot(&v2);
+            // let r= Quaternion::new(w,c.x,c.y,c.z);
+
+            // self.rotation = r.rotation;
 
             arcade_velocity = rel_camera_movement / physics_engine.get_time_step();
         }
@@ -322,8 +336,10 @@ impl Player {
             y: pos.y,
             z: pos.z,
         };
-        let rot = physics_engine.get_rotation(self.rigid_body_handle);
+        // let rot = physics_engine.get_rotation(self.rigid_body_handle);
         // rot.
+
+        let rot = self.rotation;
         let rot_quat = Quat {
             i: rot.i,
             j: rot.j,
@@ -461,9 +477,11 @@ impl Player {
         if self.is_ragdoll {
             let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
             rigid_body.set_enabled(false);
+
             self.ragdoll = Some(Ragdoll::new(
                 self.ragdoll_template.clone(),
                 physics_engine.get_translation(self.rigid_body_handle),
+                self.get_rotation(),
                 physics_engine.get_linvel(self.rigid_body_handle),
                 physics_engine,
             ));
@@ -475,7 +493,7 @@ impl Player {
 
                 let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
                 rigid_body.set_translation(pos, true);
-                rigid_body.set_linvel(Vector3::new(0.0,0.0,0.0), true);
+                rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
                 rigid_body.set_enabled(true);
 
                 self.ragdoll = None;
@@ -534,5 +552,14 @@ impl Player {
         }
 
         physics_engine.remove_from_rigid_body_set(self.rigid_body_handle);
+    }
+
+    pub fn get_rotation(&self) -> Unit<Quaternion<f32>> {
+        Isometry3::look_at_rh(
+            &Point::new(0.0, 0.0, 0.0),
+            &Point::new(self.look_at.x, self.look_at.y, self.look_at.z),
+            &Vector3::new(0.0, 1.0, 0.0),
+        )
+        .rotation
     }
 }

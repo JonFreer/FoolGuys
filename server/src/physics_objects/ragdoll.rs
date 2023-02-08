@@ -33,6 +33,7 @@ impl Ragdoll {
     pub fn new(
         template: RagdollTemplate,
         position: Vector3<f32>,
+        rotation: Unit<Quaternion<f32>>,
         lin_vel: Vector3<f32>,
         physics_engine: &mut Physics,
     ) -> Self {
@@ -41,7 +42,14 @@ impl Ragdoll {
         //Create and place rigid bodies
 
         for (name, template_part) in template.parts {
-            let mut rigid_body = RigidBodyBuilder::dynamic()
+
+
+            //calculate new rotation 
+
+
+            let new_rot = rotation*template_part.rotation ;
+            
+            let mut rigid_body = RigidBodyBuilder::fixed()
                 .translation(Vector3::new(
                     position.x + template_part.translation.x,
                     position.y + template_part.translation.y -0.5,
@@ -56,7 +64,7 @@ impl Ragdoll {
                 rigid_body.set_linvel(lin_vel, true);
             }
 
-            rigid_body.set_rotation(template_part.rotation, true);
+            rigid_body.set_rotation(new_rot, true);
 
             let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
             let _collider_handle = physics_engine.collider_set.insert_with_parent(
