@@ -1,5 +1,3 @@
-import { Socket } from "socket.io-client";
-
 export class ChatManager {
 
     private socket: WebSocket;

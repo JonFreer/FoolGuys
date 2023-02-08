@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
 use std::net::SocketAddr;
-
-
-use gltf::json::Path;
 use gltf::{Document, Node};
 use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
 use serde_json::Value;
@@ -63,7 +60,7 @@ impl World {
         scale: Vector3<f32>,
         translation: Vector3<f32>,
         roation: Unit<Quaternion<f32>>,
-        recreate: bool, //if this asset exists should it be recreated or a new one added
+        _recreate: bool, //if this asset exists should it be recreated or a new one added
         initial_velcoity: Vector3<f32>,
         lifetime: f32,
         physics_engine: &mut Physics,

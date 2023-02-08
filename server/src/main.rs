@@ -36,7 +36,7 @@ mod character_states {
 }
 
 use crate::{
-    physics::Physics, physics_objects::ragdoll::Ragdoll, structs::message_prep, world::World,
+    physics::Physics, structs::message_prep, world::World,
 };
 use crate::{player::Player, structs::ObjectUpdate};
 
@@ -44,8 +44,6 @@ use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::tungstenite;
-use tungstenite::protocol::Message;
 
 type PeerMap = Arc<Mutex<HashMap<SocketAddr, Client>>>;
 

@@ -7,7 +7,7 @@ use futures_channel::mpsc::UnboundedReceiver;
 use tokio_tungstenite::tungstenite;
 use tungstenite::protocol::Message;
 
-use crate::{character_states::character_base::CharacterState, physics::{PhysicsState, PhysicsStateUpdate}, physics_objects::ragdoll::{RagdollUpdate, Translation}};
+use crate::{character_states::character_base::CharacterState, physics::{PhysicsState, PhysicsStateUpdate}, physics_objects::ragdoll::Translation};
 
 pub fn message_prep(msg: MessageType) -> Message {
     Message::Text(serde_json::to_string(&msg).unwrap())

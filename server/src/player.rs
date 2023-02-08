@@ -6,7 +6,7 @@ use crate::{
         jumpidle::JumpIdleState, walk::WalkState,
     },
     physics::Physics,
-    physics_objects::ragdoll::{self, Ragdoll, RagdollTemplate, RagdollUpdate},
+    physics_objects::ragdoll::{ Ragdoll, RagdollTemplate, RagdollUpdate},
     structs::{self, message_prep, Client, Colour, PlayerUpdate, Quat, Vec3},
     world::World,
 };
@@ -23,7 +23,6 @@ pub struct Player {
     pub can_jump: bool,
     pub chat_queue: Vec<String>,
     pub position: Vector3<f32>,
-    // pub rotation: Quaternion<f32>,
     pub view_vector: Vector3<f32>,
     pub client_move_vec: Vector2<f32>,
     pub speed: f32,
@@ -34,7 +33,6 @@ pub struct Player {
     pub to_throw: bool,
     pub colour: Colour,
     pub on_ground: bool,
-    // pub on_ground_2: bool,
     pub acrade_veloicty_influencer: Vector3<f32>, // pub lin_vel: Vector3<f32>,
     pub character_state: CharacterState,
     pub just_jumped: bool,
@@ -55,32 +53,17 @@ impl Player {
     ) -> Self {
         let name = "Guest".to_string() + &num_players.to_string();
 
-        /* Create the bounding ball. */
         let mut rigid_body = RigidBodyBuilder::dynamic()
-            // .translation(vector![0.0, 30.0, 0.0])
             .ccd_enabled(true)
             .lock_rotations()
             .build();
 
         Player::respawn(spawn_points, &mut rigid_body);
-        // let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5)
-        //     .active_events(ActiveEvents::COLLISION_EVENTS)
-        //     .restitution(0.7)
-        //     .build();
-
-        // let rigid_body_handle = rigid_body_set.insert(rigid_body);
-        // let collider_handle =
-        //     collider_set.insert_with_parent(collider, rigid_body_handle, rigid_body_set);
-
-        // let rigid_body =
-        // RigidBodyBuilder::kinematic_position_based().translation(vector![-3.0, 5.0, 0.0]);
-
-        // rigid_body.set_locked_axes(LockedAxes::ROTATION_LOCKED, true);
+ 
 
         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
-        let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5)
-            //  ColliderBuilder::capsule_y(0.3, 0.15)
+        let collider =  ColliderBuilder::capsule_y(0.3, 0.3)
             .active_events(ActiveEvents::COLLISION_EVENTS)
             // .friction(1.0)
             // .restitution(0.7)
@@ -106,7 +89,6 @@ impl Player {
             can_jump: true,
             chat_queue: Vec::new(),
             position: Vector3::new(0.0, 0.0, 0.0),
-            // rotation: Quaternion::new(0.0, 0.0, 0.0, 0.0),
             view_vector: Vector3::new(0.0, 0.0, 0.0),
             client_move_vec: Vector2::new(0.0, 0.0),
             speed: 0.1,
@@ -117,7 +99,6 @@ impl Player {
             to_throw: false,
             colour: colour,
             on_ground: false,
-            // on_ground_2: false,
             acrade_veloicty_influencer: Vector3::new(0.2, 0.0, 0.2), // lin_vel: Vector3::new(0.0, 0.0, 0.0),
             character_state: CharacterState::Idle(IdleState {}),
             just_jumped: false,
@@ -535,9 +516,9 @@ impl Player {
         let filter = QueryFilter::default().exclude_rigid_body(self.rigid_body_handle);
 
         if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
-            let hit_point = ray.point_at(toi); // Same as: `ray.origin + ray.dir * toi`
+            let _hit_point = ray.point_at(toi); // Same as: `ray.origin + ray.dir * toi`
 
-            for (id, player) in players.iter() {
+            for (_id, player) in players.iter() {
                 if player.collider_handle == handle {
                     // println!("Collider {:?} hit at point {}", handle, hit_point);
                 }

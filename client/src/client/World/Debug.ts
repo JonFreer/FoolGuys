@@ -19,11 +19,23 @@ export class Debug{
 
     public load_state(data:any){
 
-        console.log(data)
+        //Clear any previous state
         this.debug_group.clear()
+        
+        for (let i = 0; i < this.colliders.length; i++) {
+            if(this.colliders[i] != null){
+                let obj = (this.colliders[i] as THREE.LineSegments)
+                obj.geometry.dispose()
+            }
+        }
+
+        this.colliders = [];
+
+        //Itereate through each collider and construct debug mesh
 
         let colliders = data.colliders.colliders.items
         
+
         for (let i = 0; i < colliders.length; i++) {
             let collider = colliders[i]
 
@@ -80,17 +92,27 @@ export class Debug{
 
                     let pos = collider.Occupied.value.pos.translation;
                     let rot = collider.Occupied.value.pos.rotation;
+                    
                     mesh.position.set(pos[0],pos[1],pos[2])
                     mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
+                    
                     this.debug_group.add(mesh)
                     this.colliders.push(mesh)
-                    // console.log("trimesh")
-                    // console.log(collider.Occupied.value.pos)
+
 
                 } else if (collider.Occupied.value.shape.Capsule) {
-                    let capsule = collider.Occupied.value.shape.Capsule
-                    const geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[0]*2, 4, 10 );
-                    geometry.rotateZ(Math.PI/2)
+                    let capsule = collider.Occupied.value.shape.Capsule;
+                    let geometry;
+                    if(capsule.segment.b[0] !=0){
+                        geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[0]*2, 4, 10 );
+                        geometry.rotateZ(Math.PI/2) // Check these rotations at some point
+                    }else if(capsule.segment.b[1] !=0){
+                        geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[1]*2, 4, 10 );
+                    }else{
+                        geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[2]*2, 4, 10 );
+                        geometry.rotateY(Math.PI/2) 
+                    }
+                    
                     console.log(collider.Occupied)
                     const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
                     const mesh = new THREE.LineSegments( geometry, material );

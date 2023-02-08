@@ -243,7 +243,7 @@ export class Character {
     }
 
     public setPosition(position: THREE.Vector3): void {
-        let offset = 0.5
+        let offset = 0.55
 
         if(this.is_ragdoll){
             offset = 0.0

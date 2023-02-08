@@ -1,5 +1,5 @@
 use gltf::Node;
-use nalgebra::Vector3;
+use nalgebra::{Vector3, Quaternion, Unit};
 use rapier3d::prelude::{
     Collider, GenericJointBuilder, ImpulseJointHandle, JointAxesMask, Point, RigidBodyBuilder,
     RigidBodyHandle,
@@ -47,19 +47,16 @@ impl Ragdoll {
                     position.y + template_part.translation.y -0.5,
                     position.z + template_part.translation.z,
                 ))
-                .linvel(lin_vel)
+                .linvel(lin_vel/2.0) //start limbs off with some velocity
                 .build();
 
-            // if name == "Chest"{
-            //     rigid_body = RigidBodyBuilder::fixed()
-            //     .translation(Vector3::new(
-            //         position.x + template_part.translation.x,
-            //         position.y + template_part.translation.y,
-            //         position.z + template_part.translation.z,
-            //     )).rotation(Vector3::new(0.0,0.0,-1.7))
-            //     // .linvel(lin_vel)
-            //     .build();
-            // }
+           
+
+            if name == "Chest"{
+                rigid_body.set_linvel(lin_vel, true);
+            }
+
+            rigid_body.set_rotation(template_part.rotation, true);
 
             let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
             let _collider_handle = physics_engine.collider_set.insert_with_parent(
@@ -229,6 +226,7 @@ pub struct RagdollTemplate {
 pub struct RagdollTemplatePart {
     collider: Collider,
     translation: Vector3<f32>,
+    rotation: Unit<Quaternion<f32>>,
     scale: Vector3<f32>,
     parent_name: Option<String>,
 }
@@ -282,12 +280,14 @@ impl RagdollTemplate {
 
                 let t = node.transform().decomposed().0;
                 let s = node.transform().decomposed().2;
+                let r = node.transform().decomposed().1;
 
                 parts.insert(
                     node.name().unwrap().to_string(),
                     RagdollTemplatePart {
                         collider,
                         translation: Vector3::new(t[0], t[1], t[2]),
+                        rotation: Unit::from_quaternion(Quaternion::new(r[3], r[0], r[1], r[2])),
                         scale: Vector3::new(s[0], s[1], s[2]),
                         parent_name,
                     },
