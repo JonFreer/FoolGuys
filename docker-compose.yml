@@ -30,6 +30,8 @@ services:
     - ./client/dist/client/assets/unoptimized:/assets_unoptimized/
       # - ./client/dist/client/assets:/assets/
       # - /app/node_modules
+    environment:
+    - RUST_BACKTRACE=1
     ports:
       - "2865:2865"    
     networks:

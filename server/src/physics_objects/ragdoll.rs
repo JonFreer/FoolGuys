@@ -1,5 +1,5 @@
 use gltf::Node;
-use nalgebra::{Vector3, Quaternion, Unit};
+use nalgebra::{Vector3, Quaternion, Unit, Rotation3};
 use rapier3d::prelude::{
     Collider, GenericJointBuilder, ImpulseJointHandle, JointAxesMask, Point, RigidBodyBuilder,
     RigidBodyHandle,
@@ -46,19 +46,18 @@ impl Ragdoll {
 
             //calculate new rotation 
 
-
             let new_rot = rotation*template_part.rotation ;
             
-            let mut rigid_body = RigidBodyBuilder::fixed()
+            let translation = rotation.to_rotation_matrix().to_homogeneous() * Point::new(template_part.translation.x,template_part.translation.y,template_part.translation.z).to_homogeneous() ;
+
+            let mut rigid_body = RigidBodyBuilder::dynamic()
                 .translation(Vector3::new(
-                    position.x + template_part.translation.x,
-                    position.y + template_part.translation.y -0.5,
-                    position.z + template_part.translation.z,
+                    position.x +translation.x,
+                    position.y + translation.y -0.6,
+                    position.z + translation.z,
                 ))
                 .linvel(lin_vel/2.0) //start limbs off with some velocity
                 .build();
-
-           
 
             if name == "Chest"{
                 rigid_body.set_linvel(lin_vel, true);

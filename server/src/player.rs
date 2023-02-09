@@ -339,7 +339,8 @@ impl Player {
         // let rot = physics_engine.get_rotation(self.rigid_body_handle);
         // rot.
 
-        let rot = self.rotation;
+        let rot = self.get_rotation();
+
         let rot_quat = Quat {
             i: rot.i,
             j: rot.j,
@@ -560,6 +561,6 @@ impl Player {
             &Point::new(self.look_at.x, self.look_at.y, self.look_at.z),
             &Vector3::new(0.0, 1.0, 0.0),
         )
-        .rotation
+        .rotation.inverse()
     }
 }

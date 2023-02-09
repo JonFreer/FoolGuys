@@ -288,14 +288,14 @@ export class Character {
     }
 
     public setLookVector(dir: THREE.Vector3) {
-        if (this.gltf_scene != undefined) {
-            let look_vector = new THREE.Vector3(
-                this.gltf_scene.position.x - dir.x,
-                this.gltf_scene.position.y + dir.y,
-                this.gltf_scene.position.z - dir.z
-            )
-            this.gltf_scene.lookAt(look_vector);
-        }
+        // if (this.gltf_scene != undefined) {
+        //     let look_vector = new THREE.Vector3(
+        //         this.gltf_scene.position.x - dir.x,
+        //         this.gltf_scene.position.y + dir.y,
+        //         this.gltf_scene.position.z - dir.z
+        //     )
+        //     this.gltf_scene.lookAt(look_vector);
+        // }
     }
 
     public setState(state: any): void {
