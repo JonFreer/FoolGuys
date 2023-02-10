@@ -4,8 +4,6 @@ import { AssetLoader } from "./AssetLoader";
 import { World } from "./World";
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { Bone, Euler, Quaternion } from "three";
-import { Body } from "cannon-es";
-import { format } from "path";
 import { GUI } from "dat.gui";
 import { PlayerUpdate } from "backend";
 

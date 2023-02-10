@@ -1,6 +1,4 @@
-import { Socket } from 'socket.io-client';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { CameraOperator } from './CameraOperator';
@@ -9,7 +7,6 @@ import { Sky } from './Sky'
 import { Labels } from './Labels'
 import { MobileControls } from './MobileControls';
 import { ChatManager } from './Chat';
-import { Obstacle } from './obstacle';
 import { Character } from './Character';
 import { Sea } from './Sea';
 import { Grass } from './Grass';

@@ -6,15 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
 const http_1 = __importDefault(require("http"));
-const socket_io_1 = require("socket.io");
 const port = 3000;
 class App {
+    // private io: Server
     constructor(port) {
         this.port = port;
         const app = (0, express_1.default)();
         app.use(express_1.default.static(path_1.default.join(__dirname, '../client')));
         this.server = new http_1.default.Server(app);
-        this.io = new socket_io_1.Server(this.server);
+        // this.io = new Server(this.server)
     }
     Start() {
         this.server.listen(this.port, () => {
