@@ -6,7 +6,8 @@
          "paths": {
             "three/examples/jsm/libs/tween.module.min": ["../typings/tween.js"],
             "three-csm": ["../typings/three-csm"],
-            "backend": ["../../../server/bindings/index.ts"],
+            "backend": ["../../../server/bindings/index.ts","../typings/rust/index.ts"],
+            
             
         }
     },

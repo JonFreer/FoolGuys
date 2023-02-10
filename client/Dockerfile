@@ -2,7 +2,7 @@
 
 
 FROM node:latest
-ENV NODE_ENV=production
+
 
 WORKDIR /dir
 
@@ -12,7 +12,7 @@ RUN npm install
 #--production
 
 COPY . .
-
+ENV NODE_ENV=production
 RUN npm run build
 
 # CMD [ "npm" ,"start" ]
