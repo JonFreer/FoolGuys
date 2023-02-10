@@ -248,7 +248,7 @@ impl World {
                     Objects::Dynamic(object) => {
                         object.update( physics_engine);
 
-                        if !object.alive {
+                        if !object.lifetime.alive {
                             object_to_remove.push(i);
                         }
 

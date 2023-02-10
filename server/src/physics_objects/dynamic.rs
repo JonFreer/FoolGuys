@@ -8,8 +8,13 @@ use crate::{structs::ObjectUpdate, world::World, physics::Physics};
 
 pub struct DynamicObject {
     pub object: RigidBodyData,
-    lifetime: f32,
-    pub alive: bool
+    pub lifetime: LifeTime,
+}
+
+pub struct LifeTime {
+    immortal:bool,
+    lifetime:f32,
+    pub alive:bool
 }
 
 impl DynamicObject {
@@ -27,6 +32,8 @@ impl DynamicObject {
     ) -> Self {
 
         let mut platform_body = RigidBodyBuilder::dynamic().build();
+
+        // let translation = translation - Vector3::new(0.0,524294200.0,0.0);
 
         platform_body.set_translation(translation, true);
 
@@ -49,7 +56,17 @@ impl DynamicObject {
             scale,
         );
 
-        Self { object , lifetime, alive:true}
+        let lifetime_struct = LifeTime{
+            immortal : match lifetime{
+                0.0=>true,
+                _=>false
+            },
+            lifetime:lifetime,
+            alive:true
+        };
+
+        Self { object , lifetime:lifetime_struct}
+
     }
 
     pub fn get_info(&mut self, rigid_body_set: &mut RigidBodySet) -> ObjectUpdate {
@@ -57,18 +74,29 @@ impl DynamicObject {
     }
 
     pub fn update(&mut self, physics_engine: &mut Physics){
-        if self.lifetime == 0.0 || !self.alive{
+
+        if !self.lifetime.alive{
             return;
         }
 
-        self.lifetime = self.lifetime - physics_engine.get_time_step();
-
-        //decompose if life is over
-        if self.lifetime <= 0.0 || self.get_translation(physics_engine).y < -10.0{
-            physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
-            self.alive = false;
-            // world.rigid_body_set.remove(self.object.rigid_body_handle,&mut world.island_manager,&mut world.collider_set,&mut )
+        if self.get_translation(physics_engine).y < -10.0 {
+            self.set_not_alive(physics_engine);
+            return;
         }
+
+
+        if !self.lifetime.immortal{
+            self.lifetime.lifetime = self.lifetime.lifetime - physics_engine.get_time_step();
+            if self.lifetime.lifetime <= 0.0{
+                self.set_not_alive(physics_engine);
+            }
+        }
+    }
+
+    pub fn set_not_alive(&mut self, physics_engine: &mut Physics){
+        println!("Removing object");
+        physics_engine.remove_from_rigid_body_set(self.object.rigid_body_handle);
+        self.lifetime.alive = false;
     }
 
     pub fn get_translation(& self, physics_engine: &mut Physics ) -> Vector3<f32>{
