@@ -38,6 +38,9 @@ export class Character {
 
     constructor(player_data: any, assetLoader: AssetLoader, world: World) {
 
+        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color("rgb(" + player_data.colour.r + "," + player_data.colour.g + "," + player_data.colour.b + ")")})
+
+
         assetLoader.loadGLTF('assets/character.glb', (gltf:GLTF) => {
 
             console.log("Loaded Character Model")
@@ -46,6 +49,10 @@ export class Character {
             this.gltf_scene = gltf.scene;
 
             world.graphicsWorld.add(gltf.scene);
+
+            if( this.mesh != undefined){
+                // this.mesh.material = mat
+            }
 
         })
 
@@ -57,6 +64,7 @@ export class Character {
     
                     object.castShadow = true;
                     object.receiveShadow = true;
+                    // object.material = mat;
                     object.material.side = THREE.FrontSide;
                     object.geometry.computeVertexNormals(true)
                 }
@@ -68,6 +76,9 @@ export class Character {
         })
 
         console.log("creating character")
+
+
+        
 
         // const gui = new GUI()
 
