@@ -186,6 +186,8 @@ export class World {
             this.players[client_id].updateCharacter(update)
         }
 
+
+
         if (!this.clientCubes[client_id]) {
             const geometry = new THREE.BoxGeometry();
             let col = update.colour
@@ -236,6 +238,8 @@ export class World {
             this.clientCubes[client_id].lookAt(look_vector);
 
         }
+
+
     }
 
     public removePlayer(id: string) {

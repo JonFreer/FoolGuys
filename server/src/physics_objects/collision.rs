@@ -1,6 +1,6 @@
 use gltf::Node;
 use nalgebra::{Vector3, Quaternion, UnitQuaternion};
-use rapier3d::prelude::{ColliderBuilder, Collider, Point, Cuboid, ConvexPolyhedron, SharedShape, Ball, ShapeType};
+use rapier3d::prelude::{ColliderBuilder, Collider, Point, Cuboid, ConvexPolyhedron, SharedShape, Ball, ShapeType, InteractionGroups};
 use serde_json::Value;
 
 
@@ -84,7 +84,7 @@ pub fn  new_collider(node: &Node, buffers: &Vec<gltf::buffer::Data>) -> Option<C
         None => None
     };
 
-    let collider = match extras{
+    let mut collider = match extras{
         Some (e) => {
             match e["physics"].as_str(){
                 Some("hull") => Some(new_hull_collider(node,buffers)),
@@ -97,6 +97,11 @@ pub fn  new_collider(node: &Node, buffers: &Vec<gltf::buffer::Data>) -> Option<C
         None => None
         
     };
+
+    if let Some(mut c) = collider{
+        c.set_collision_groups(InteractionGroups::new(0b0001.into(), 0b0001.into()));
+        collider = Some(c);
+    }
 
     collider
 
@@ -202,6 +207,9 @@ fn new_trimesh_collider(node: &Node,buffers: &Vec<gltf::buffer::Data>) -> Collid
     let mut collider =
         ColliderBuilder::trimesh(p_vec,indices_out).build();
         
+
+    // let mut collider = ColliderBuilder::convex_decomposition(&p_vec, &indices_out).build();
+    
     let rotation = UnitQuaternion::from_quaternion(Quaternion::new(
         rot[3], rot[0], rot[1], rot[2],
     ));

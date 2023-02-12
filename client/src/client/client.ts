@@ -45,7 +45,7 @@ const world = new World(socket, "assets/world.glb")
 socket.onmessage = function (event) {
 
     const msg = JSON.parse(event.data) as MessageType
-    console.log(msg)
+    // console.log(msg)
     if (msg.kind == 'Join') {
         world.player_id = msg.id
     }
@@ -66,6 +66,8 @@ socket.onmessage = function (event) {
                 world.removePlayer(id)
             }
         })
+
+        world.cameraOperator.setRadius(data.players[world.player_id].camera_distance-0.1)
 
         world.updateObstacles(data.dynamic_objects);
      
@@ -165,6 +167,11 @@ function onDocumentKey(e: KeyboardEvent) {
     }
 
 }
+
+// addEventListener('mousemove', (event) => {
+
+
+// });
 
 function sendUpdate(movement: THREE.Vector2) {
     if (!titleScreen) {

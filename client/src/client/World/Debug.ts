@@ -4,7 +4,7 @@ import { World } from "./World";
 export class Debug{
 
     public debug_group: THREE.Group;
-    public colliders : (THREE.LineSegments|null)[] = [];
+    public colliders : (THREE.LineSegments|null|THREE.Group)[] = [];
 
     constructor(world:World){
 
@@ -41,120 +41,143 @@ export class Debug{
 
             if (collider.Occupied) {
                 console.log(collider.Occupied.value.shape)
-                if (collider.Occupied.value.shape.TriMesh) {
-                    const geometry = new THREE.BufferGeometry();
-                    
-                    let vert_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.TriMesh.vertices.length; i++){
-                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][0])
-                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][1])
-                        vert_array.push(collider.Occupied.value.shape.TriMesh.vertices[i][2])
-                    }
-                    const vertices = new Float32Array(vert_array)
-
-                    let indices_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.TriMesh.indices.length; i++){
-                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][0])
-                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][1])
-                        indices_array.push(collider.Occupied.value.shape.TriMesh.indices[i][2])
-                    }
-
-                    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                    geometry.setIndex( indices_array );
-                    const material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
-                    const mesh = new THREE.LineSegments(geometry, material);
-                    
+                let mesh = this.add_shape(collider.Occupied.value,true)
+                if(mesh!=null){
                     this.debug_group.add(mesh)
-                    this.colliders.push(mesh)
-     
-                }else if (collider.Occupied.value.shape.ConvexPolyhedron) {
-                    const geometry = new THREE.BufferGeometry();
-                    //collider.Occupied.value.shape.TriMesh.vertices
-                    
-                    let vert_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.ConvexPolyhedron.points.length; i++){
-                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][0])
-                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][1])
-                        vert_array.push(collider.Occupied.value.shape.ConvexPolyhedron.points[i][2])
-                    }
-
-                    let indices_array =[]
-                    for( let i =0; i< collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face.length; i++){
-                        indices_array.push(collider.Occupied.value.shape.ConvexPolyhedron.vertices_adj_to_face[i])
-                    }
-
-
-                    const vertices = new Float32Array(vert_array)
-                    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-                    geometry.setIndex( indices_array );
-                    const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
-                    const mesh = new THREE.LineSegments(geometry, material);
-
-                    let pos = collider.Occupied.value.pos.translation;
-                    let rot = collider.Occupied.value.pos.rotation;
-                    
-                    mesh.position.set(pos[0],pos[1],pos[2])
-                    mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
-                    
-                    this.debug_group.add(mesh)
-                    this.colliders.push(mesh)
-
-
-                } else if (collider.Occupied.value.shape.Capsule) {
-                    let capsule = collider.Occupied.value.shape.Capsule;
-                    let geometry;
-                    if(capsule.segment.b[0] !=0){
-                        geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[0]*2, 4, 10 );
-                        geometry.rotateZ(Math.PI/2) // Check these rotations at some point
-                    }else if(capsule.segment.b[1] !=0){
-                        geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[1]*2, 4, 10 );
-                    }else{
-                        geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[2]*2, 4, 10 );
-                        geometry.rotateY(Math.PI/2) 
-                    }
-                    
-                    console.log(collider.Occupied)
-                    const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
-                    const mesh = new THREE.LineSegments( geometry, material );
-
-                    let pos = collider.Occupied.value.pos.translation;
-
-                    // console.log(pos)
-
-                    let rot = collider.Occupied.value.pos.rotation;
-                    mesh.position.set(pos[0],pos[1],pos[2])
-                    mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
-
-                    this.debug_group.add(mesh)
-                    this.colliders.push(mesh)
-                }else if (collider.Occupied.value.shape.Cuboid) {
-                    let capsule = collider.Occupied.value.shape.Cuboid
-                    const geometry = new THREE.CapsuleGeometry( 1, 1, 4, 10 );
-                    console.log(collider.Occupied)
-                    const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
-                    const mesh = new THREE.LineSegments( geometry, material );
-
-                    let pos = collider.Occupied.value.pos.translation;
-
-                    // console.log(pos)
-
-                    let rot = collider.Occupied.value.pos.rotation;
-                    mesh.position.set(pos[0],pos[1],pos[2])
-                    mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
-
-                    this.debug_group.add(mesh)
-                    this.colliders.push(mesh)
-                }else{
-                    this.colliders.push(null)
                 }
 
 
+                this.colliders.push(mesh)
             }
 
         }
 
         // for 
 
+    }
+
+    public add_shape(collider:any,add_to_colliders:boolean){
+        if (collider.shape.TriMesh) {
+            const geometry = new THREE.BufferGeometry();
+            
+            let vert_array =[]
+            for( let i =0; i< collider.shape.TriMesh.vertices.length; i++){
+                vert_array.push(collider.shape.TriMesh.vertices[i][0])
+                vert_array.push(collider.shape.TriMesh.vertices[i][1])
+                vert_array.push(collider.shape.TriMesh.vertices[i][2])
+            }
+            const vertices = new Float32Array(vert_array)
+
+            let indices_array =[]
+            for( let i =0; i< collider.Occupied.value.shape.TriMesh.indices.length; i++){
+                indices_array.push(collider.shape.TriMesh.indices[i][0])
+                indices_array.push(collider.shape.TriMesh.indices[i][1])
+                indices_array.push(collider.shape.TriMesh.indices[i][2])
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setIndex( indices_array );
+            const material = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
+            const mesh = new THREE.LineSegments(geometry, material);
+            return mesh
+
+
+        }else if (collider.shape.ConvexPolyhedron) {
+            const geometry = new THREE.BufferGeometry();
+            //collider.Occupied.value.shape.TriMesh.vertices
+            
+            let vert_array =[]
+            for( let i =0; i< collider.shape.ConvexPolyhedron.points.length; i++){
+                vert_array.push(collider.shape.ConvexPolyhedron.points[i][0])
+                vert_array.push(collider.shape.ConvexPolyhedron.points[i][1])
+                vert_array.push(collider.shape.ConvexPolyhedron.points[i][2])
+            }
+
+            let indices_array =[]
+            for( let i =0; i< collider.shape.ConvexPolyhedron.vertices_adj_to_face.length; i++){
+                indices_array.push(collider.shape.ConvexPolyhedron.vertices_adj_to_face[i])
+            }
+
+
+            const vertices = new Float32Array(vert_array)
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            geometry.setIndex( indices_array );
+            const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
+            const mesh = new THREE.LineSegments(geometry, material);
+
+            let pos = collider.pos.translation;
+            let rot = collider.pos.rotation;
+            
+            mesh.position.set(pos[0],pos[1],pos[2])
+            mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
+            return mesh
+
+        } else if (collider.shape.Capsule) {
+            let capsule = collider.shape.Capsule;
+            let geometry;
+            if(capsule.segment.b[0] !=0){
+                geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[0]*2, 4, 10 );
+                geometry.rotateZ(Math.PI/2) // Check these rotations at some point
+            }else if(capsule.segment.b[1] !=0){
+                geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[1]*2, 4, 10 );
+            }else{
+                geometry = new THREE.CapsuleGeometry( capsule.radius, capsule.segment.b[2]*2, 4, 10 );
+                geometry.rotateY(Math.PI/2) 
+            }
+            
+  
+            const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
+            const mesh = new THREE.LineSegments( geometry, material );
+
+            let pos = collider.pos.translation;
+
+            // console.log(pos)
+
+            let rot = collider.pos.rotation;
+            mesh.position.set(pos[0],pos[1],pos[2])
+            mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
+            return mesh
+            this.debug_group.add(mesh)
+            this.colliders.push(mesh)
+        }else if (collider.shape.Cuboid) {
+            let capsule = collider.shape.Cuboid
+            const geometry = new THREE.CapsuleGeometry( 1, 1, 4, 10 );
+            const material = new THREE.LineBasicMaterial( { color: 0xff0000, linewidth: 4 } );
+            const mesh = new THREE.LineSegments( geometry, material );
+
+            let pos = collider.pos.translation;
+
+            // console.log(pos)
+
+            let rot = collider.pos.rotation;
+            mesh.position.set(pos[0],pos[1],pos[2])
+            mesh.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
+            return mesh
+
+        }
+        else if(collider.shape.Compound){
+            console.log("hiii",collider.shape.Compound)
+            let shapes = collider.shape.Compound.shapes
+
+            let group = new THREE.Group
+            let pos = collider.pos.translation;
+            let rot = collider.pos.rotation;
+            group.position.set(pos[0],pos[1],pos[2])
+            group.rotation.setFromQuaternion(new THREE.Quaternion(rot[0],rot[1],rot[2],rot[3]))
+            for(let i = 0; i < shapes.length;i++){
+                //TODO::: add debug rendering for compound shapes
+                console.log(shapes[i])
+                let child = this.add_shape({shape:shapes[i][1],pos:shapes[i][0]},false)
+                if(child != null){
+                    group.add(child)
+                }   
+            }
+            return group
+            this.colliders.push(null)
+        }else{
+            return null
+            this.colliders.push(null)
+        }
     }
 
     public update_state(data:any){

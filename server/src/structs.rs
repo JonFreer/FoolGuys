@@ -38,7 +38,8 @@ pub struct PlayerUpdate{
     pub state: CharacterState,
     pub dir: Vec3,
     pub is_ragdoll: bool,
-    pub ragdoll_info: HashMap<String, Translation>
+    pub ragdoll_info: HashMap<String, Translation>,
+    pub camera_distance: f32
 }
 
 #[ts(export)]

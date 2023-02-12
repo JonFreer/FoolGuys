@@ -233,7 +233,7 @@ export class Character {
    
        
         this.setState(update.state)
-        console.log(update.state)
+        // console.log(update.state)
         
 
         if(this.is_ragdoll){

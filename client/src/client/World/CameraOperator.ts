@@ -120,7 +120,8 @@ export class CameraOperator implements IInputReceiver
 			this.camera.lookAt(this.target);
 			let old_view = this.viewVector;
 			this.viewVector = new THREE.Vector3().subVectors(this.target, this.world.camera.position);
-			this.viewVector = new THREE.Vector3(this.viewVector.x, 0, this.viewVector.z).normalize()
+			this.viewVector = this.viewVector.normalize()
+			// this.viewVector = new THREE.Vector3(this.viewVector.x, 0, this.viewVector.z).normalize()
 			if(old_view!==this.viewVector){
 				this.socket.send(JSON.stringify(['update_view', {
 					viewVector:this.viewVector}

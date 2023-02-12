@@ -209,8 +209,39 @@ def process_static(scene, collision_collection,client_collection):
                 temp_collection.objects.link(obj.copy())
 
         elif (obj.name == 'land'):
-            collision_collection.objects.link(obj.copy())
+
             client_collection.objects.link(obj.copy())
+            collision_collection.objects.link(obj.copy())
+    
+            
+        # elif (obj.name == 'land_copy'):
+
+        
+
+            # land = obj.copy()
+            # land.data = obj.data.copy()
+            # collision_collection.objects.link(land)
+
+            # bpy.ops.object.select_all(action='DESELECT')
+            # try:
+            #     # bpy.context.scene.objects.active = land
+            #     land.select_set(True)
+
+            #     bpy.ops.object.make_single_user(object=True, 
+            #                                     obdata=True, 
+            #                                     material=True, 
+            #                                     animation=True, 
+            #                                     obdata_animation=True)
+                
+
+            #     bpy.ops.object.modifier_apply(modifier="Solidify")
+
+                
+            # except Exception  as err:
+            #     print("Failed to solidify",err)
+            
+
+            
 
     duplicates_make_real(temp_collection)
 

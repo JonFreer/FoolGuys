@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use gltf::{Document, Node};
 use nalgebra::{Quaternion, Unit, UnitQuaternion, Vector3};
+use rapier3d::prelude::{ColliderHandle, InteractionGroups};
 use serde_json::Value;
 
 use crate::physics::Physics;
@@ -23,6 +24,7 @@ pub struct World {
     asset_path: String,
     asset_count: i32,
     pub character_ragdoll_template:RagdollTemplate
+
 }
 
 impl World {
@@ -39,6 +41,7 @@ impl World {
             asset_path: asset_path.to_string(),
             asset_count:0,
             character_ragdoll_template:RagdollTemplate::new(path.to_string()+"character.glb")
+
         }
     }
 
@@ -103,7 +106,7 @@ impl World {
     ) {
         if let Some(_) = node.mesh() {
             let collider_option = collision::new_collider(node, &buffers);
-            if let Some(collider) = collider_option {
+            if let Some(mut collider) = collider_option {
                 let extras = node.extras().as_ref();
                 if let Some(extras) = extras {
                     let extras: gltf::json::Value =
@@ -166,10 +169,22 @@ impl World {
                         );
                         self.dynamic_objects.push(Objects::LaunchPad(obj));
                     } else {
+                        if node.name().unwrap().contains("land"){
+                            println!("found land 2");
+                            collider.set_collision_groups(InteractionGroups::new(0b0011.into(), 0b0011.into()));
+                        }
                         physics_engine.collider_set.insert(collider);
                     }
                 } else {
-                    physics_engine.collider_set.insert(collider);
+
+                    
+
+                    if node.name().unwrap().contains("land"){
+                        // self.floor_collider_handle = Some(handle);
+                        println!("found land");
+                        collider.set_collision_groups(InteractionGroups::new(0b0011.into(), 0b0011.into()));
+                    }
+                    let _handle = physics_engine.collider_set.insert(collider);
                 }
             }
 

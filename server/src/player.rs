@@ -6,7 +6,10 @@ use crate::{
         jumpidle::JumpIdleState, walk::WalkState,
     },
     physics::Physics,
-    physics_objects::ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate},
+    physics_objects::{
+        ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate},
+        rigid_body_parent::Objects,
+    },
     structs::{self, message_prep, Client, Colour, PlayerUpdate, Quat, Vec3},
     world::World,
 };
@@ -39,9 +42,12 @@ pub struct Player {
     pub just_jumped: bool,
     pub look_at: Vector3<f32>,
     pub target_look_at: Vector<f32>,
+
     pub is_ragdoll: bool,
     ragdoll: Option<Ragdoll>,
     ragdoll_template: RagdollTemplate,
+
+    pub camera_distance: f32,
 }
 
 impl Player {
@@ -64,7 +70,7 @@ impl Player {
         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
         let collider = ColliderBuilder::capsule_y(0.3, 0.3)
-            .active_events(ActiveEvents::COLLISION_EVENTS)
+            .active_events(ActiveEvents::COLLISION_EVENTS | ActiveEvents::CONTACT_FORCE_EVENTS)
             // .friction(1.0)
             // .restitution(0.7)
             // .mass(10.0)
@@ -109,6 +115,7 @@ impl Player {
             is_ragdoll: false,
             ragdoll_template,
             ragdoll: None,
+            camera_distance: 4.0,
         }
     }
 
@@ -248,11 +255,29 @@ impl Player {
 
         // character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.5));
         let mut collisions = vec![];
-        let corrected_movement = physics_engine.update_characet_controller(
+
+        let corrected_movement = physics_engine.update_character_controller(
             self.collider_handle,
             self.rigid_body_handle,
             &mut collisions,
         );
+
+        // println!("{:?}",collisions.len());
+        // for collision in collisions{
+        //     println!("C {:?}",collision);
+        // }
+
+        let contacts = physics_engine.get_contact_force_with(self.collider_handle);
+
+        for contact in contacts {
+            if contact.total_force_magnitude > 200.0 {
+                self.toggle_ragdoll(physics_engine);
+            }
+        }
+
+        // println!("{:?}",self.view_vector);
+
+        self.perform_camera_ray_cast(physics_engine);
 
         if corrected_movement.grounded {
             self.can_jump = true;
@@ -303,10 +328,10 @@ impl Player {
                 "asset_id".to_string(),
                 "Asset_Apple".to_string(),
                 Vector3::new(1.0, 1.0, 1.0) * 0.2,
-                rigid_body.translation() + Vector3::new(1.0, 2.0, 1.0),
+                rigid_body.translation() + Vector3::new(0.0, 0.5, 0.0),
                 *rigid_body.rotation(),
                 true,
-                self.view_vector * 10.0 + Vector::new(0.0, 10.0, 0.0),
+                self.view_vector * 15.0 + Vector::new(0.0, 5.0, 0.0),
                 20.0,
                 physics_engine, // Vector3::new(10.0,5.0,0.0)
             );
@@ -368,6 +393,7 @@ impl Player {
             dir: look_at,
             is_ragdoll: self.is_ragdoll,
             ragdoll_info,
+            camera_distance: self.camera_distance,
         }
     }
 
@@ -516,7 +542,7 @@ impl Player {
         }
     }
 
-    pub fn get_translation(&mut self, physics_engine: &mut Physics) -> Vector3<f32> {
+    pub fn get_translation(&self, physics_engine: &mut Physics) -> Vector3<f32> {
         physics_engine.get_translation(self.rigid_body_handle)
     }
 
@@ -535,7 +561,7 @@ impl Player {
         let filter = QueryFilter::default().exclude_rigid_body(self.rigid_body_handle);
 
         if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
-            let _hit_point = ray.point_at(toi); // Same as: `ray.origin + ray.dir * toi`
+            let hit_point = ray.point_at(toi); // Same as: `ray.origin + ray.dir * toi`
 
             for (_id, player) in players.iter() {
                 if player.collider_handle == handle {
@@ -545,6 +571,65 @@ impl Player {
 
             // ray.point_at(toi)
         }
+    }
+
+    pub fn check_interact(&mut self, interactables: &Vec<Objects>, physics_engine: &mut Physics) {
+        let max_toi = 4.0;
+        let solid = false;
+        let filter = QueryFilter::default().exclude_rigid_body(self.rigid_body_handle);
+
+        // if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
+
+        // }
+    }
+
+    pub fn perform_camera_ray_cast(&mut self, physics_engine: &mut Physics) {
+        let mut max_toi = 4.0;
+        let solid = false;
+
+
+
+
+        //first check for collision
+        let filter = QueryFilter::default().exclude_rigid_body(self.rigid_body_handle);
+        let origin = Point::from(self.get_translation(physics_engine)) + Vector3::new(0.0,-0.3,0.0);
+
+        
+        let group = InteractionGroups::new(0b0010.into(),0b0010.into());
+
+        let floor_filter = QueryFilter::new().groups(group).exclude_rigid_body(self.rigid_body_handle);
+
+        let ray = Ray::new(origin, -self.view_vector);
+
+        if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, floor_filter) {
+            max_toi = toi;
+        } 
+
+
+        let point = origin + self.view_vector * -max_toi;
+
+        if !physics_engine.intersections_with_point(&point, filter) {
+            self.camera_distance = max_toi;
+        } else {
+
+           let ray = Ray::new(origin, -self.view_vector);
+
+            if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
+                self.camera_distance = toi;
+            } else {
+                self.camera_distance = max_toi;
+            }
+        }
+        
+    //         let ray = Ray::new(origin, -self.view_vector);
+
+    //         if let Some((handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
+    //             self.camera_distance = toi;
+    //             // println!("{:?}", toi);
+    //         } else {
+    //             self.camera_distance = max_toi;
+    //         }
+    //     }
     }
 
     pub fn remove_self(&mut self, physics_engine: &mut Physics) {
@@ -561,6 +646,7 @@ impl Player {
             &Point::new(self.look_at.x, self.look_at.y, self.look_at.z),
             &Vector3::new(0.0, 1.0, 0.0),
         )
-        .rotation.inverse()
+        .rotation
+        .inverse()
     }
 }

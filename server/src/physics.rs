@@ -1,5 +1,5 @@
 
-use nalgebra::{Vector3, Vector2, Vector1, Quaternion, Unit};
+use nalgebra::{Vector3, Vector2, Vector1, Quaternion, Unit, Point, Point3};
 
 use rapier3d::{
     control::{CharacterCollision, EffectiveCharacterMovement, KinematicCharacterController},
@@ -8,8 +8,8 @@ use rapier3d::{
     prelude::{
         BroadPhase, CCDSolver, ChannelEventCollector, Collider, ColliderHandle, ColliderSet,
         CollisionEvent, ImpulseJointSet, IntegrationParameters,
-        IslandManager, MultibodyJointSet, NarrowPhase, PhysicsPipeline, Point, QueryFilter,
-        QueryPipeline, Real, RigidBody, RigidBodyHandle, RigidBodySet, Vector, Isometry,
+        IslandManager, MultibodyJointSet, NarrowPhase, PhysicsPipeline, QueryFilter,
+        QueryPipeline, Real, RigidBody, RigidBodyHandle, RigidBodySet, Vector, Isometry, ContactForceEvent,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -31,7 +31,10 @@ pub struct Physics {
     gravity: Vector3<f32>,
     event_handler: ChannelEventCollector,
     collision_recv: Receiver<CollisionEvent>,
+    contact_force_recv:Receiver<ContactForceEvent>,
     pub collision_vec: Vec<CollisionEvent>,
+    pub contact_force_vec: Vec<ContactForceEvent>
+
     // pub debug_render_pipeline: DebugRenderPipeline,
     // pub debug_state: DebugState,
 }
@@ -56,7 +59,7 @@ impl Physics {
         let island_manager = IslandManager::new();
 
         let (collision_send, collision_recv) = crossbeam::channel::unbounded();
-        let (contact_force_send, _contact_force_recv) = crossbeam::channel::unbounded();
+        let (contact_force_send, contact_force_recv) = crossbeam::channel::unbounded();
 
         let event_handler = ChannelEventCollector::new(collision_send, contact_force_send);
 
@@ -78,7 +81,9 @@ impl Physics {
             gravity,
             event_handler,
             collision_recv,
+            contact_force_recv,
             collision_vec: Vec::new(),
+            contact_force_vec:Vec::new()
             // debug_render_pipeline: DebugRenderPipeline::new(
             //     debug_render_style,
             //     DebugRenderMode::COLLIDER_SHAPES,
@@ -120,16 +125,24 @@ impl Physics {
             &self.collider_set,
         );
 
-        let mut collision_vec = Vec::new();
+        self.collision_vec = Vec::new();
+        self.contact_force_vec = Vec::new();
 
         while let Ok(collision_event) = self.collision_recv.try_recv() {
             // if let Some(collision_event) = collision_event{
-            collision_vec.push(collision_event);
+            self.collision_vec.push(collision_event);
             // }
         }
+
+        while let Ok(contact_force_event) = self.contact_force_recv.try_recv() {
+            // Handle the contact force event.
+            self.contact_force_vec.push(contact_force_event);
+        }
+
+
     }
 
-    pub fn update_characet_controller(
+    pub fn update_character_controller(
         &mut self,
         collider_handle: ColliderHandle,
         rigid_body_handle: RigidBodyHandle,
@@ -195,6 +208,23 @@ impl Physics {
         )
     }
 
+    pub fn intersections_with_point(
+        &mut self,
+        point: &Point3<f32>,
+        filter: QueryFilter,
+    ) ->bool{
+
+        let mut found = false;
+        self.query_pipeline.intersections_with_point(&self.rigid_body_set,
+            &self.collider_set, point, filter, |handle| {
+                found = true;
+                false
+            }
+        );
+
+        found
+    }
+
     pub fn get_state(&mut self) -> PhysicsState {
         PhysicsState {
             bodies: self.rigid_body_set.clone(),
@@ -207,6 +237,33 @@ impl Physics {
         PhysicsStateUpdate {
             bodies: self.rigid_body_set.clone(),
         }
+    }
+
+    pub fn get_collisions_with(&mut self, collider_handle: ColliderHandle)-> Vec<CollisionEvent>{
+        
+        let mut out_vec = Vec::new();
+
+        for collision in &self.collision_vec{
+            
+            if collision.collider1()==collider_handle || collision.collider2()==collider_handle {
+                out_vec.push(collision.clone());
+            }
+        }
+        out_vec
+       
+
+    }
+
+    pub fn get_contact_force_with(&mut self, collider_handle: ColliderHandle)->Vec<ContactForceEvent>{
+
+        let mut out_vec = Vec::new();
+
+        for contact_force in &self.contact_force_vec{
+            if contact_force.collider1==collider_handle || contact_force.collider2==collider_handle {
+                out_vec.push(contact_force.clone());
+            }
+        }
+        out_vec
     }
 
     // pub fn debug_render(&mut self) {
