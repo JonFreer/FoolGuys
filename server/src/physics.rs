@@ -148,7 +148,7 @@ impl Physics {
         rigid_body_handle: RigidBodyHandle,
         collisions: &mut Vec<CharacterCollision>,
     ) -> EffectiveCharacterMovement {
-        let pos = Vector3::new(0.0, 0.0, 0.0);
+        let pos = Vector3::new(0.0, -0.1, 0.0);
 
         let character_controller = KinematicCharacterController::default();
 
