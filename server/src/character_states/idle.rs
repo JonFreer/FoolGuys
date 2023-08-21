@@ -1,4 +1,4 @@
-use crate::player::Player;
+use crate::character::Character;
 use ts_rs::TS;
 use super::{character_base::CharacterState, jumpidle::JumpIdleState};
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ impl IdleState{
         Self{}
     }
 
-    pub fn on_input_change(player : &mut Player){
+    pub fn on_input_change(player : &mut Character){
 
         if player.just_jumped{
             player.character_state = CharacterState::JumpIdle(JumpIdleState::new());

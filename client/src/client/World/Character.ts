@@ -5,7 +5,7 @@ import { World } from "./World";
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { Bone, Euler, Quaternion } from "three";
 import { GUI } from "dat.gui";
-import { PlayerUpdate } from "backend";
+import { PlayerUpdate, Vec3 } from "backend";
 
 enum State {
     Idle,
@@ -405,6 +405,14 @@ export class Character {
     public update(timeStep: number) {
         if (this.mixer !== undefined) this.mixer.update(timeStep);
         // if (this.action !== undefined) console.log(this.action.isRunning());
+    }
+
+    public get_position(): THREE.Vector3{
+        if (this.gltf_scene != undefined){
+            return this.gltf_scene.position
+        }else{
+            return new THREE.Vector3(0,0,0)
+        }
     }
 }
 

@@ -21,7 +21,7 @@ pub fn message_prep(msg: MessageType) -> Message {
 pub enum MessageType{
     Join{name:String,id:String},
     Chat{name:String,message:String},
-    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>, },
+    WorldUpdate{players:HashMap<String,PlayerUpdate>,dynamic_objects:HashMap<String,ObjectUpdate>, vehicles: HashMap<String,VehicleUpdate>},
     PhysicsState{data:PhysicsState},
     PhysicsUpdate{data:PhysicsStateUpdate}
 
@@ -53,6 +53,15 @@ pub struct ObjectUpdate{
     pub scale:Vec3
 }
 
+#[ts(export)]
+#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize,TS)]
+pub struct VehicleUpdate{
+    pub name:String,
+    pub p:Vec3,
+    pub q:Quat,
+    pub asset_name: String,
+}
 
 #[ts(export)]
 #[derive(Clone, Debug)]

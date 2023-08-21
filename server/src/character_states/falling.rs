@@ -1,4 +1,4 @@
-use crate::player::Player;
+use crate::character::Character;
 
 use super::{character_base::CharacterState, idle::IdleState};
 
@@ -10,7 +10,7 @@ impl FallingState{
         Self{}
     }
 
-    pub fn update(player: &mut Player, time_step: f32) {
+    pub fn update(player: &mut Character, time_step: f32) {
 
 
         if player.on_ground{

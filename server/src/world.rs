@@ -16,6 +16,7 @@ use crate::physics_objects::ragdoll::RagdollTemplate;
 use crate::physics_objects::rigid_body_parent::Objects;
 use crate::physics_objects::spin::SpinObject;
 use crate::player::Player;
+use crate::vehicles::blimp::Blimp;
 
 pub struct World {
     pub dynamic_objects: Vec<Objects>,
@@ -23,8 +24,8 @@ pub struct World {
     assets: HashMap<String, AssetBase>,
     asset_path: String,
     asset_count: i32,
-    pub character_ragdoll_template:RagdollTemplate
-
+    pub character_ragdoll_template:RagdollTemplate,
+    pub vehicles: Vec<Blimp>
 }
 
 impl World {
@@ -40,8 +41,8 @@ impl World {
             assets,
             asset_path: asset_path.to_string(),
             asset_count:0,
-            character_ragdoll_template:RagdollTemplate::new(path.to_string()+"character.glb")
-
+            character_ragdoll_template:RagdollTemplate::new(path.to_string()+"character.glb"),
+            vehicles: Vec::new()
         }
     }
 
@@ -54,6 +55,8 @@ impl World {
         }
 
         self.load_spawn_points(&gltf);
+
+        self.vehicles.push(Blimp::new(physics_engine));
     }
 
     pub fn add_dynamic_asset(

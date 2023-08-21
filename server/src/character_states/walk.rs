@@ -1,4 +1,4 @@
-use crate::player::Player;
+use crate::character::Character;
 
 use super::{character_base::CharacterState, idle::IdleState, jumpidle::JumpIdleState};
 
@@ -10,7 +10,7 @@ impl WalkState{
     //     Self{}
     // }
 
-    pub fn on_input_change(player : &mut Player){
+    pub fn on_input_change(player : &mut Character){
 
 
 
