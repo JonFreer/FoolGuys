@@ -1,8 +1,11 @@
 // import { KeyBinding } from '../core/KeyBinding';
 
+import { KeyBinding } from "./keybindings";
+
 export interface IInputReceiver
 {
-	// actions: { [action: string]: KeyBinding };
+    lastInputManager: IInputReceiver|undefined;
+	actions: { [action: string]: KeyBinding };
 
 	handleKeyboardEvent(event: KeyboardEvent, code: string, pressed: boolean): void;
 	handleMouseButton(event: MouseEvent, code: string, pressed: boolean): void;

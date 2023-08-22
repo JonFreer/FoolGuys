@@ -97,7 +97,7 @@ export class MobileControls {
                 let diff_x = -(that.tpLook.clientX - ev.targetTouches[i].clientX) * that.sensitivity;
                 let diff_y = -(that.tpLook.clientY - ev.targetTouches[i].clientY) * that.sensitivity;
                 // console.log(this)
-                that.world.cameraOperator.move(diff_x, diff_y)
+                that.world.inputManager.characterReceiver.move(diff_x, diff_y)
                 that.tpLook = ev.targetTouches[i]
             }
         }

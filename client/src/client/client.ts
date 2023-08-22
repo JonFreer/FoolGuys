@@ -49,10 +49,10 @@ socket.onmessage = function (event) {
   if (msg.kind == "WorldUpdate") {
     const data = msg;
 
-    console.log("World Update", data);
+    // console.log("World Update", data);
 
     world.playerManager.updatePlayers(data.players);
-    world.cameraOperator.setRadius(
+    world.inputManager.setRadius(
       data.players[world.player_id].camera_distance - 0.1
     );
     world.objectManager.updateObstacles(data.dynamic_objects);
@@ -142,7 +142,7 @@ function onDocumentKey(e: KeyboardEvent) {
 
   if (e.type == "keydown") {
     if (e.key.toLowerCase() == "p") {
-      socket.send(JSON.stringify(["throw", {}]));
+      // socket.send(JSON.stringify(["throw", {}]));
     }
 
     if (e.key.toLowerCase() == " ") {
@@ -164,7 +164,7 @@ function sendUpdate(movement: THREE.Vector2) {
           t: Date.now(),
           moveVector: movement,
           keyMap: keyMap,
-          viewVector: world.cameraOperator.viewVector,
+          viewVector: world.inputManager.characterReceiver.viewVector,
         },
       ])
     );

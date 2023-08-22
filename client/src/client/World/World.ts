@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
-import { CameraOperator } from './CameraOperator';
+// import { CameraOperator } from './CameraOperator';
 import { InputManager } from './InputManager';
 import { Sky } from './Sky'
 import { Labels } from './Labels'
@@ -21,11 +21,12 @@ import { ObjectUpdate, PlayerUpdate, Translation, VehicleUpdate } from 'backend'
 import { Vehicles } from '../vehicles/vehicles';
 import { ObjectManager } from './ObjectManager';
 import { PlayerManager } from './PlayerManager';
+import { FreeCam } from '../InputManagers/FreeCam';
 
 export class World {
 
     // ShaderChunkLoader.load_shader_chunks();
-
+    // public this.inputManager
     public assets: AssetLoader = new AssetLoader();
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
@@ -38,7 +39,8 @@ export class World {
     // public controls: OrbitControls;
     private stats;
     public sky: Sky;
-    public cameraOperator: CameraOperator;
+    // public cameraOperator: CameraOperator;
+    // public freeCam: FreeCam;
     public inputManager: InputManager;
     public socket: WebSocket;
     public labels: Labels;
@@ -101,8 +103,11 @@ export class World {
             0.1,
             2000000
         )
+
         this.inputManager = new InputManager(this, this.renderer.domElement);
-        this.cameraOperator = new CameraOperator(this, this.camera, this.socket, 0.3);
+
+        // this.cameraOperator = new CameraOperator(this, this.camera, this.socket, 0.3);
+
         document.body.appendChild(this.renderer.domElement)
 
         this.sky = new Sky(this);
@@ -181,7 +186,7 @@ export class World {
 
         this.sea.update(this.global_time);
 
-        this.grass.update(this.global_time, this.cameraOperator.camera.position);
+        this.grass.update(this.global_time, this.camera.position);
 
         if (this.floor != undefined) {
             this.floor.update(this.global_time);
@@ -191,12 +196,14 @@ export class World {
             this.updatables[i].update(this.global_time);
         }
    
-        this.inputManager.update(0.1, 0.1)
+        this.inputManager.update(0.1, 0.1,this,this.camera)
 
         if (this.playerManager.players[this.player_id] != undefined) {
-            this.cameraOperator.setTarget(this.playerManager.players[this.player_id].get_position())
-            this.cameraOperator.update(0.1);
+            // this.cameraOperator.setTarget(this.playerManager.players[this.player_id].get_position())
+            // this.cameraOperator.update(0.1);
+            // this.freeCam.update(0.1);
         }
+
         this.render()
 
         this.labels.update()
@@ -211,11 +218,4 @@ export class World {
         this.characterGLTF = gltf;
     }
 
-
-
-    // public registerUpdatable(registree: IUpdatable): void
-    // {
-    // 	this.updatables.push(registree);
-    // 	this.updatables.sort((a, b) => (a.updateOrder > b.updateOrder) ? 1 : -1);
-    // }
 }

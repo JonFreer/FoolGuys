@@ -49,7 +49,7 @@ impl Blimp {
     pub fn update_physics(&mut self, physics_engine: &mut Physics) {
         let rot = physics_engine.get_rotation(self.vehicle_data.rigid_body_handle);
         let vec = rot * Vector3::new(1.0,0.0,0.0);
-        println!("{:?}",vec);
+        println!("{:?}",vec * self.client_move_vec.y);
     }
 
     pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) {

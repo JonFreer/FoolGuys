@@ -49,7 +49,7 @@ impl Player {
             camera_distance: 4.0,
             chat_queue: Vec::new(),
             character,
-            vehicle: None,
+            vehicle: None //Some("Blimp".to_owned()),
         }
     }
 
