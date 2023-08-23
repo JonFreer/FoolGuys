@@ -49,7 +49,7 @@ impl Player {
             camera_distance: 4.0,
             chat_queue: Vec::new(),
             character,
-            vehicle: None //Some("Blimp".to_owned()),
+            vehicle:Some("Blimp".to_owned()),
         }
     }
 
@@ -145,8 +145,9 @@ impl Player {
     }
 
     pub fn get_info(&mut self, physics_engine: &mut Physics) -> PlayerUpdate {
-        self.character
-            .get_info(physics_engine, self.name.clone(), self.camera_distance)
+        let mut update = self.character.get_info(physics_engine, self.name.clone(), self.camera_distance);
+        update.vehicle = self.vehicle.clone();
+        update
     }
 
     pub fn perform_camera_ray_cast(&mut self, physics_engine: &mut Physics) {

@@ -33,6 +33,9 @@ export class Character {
     // private arrowHelper2 : THREE.ArrowHelper;
 
     private ragdoll = new THREE.Group
+
+    public vehicle : String|null = null;
+
     // private: loaded
     // private action : any;
 
@@ -217,7 +220,7 @@ export class Character {
     }
 
     public updateCharacter(update:PlayerUpdate){
-
+        this.vehicle = update.vehicle;
         this.is_ragdoll = update.is_ragdoll;
 
         this.name = update.name.slice(1, -1);

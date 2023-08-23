@@ -44,7 +44,7 @@ export class Vehicles{
                 .start()
 
             this.vehicles[id].object.setRotationFromQuaternion(new THREE.Quaternion(update.q.i, update.q.j, update.q.k, update.q.w))
-            this.vehicles[id].object.scale.set(10, 10, 10)
+            this.vehicles[id].object.scale.set(1, 1, 1)
         } else {
 
             // let obstacle = obstacles[id];

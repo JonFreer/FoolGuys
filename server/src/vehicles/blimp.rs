@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, ops::Mul};
 
 use nalgebra::{Vector2, Vector3};
 use rapier3d::prelude::{ColliderBuilder, ColliderHandle, RigidBodyBuilder, RigidBodyHandle};
@@ -17,6 +17,7 @@ pub struct Blimp {
     pub vehicle_data: VehicleData,
     pub occupant: Option<SocketAddr>,
     pub client_move_vec: Vector2<f32>, // pub player:
+    // pub
 }
 
 impl Blimp {
@@ -24,7 +25,7 @@ impl Blimp {
         let mut rigid_body = RigidBodyBuilder::dynamic().lock_rotations().build();
 
         rigid_body.set_translation(Vector3::new(0.0, 100.0, 0.0), true);
-
+        rigid_body.set_angular_damping(1.0);
         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
         let collider = ColliderBuilder::capsule_y(0.3, 0.3).build();
@@ -48,8 +49,29 @@ impl Blimp {
 
     pub fn update_physics(&mut self, physics_engine: &mut Physics) {
         let rot = physics_engine.get_rotation(self.vehicle_data.rigid_body_handle);
-        let vec = rot * Vector3::new(1.0,0.0,0.0);
-        println!("{:?}",vec * self.client_move_vec.y);
+        let vec = rot * Vector3::new(0.1,0.0,0.0);
+        let velocity = vec * self.client_move_vec.y;
+
+        let current_velocity = physics_engine.get_rigid_body(self.vehicle_data.rigid_body_handle).linvel();
+        let scaled_velocity = current_velocity * 0.99;
+        let mut new_veolcity = scaled_velocity + velocity;
+        new_veolcity.y = 0.0;
+
+        physics_engine
+                .get_rigid_body(self.vehicle_data.rigid_body_handle)
+                .set_linvel(new_veolcity, true);
+
+
+        if self.client_move_vec.x != 0.0{
+        let angular_velocity = physics_engine.get_rigid_body(self.vehicle_data.rigid_body_handle).angvel();
+
+            let new_velocity = angular_velocity + Vector3::new(0.0,0.01,0.0)* self.client_move_vec.x;
+
+            physics_engine
+            .get_rigid_body(self.vehicle_data.rigid_body_handle).set_angvel(new_velocity, true);
+        }
+      
+        // println!("{:?}",vec * self.client_move_vec.y);
     }
 
     pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) {
@@ -74,6 +96,11 @@ impl Blimp {
             self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
             self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
         }
+
+        if value[0] == "update_blimp" {
+
+        }
+
     }
 }
 

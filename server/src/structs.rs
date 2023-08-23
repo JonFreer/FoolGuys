@@ -39,7 +39,8 @@ pub struct PlayerUpdate{
     pub dir: Vec3,
     pub is_ragdoll: bool,
     pub ragdoll_info: HashMap<String, Translation>,
-    pub camera_distance: f32
+    pub camera_distance: f32,
+    pub vehicle: Option<String>
 }
 
 #[ts(export)]

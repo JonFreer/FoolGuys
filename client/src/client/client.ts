@@ -50,7 +50,6 @@ socket.onmessage = function (event) {
     const data = msg;
 
     // console.log("World Update", data);
-
     world.playerManager.updatePlayers(data.players);
     world.inputManager.setRadius(
       data.players[world.player_id].camera_distance - 0.1
@@ -119,57 +118,27 @@ world.animate();
 
 function onDocumentKey(e: KeyboardEvent) {
   keyMap[e.key.toLowerCase()] = e.type === "keydown";
-  let movement = new Vector2(0, 0);
-  if (keyMap["w"] || keyMap["W"]) {
-    movement.y += 1;
-  }
-  if (keyMap["s"] || keyMap["S"]) {
-    movement.y -= 1;
-  }
-  if (keyMap["a"] || keyMap["A"]) {
-    movement.x += 1;
-  }
-  if (keyMap["d"] || keyMap["D"]) {
-    movement.x -= 1;
-  }
-
-  sendUpdate(movement);
-
   if (e.key === "Tab") {
     world.labels.setEnabled(e.type === "keydown");
     e.preventDefault();
   }
-
-  if (e.type == "keydown") {
-    if (e.key.toLowerCase() == "p") {
-      // socket.send(JSON.stringify(["throw", {}]));
-    }
-
-    if (e.key.toLowerCase() == " ") {
-      socket.send(JSON.stringify(["update_jump", {}]));
-    }
-
-    if (e.key.toLowerCase() == "o") {
-      socket.send(JSON.stringify(["is_ragdoll", {}]));
-    }
-  }
 }
 
-function sendUpdate(movement: THREE.Vector2) {
-  if (!titleScreen) {
-    socket.send(
-      JSON.stringify([
-        "update",
-        {
-          t: Date.now(),
-          moveVector: movement,
-          keyMap: keyMap,
-          viewVector: world.inputManager.characterReceiver.viewVector,
-        },
-      ])
-    );
-  }
-}
+// function sendUpdate(movement: THREE.Vector2) {
+//   if (!titleScreen) {
+//     socket.send(
+//       JSON.stringify([
+//         "update",
+//         {
+//           t: Date.now(),
+//           moveVector: movement,
+//           keyMap: keyMap,
+//           viewVector: world.inputManager.characterReceiver.viewVector,
+//         },
+//       ])
+//     );
+//   }
+// }
 
 function loadGLTF(path: string, onLoadingFinished: (gltf: any) => void): void {
   // let trackerEntry = this.addLoadingEntry(path);

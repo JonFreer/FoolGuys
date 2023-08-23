@@ -33,6 +33,11 @@ export class PlayerManager {
       );
     } else {
       this.players[client_id].updateCharacter(update);
+      if(client_id == this.world.player_id){
+        if(update.vehicle!=null){
+          this.world.inputManager.setInputReceiver(this.world.inputManager.blimpReceiver)
+        }
+      }
     }
   }
 

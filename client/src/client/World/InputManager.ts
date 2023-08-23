@@ -2,7 +2,8 @@
 import {World} from './World'
 import { IInputReceiver } from '../interfaces/IInputReceiver';
 import { FreeCam } from '../InputManagers/FreeCam';
-import { Character } from '../InputManagers/character';
+import { Character } from '../InputManagers/Character';
+import { BlimpReciever } from '../InputManagers/BlimpReciever';
 // import { EntityType } from '../enums/EntityType';
 // import { IUpdatable } from '../interfaces/IUpdatable';
 
@@ -18,6 +19,7 @@ export class InputManager
 
 	public freeCamReceiver: FreeCam;
 	public characterReceiver: Character;
+	public blimpReceiver: BlimpReciever;
 
 	public boundOnMouseDown: (evt: any) => void;
 	public boundOnMouseMove: (evt: any) => void;
@@ -64,7 +66,8 @@ export class InputManager
 		// this.inputReceiver = new FreeCam
 
 		this.freeCamReceiver = new FreeCam(world,world.camera);
-		this.characterReceiver = new Character(world,world.camera,world.socket)
+		this.characterReceiver = new Character(world,world.camera,world.socket);
+		this.blimpReceiver = new BlimpReciever(world,world.camera,world.socket);
 		// world.registerUpdatable(this);
 	}
 

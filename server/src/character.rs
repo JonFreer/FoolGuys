@@ -415,6 +415,7 @@ impl Character {
             is_ragdoll: self.is_ragdoll,
             ragdoll_info,
             camera_distance: camera_distance,
+            vehicle:None
         }
 
     }
