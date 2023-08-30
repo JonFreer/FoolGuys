@@ -12,10 +12,8 @@ export class AssetLoader {
     constructor() {
         this.gltfLoader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/libs/draco/'); 
+        dracoLoader.setDecoderPath("draco/");
         this.gltfLoader.setDRACOLoader( dracoLoader );
-            
-
     }
 
     public loadManifest(){
