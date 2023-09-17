@@ -87,9 +87,12 @@ export class InputManager
 	}
 
 	public setInputReceiver(receiver: IInputReceiver): void
-	{
-		this.inputReceiver = receiver;
-		this.inputReceiver.inputReceiverInit();
+	{	
+		if(receiver!= this.inputReceiver){
+			this.inputReceiver = receiver;
+			this.inputReceiver.inputReceiverInit();
+		}
+		// this.inputReceiver.inputReceiverInit();
 	}
 
 	public setPointerLock(enabled: boolean): void

@@ -8,7 +8,7 @@ use crate::{
     character::Character,
     physics::Physics,
     physics_objects::ragdoll::RagdollTemplate,
-    structs::{self, message_prep, Client, PlayerUpdate},
+    structs::{self, message_prep, Client, PlayerUpdate, GeneralActions, KeyBinding},
     vehicles::blimp::Blimp,
     world::World,
 };
@@ -25,6 +25,7 @@ pub struct Player {
     pub chat_queue: Vec<String>,
     pub character: Character,
     pub vehicle: Option<String>,
+    pub actions: GeneralActions
 }
 
 impl Player {
@@ -49,7 +50,8 @@ impl Player {
             camera_distance: 4.0,
             chat_queue: Vec::new(),
             character,
-            vehicle:Some("Blimp".to_owned()),
+            vehicle:None,//Some("Blimp".to_owned()),
+            actions: GeneralActions::new()
         }
     }
 
@@ -71,13 +73,20 @@ impl Player {
                 let msg_content: Result<Value, Error> = serde_json::from_str(&m.to_string()); //.unwrap();
                 if let Ok(v) = msg_content {
                     // println!("{} {}", msg, v[0]);
-
                     match &self.vehicle {
                         Some(_vehicle) => {
-                            vehicles[0].update_messages(physics_engine, &v);
+                            if vehicles[0].update_messages(physics_engine, &v){
+                                self.vehicle = None;
+                                vehicles[0].controls.enter_passenger.justPressed = false;
+                                self.character.exit_vehicle(physics_engine,&vehicles[0]);
+                            }
                         }
                         None => {
-                            self.character.update_messages(physics_engine, &v);
+                            if self.character.update_messages(physics_engine, &v){
+                                self.vehicle = Some("Blimp".to_owned());
+                                self.character.actions.enter_passenger.justPressed = false;
+                                self.character.enter_vehicle(physics_engine);
+                            }
                         }
                     }
 
@@ -138,8 +147,17 @@ impl Player {
         physics_engine: &mut Physics,
         players: &HashMap<SocketAddr, Player>,
     ) {
-        self.character
-            .update_physics(world, physics_engine, players, self.view_vector, self.speed);
+
+        
+
+        match &self.vehicle {
+            Some(_vehicle) => {
+                // self.vehicle = None;
+            },
+            None =>{
+                self.character.update_physics(world, physics_engine, players, self.view_vector, self.speed);
+            }
+        }
 
         self.perform_camera_ray_cast(physics_engine);
     }

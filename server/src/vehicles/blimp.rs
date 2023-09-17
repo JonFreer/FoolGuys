@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use crate::{
     physics::Physics,
-    structs::{Quat, Vec3, VehicleUpdate},
+    structs::{Quat, Vec3, VehicleUpdate, KeyBinding, BlimpControls},
     world::World,
 };
 
@@ -17,6 +17,7 @@ pub struct Blimp {
     pub vehicle_data: VehicleData,
     pub occupant: Option<SocketAddr>,
     pub client_move_vec: Vector2<f32>, // pub player:
+    pub controls: BlimpControls
     // pub
 }
 
@@ -24,7 +25,7 @@ impl Blimp {
     pub fn new(physics_engine: &mut Physics) -> Self {
         let mut rigid_body = RigidBodyBuilder::dynamic().lock_rotations().build();
 
-        rigid_body.set_translation(Vector3::new(0.0, 100.0, 0.0), true);
+        rigid_body.set_translation(Vector3::new(116.59255, 2.4971805, 79.82746), true);
         rigid_body.set_angular_damping(1.0);
         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
@@ -44,6 +45,7 @@ impl Blimp {
             },
             occupant: None,
             client_move_vec: Vector2::new(0.0, 0.0),
+            controls: BlimpControls::new()
         }
     }
 
@@ -55,7 +57,17 @@ impl Blimp {
         let current_velocity = physics_engine.get_rigid_body(self.vehicle_data.rigid_body_handle).linvel();
         let scaled_velocity = current_velocity * 0.99;
         let mut new_veolcity = scaled_velocity + velocity;
-        new_veolcity.y = 0.0;
+
+        new_veolcity.y += 9.81/60.0;
+        if self.controls.up.isPressed{
+            println!("{:?}",self.controls.up);
+
+            new_veolcity.y += 0.1;
+        }
+
+        if self.controls.down.isPressed{
+            new_veolcity.y -= 0.1;
+        }
 
         physics_engine
                 .get_rigid_body(self.vehicle_data.rigid_body_handle)
@@ -74,7 +86,7 @@ impl Blimp {
         // println!("{:?}",vec * self.client_move_vec.y);
     }
 
-    pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) {
+    pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) -> bool {
         if value[0] == "update" {
             let move_vec = value[1]["moveVector"].clone();
             self.client_move_vec = Vector2::new(
@@ -98,8 +110,15 @@ impl Blimp {
         }
 
         if value[0] == "update_blimp" {
-
+            let actions: Value = value[1]["actions"].clone();
+            self.controls = BlimpControls{
+                up: KeyBinding::new(&actions["up"]),
+                down : KeyBinding::new(&actions["down"]),
+                enter_passenger: KeyBinding::new(&actions["enter_passenger"])
+            };
         }
+
+        self.controls.enter_passenger.justPressed
 
     }
 }

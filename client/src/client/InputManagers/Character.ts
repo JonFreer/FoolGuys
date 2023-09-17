@@ -180,6 +180,7 @@ export class Character implements IInputReceiver {
           moveVector: movement,
           keyMap: {},
           viewVector: this.viewVector,
+          actions:this.actions
         },
       ])
     );
@@ -204,7 +205,28 @@ export class Character implements IInputReceiver {
 
   public handleMouseWheel(event: WheelEvent, value: number): void {}
 
-  public inputReceiverInit(): void {}
+  public inputReceiverInit(): void {
+    // reset all of the actions
+      // Actions
+      this.actions = {
+        up: new KeyBinding("KeyW"),
+        down: new KeyBinding("KeyS"),
+        left: new KeyBinding("KeyA"),
+        right: new KeyBinding("KeyD"),
+        run: new KeyBinding("ShiftLeft"),
+        jump: new KeyBinding("Space"),
+        use: new KeyBinding("KeyE"),
+        enter: new KeyBinding("KeyF"),
+        enter_passenger: new KeyBinding("KeyG"),
+        seat_switch: new KeyBinding("KeyX"),
+        primary: new KeyBinding("Mouse0"),
+        secondary: new KeyBinding("Mouse1"),
+        throw: new KeyBinding("KeyP"),
+        ragdoll: new KeyBinding("KeyO"),
+      };
+
+      
+  }
 
   public inputReceiverUpdate(timeStep: number): void {
     // Set fly speed

@@ -236,20 +236,20 @@ export class Character {
    
        
         this.setState(update.state)
-        // console.log(update.state)
         
-
-        if(this.is_ragdoll){
-            this.setRagdoll(update.ragdoll_info)
-            if(this.gltf_scene){
+        if(this.gltf_scene){
+            if(update.vehicle == null ){
+                if(this.is_ragdoll){
+                    this.setRagdoll(update.ragdoll_info);
+                    this.gltf_scene.visible = false;
+                    this.ragdoll.visible = true;
+                }else{
+                    this.gltf_scene.visible = true;
+                    this.ragdoll.visible = false;
+                }
+            }else{
                 this.gltf_scene.visible = false;
             }
-            this.ragdoll.visible = true;
-        }else{
-            if(this.gltf_scene){
-                this.gltf_scene.visible = true;
-            }
-            this.ragdoll.visible = false;
         }
         
     }

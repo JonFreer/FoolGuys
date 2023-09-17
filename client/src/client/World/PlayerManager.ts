@@ -36,7 +36,10 @@ export class PlayerManager {
       if(client_id == this.world.player_id){
         if(update.vehicle!=null){
           this.world.inputManager.setInputReceiver(this.world.inputManager.blimpReceiver)
+        }else{
+          this.world.inputManager.setInputReceiver(this.world.inputManager.characterReceiver)
         }
+        
       }
     }
   }

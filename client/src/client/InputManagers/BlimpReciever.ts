@@ -33,10 +33,13 @@ export class BlimpReciever implements IInputReceiver {
     this.sensitivity = new THREE.Vector2(sensitivityX, sensitivityY);
 
     this.actions = {
-      up: new KeyBinding("KeyW"),
-      down: new KeyBinding("KeyS"),
+      forward: new KeyBinding("KeyW"),
+      backward: new KeyBinding("KeyS"),
       left: new KeyBinding("KeyA"),
       right: new KeyBinding("KeyD"),
+      up: new KeyBinding("KeyE"),
+      down: new KeyBinding("KeyQ"),
+      enter_passenger: new KeyBinding("KeyG"),
     };
   }
 
@@ -44,10 +47,10 @@ export class BlimpReciever implements IInputReceiver {
 
     let movement = new Vector2(0, 0);
 
-    if (this.actions["up"].isPressed) {
+    if (this.actions["forward"].isPressed) {
       movement.y += 1;
     }
-    if (this.actions["down"].isPressed) {
+    if (this.actions["backward"].isPressed) {
       movement.y -= 1;
     }
     if (this.actions["left"].isPressed) {
@@ -66,12 +69,18 @@ export class BlimpReciever implements IInputReceiver {
       ])
     );
 
+    this.socket.send(
+      JSON.stringify([
+        "update_blimp",
+        {
+          actions: this.actions,
+        },
+      ])
+    );
 
-    let update: VehicleInput = {
-      up: true,
-    };
+    console.log(this.actions)
 
-    this.socket.send(JSON.stringify(["update_blimp", true]));
+
   }
 
   public move(deltaX: number, deltaY: number): void {
@@ -84,7 +93,7 @@ export class BlimpReciever implements IInputReceiver {
   public triggerAction(actionName: string, value: boolean): void {
     // Get action and set it's parameters
     let action = this.actions[actionName];
-
+    console.log("aaaa")
     if (action.isPressed !== value) {
       // Set value
       action.isPressed = value;
@@ -121,8 +130,10 @@ export class BlimpReciever implements IInputReceiver {
       }
     } else {
       for (const action in this.actions) {
+        // console.log(action)
         if (this.actions.hasOwnProperty(action)) {
           const binding = this.actions[action];
+          console.log(binding,code)
           if (binding.eventCodes.includes(code)) {
             // binding.isPressed = pressed;
             this.triggerAction(action, pressed);
@@ -143,6 +154,16 @@ export class BlimpReciever implements IInputReceiver {
   }
   inputReceiverInit(): void {
     // throw new Error("Method not implemented.");
+    this.actions = {
+      forward: new KeyBinding("KeyW"),
+      backward: new KeyBinding("KeyS"),
+      left: new KeyBinding("KeyA"),
+      right: new KeyBinding("KeyD"),
+      up: new KeyBinding("KeyE"),
+      down: new KeyBinding("KeyQ"),
+      enter_passenger: new KeyBinding("KeyG"),
+    };
+    
   }
   inputReceiverUpdate(timeStep: number): void {
     // throw new Error("Method not implemented.");

@@ -10,8 +10,8 @@ use crate::{
         ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate},
         rigid_body_parent::Objects,
     },
-    structs::{Colour, PlayerUpdate, Quat, Vec3},
-    world::World, player::Player,
+    structs::{Colour, PlayerUpdate, Quat, Vec3, CharacterControls, KeyBinding},
+    world::World, player::Player, vehicles::blimp::Blimp,
 };
 use nalgebra::{Isometry3, Quaternion, Unit, Vector1, Vector2, Vector3};
 use rand::Rng;
@@ -39,6 +39,7 @@ pub struct Character {
     pub client_move_vec: Vector2<f32>,
     ragdoll: Option<Ragdoll>,
     ragdoll_template: RagdollTemplate,
+    pub actions: CharacterControls
 }
 
 impl Character {
@@ -97,6 +98,7 @@ impl Character {
             ragdoll_template,
             ragdoll: None,
             client_move_vec: Vector2::new(0.0, 0.0),
+            actions: CharacterControls::new()
         }
 
     }
@@ -111,7 +113,7 @@ impl Character {
         rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
     }
 
-    pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value){
+    pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) -> bool{
 
         if value[0] == "update" {
 
@@ -123,6 +125,12 @@ impl Character {
 
             self.client_move_vec.x = self.client_move_vec.x.max(-1.0).min(1.0);
             self.client_move_vec.y = self.client_move_vec.y.max(-1.0).min(1.0);
+
+            let actions: Value = value[1]["actions"].clone();
+
+            self.actions = CharacterControls{
+                enter_passenger: KeyBinding::new(&actions["enter_passenger"]),
+            };
 
         }
 
@@ -148,6 +156,8 @@ impl Character {
         if value[0] == "is_ragdoll" {
             self.toggle_ragdoll(physics_engine);
         }
+
+        self.actions.enter_passenger.justPressed
 
 
     }
@@ -361,6 +371,29 @@ impl Character {
         }
 
         self.check_attack(players, physics_engine, view_vector);
+    }
+
+
+    pub fn enter_vehicle(&mut self, physics_engine: &mut Physics){
+        // when we enter a vehicle we should:
+        // 1) Remove the physics body
+
+        let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
+        rigid_body.set_enabled(false);
+
+    }
+
+    pub fn exit_vehicle(&mut self, physics_engine: &mut Physics, vehicle: &Blimp){
+        // when we enter a vehicle we should:
+        // 1) Remove the physics body
+        let mut target_translation = physics_engine.get_translation(vehicle.vehicle_data.rigid_body_handle);
+        target_translation.y += 1.0;
+        
+        let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
+        rigid_body.set_enabled(true);
+        rigid_body.set_translation(target_translation, true);
+        rigid_body.set_linvel(Vector3::new(0.0,0.0,0.0), true);
+
     }
 
     pub fn get_info(&mut self, physics_engine: &mut Physics, name:String, camera_distance: f32) -> PlayerUpdate {
