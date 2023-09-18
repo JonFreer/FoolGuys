@@ -8,7 +8,7 @@ use crate::{
     character::Character,
     physics::Physics,
     physics_objects::ragdoll::RagdollTemplate,
-    structs::{self, message_prep, Client, PlayerUpdate, GeneralActions, KeyBinding},
+    structs::{self, message_prep, Client, GeneralActions, KeyBinding, PlayerUpdate},
     vehicles::blimp::Blimp,
     world::World,
 };
@@ -25,7 +25,7 @@ pub struct Player {
     pub chat_queue: Vec<String>,
     pub character: Character,
     pub vehicle: Option<String>,
-    pub actions: GeneralActions
+    pub actions: GeneralActions,
 }
 
 impl Player {
@@ -50,8 +50,8 @@ impl Player {
             camera_distance: 4.0,
             chat_queue: Vec::new(),
             character,
-            vehicle:None,//Some("Blimp".to_owned()),
-            actions: GeneralActions::new()
+            vehicle: None, //Some("Blimp".to_owned()),
+            actions: GeneralActions::new(),
         }
     }
 
@@ -63,7 +63,7 @@ impl Player {
         &mut self,
         c: &mut Client,
         physics_engine: &mut Physics,
-        vehicles: &mut Vec<Blimp>,
+        vehicles: &mut HashMap<String, Blimp>,
     ) {
         loop {
             if let Ok(message) = c.rx.try_next() {
@@ -74,18 +74,24 @@ impl Player {
                 if let Ok(v) = msg_content {
                     // println!("{} {}", msg, v[0]);
                     match &self.vehicle {
-                        Some(_vehicle) => {
-                            if vehicles[0].update_messages(physics_engine, &v){
+                        Some(vehicle_name) => {
+                            // let vehicle = vehicles.get(_vehicle)
+                            let mut vehicle = vehicles.get_mut(vehicle_name).unwrap();
+                            if vehicle.update_messages(physics_engine, &v) {
                                 self.vehicle = None;
-                                vehicles[0].controls.enter_passenger.justPressed = false;
-                                self.character.exit_vehicle(physics_engine,&vehicles[0]);
+                                vehicle.controls.enter_passenger.justPressed = false;
+                                self.character.exit_vehicle(physics_engine, vehicle);
                             }
                         }
                         None => {
-                            if self.character.update_messages(physics_engine, &v){
-                                self.vehicle = Some("Blimp".to_owned());
+                            if self.character.update_messages(physics_engine, &v) {
+                                //check if we can enter the vehicle
                                 self.character.actions.enter_passenger.justPressed = false;
-                                self.character.enter_vehicle(physics_engine);
+                                if let Some(vehicle) =
+                                    self.character.check_enter_vehicle(physics_engine, vehicles)
+                                {
+                                    self.vehicle = Some(vehicle);
+                                }
                             }
                         }
                     }
@@ -147,15 +153,18 @@ impl Player {
         physics_engine: &mut Physics,
         players: &HashMap<SocketAddr, Player>,
     ) {
-
-        
-
         match &self.vehicle {
             Some(_vehicle) => {
                 // self.vehicle = None;
-            },
-            None =>{
-                self.character.update_physics(world, physics_engine, players, self.view_vector, self.speed);
+            }
+            None => {
+                self.character.update_physics(
+                    world,
+                    physics_engine,
+                    players,
+                    self.view_vector,
+                    self.speed,
+                );
             }
         }
 
@@ -163,7 +172,9 @@ impl Player {
     }
 
     pub fn get_info(&mut self, physics_engine: &mut Physics) -> PlayerUpdate {
-        let mut update = self.character.get_info(physics_engine, self.name.clone(), self.camera_distance);
+        let mut update =
+            self.character
+                .get_info(physics_engine, self.name.clone(), self.camera_distance);
         update.vehicle = self.vehicle.clone();
         update
     }

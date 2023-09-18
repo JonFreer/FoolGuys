@@ -207,7 +207,7 @@ async fn main() -> Result<(), IoError> {
             }
 
             for (vehicles) in world.vehicles.iter_mut(){
-                vehicles.update_physics(&mut physics_engine);
+                vehicles.1.update_physics(&mut physics_engine);
             }
 
             //Send chat messages
@@ -248,7 +248,7 @@ async fn main() -> Result<(), IoError> {
                 .map(|x| (x.name(), x.get_info(&mut physics_engine.rigid_body_set)))
                 .collect();
 
-            let vehicles_info: HashMap<String,VehicleUpdate> = world.vehicles.iter_mut().map(|x| (x.name.clone(), x.get_info(&mut physics_engine.rigid_body_set))).collect();
+            let vehicles_info: HashMap<String,VehicleUpdate> = world.vehicles.iter_mut().map(|(_,x)| (x.name.clone(), x.get_info(&mut physics_engine.rigid_body_set))).collect();
 
             // let ragdoll_info = ragdoll.get_info(&mut physics_engine);
 

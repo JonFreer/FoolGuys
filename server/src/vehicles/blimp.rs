@@ -22,7 +22,7 @@ pub struct Blimp {
 }
 
 impl Blimp {
-    pub fn new(physics_engine: &mut Physics) -> Self {
+    pub fn new(name:String,physics_engine: &mut Physics) -> Self {
         let mut rigid_body = RigidBodyBuilder::dynamic().lock_rotations().build();
 
         rigid_body.set_translation(Vector3::new(116.59255, 2.4971805, 79.82746), true);
@@ -38,7 +38,7 @@ impl Blimp {
         );
 
         Self {
-            name: "Blimp".to_string(),
+            name:name,
             vehicle_data: VehicleData {
                 rigid_body_handle,
                 collider_handle,

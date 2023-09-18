@@ -25,7 +25,7 @@ pub struct World {
     asset_path: String,
     asset_count: i32,
     pub character_ragdoll_template:RagdollTemplate,
-    pub vehicles: Vec<Blimp>
+    pub vehicles: HashMap<String,Blimp>
 }
 
 impl World {
@@ -42,7 +42,7 @@ impl World {
             asset_path: asset_path.to_string(),
             asset_count:0,
             character_ragdoll_template:RagdollTemplate::new(path.to_string()+"character.glb"),
-            vehicles: Vec::new()
+            vehicles: HashMap::new()
         }
     }
 
@@ -56,7 +56,8 @@ impl World {
 
         self.load_spawn_points(&gltf);
 
-        self.vehicles.push(Blimp::new(physics_engine));
+        self.vehicles.insert("Blimp".to_owned(),Blimp::new("Blimp".to_string(),physics_engine));
+        self.vehicles.insert("Blimp2".to_owned(),Blimp::new("Blimp2".to_string(),physics_engine));
     }
 
     pub fn add_dynamic_asset(

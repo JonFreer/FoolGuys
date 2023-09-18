@@ -10,8 +10,10 @@ use crate::{
         ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate},
         rigid_body_parent::Objects,
     },
-    structs::{Colour, PlayerUpdate, Quat, Vec3, CharacterControls, KeyBinding},
-    world::World, player::Player, vehicles::blimp::Blimp,
+    player::Player,
+    structs::{CharacterControls, Colour, KeyBinding, PlayerUpdate, Quat, Vec3},
+    vehicles::blimp::Blimp,
+    world::World,
 };
 use nalgebra::{Isometry3, Quaternion, Unit, Vector1, Vector2, Vector3};
 use rand::Rng;
@@ -39,7 +41,7 @@ pub struct Character {
     pub client_move_vec: Vector2<f32>,
     ragdoll: Option<Ragdoll>,
     ragdoll_template: RagdollTemplate,
-    pub actions: CharacterControls
+    pub actions: CharacterControls,
 }
 
 impl Character {
@@ -48,7 +50,6 @@ impl Character {
         physics_engine: &mut Physics,
         ragdoll_template: RagdollTemplate,
     ) -> Self {
-
         let mut rigid_body = RigidBodyBuilder::dynamic()
             .ccd_enabled(true)
             .lock_rotations()
@@ -98,9 +99,8 @@ impl Character {
             ragdoll_template,
             ragdoll: None,
             client_move_vec: Vector2::new(0.0, 0.0),
-            actions: CharacterControls::new()
+            actions: CharacterControls::new(),
         }
-
     }
 
     fn appply_vector_matrix_x(a: Vector3<f32>, b: Vector3<f32>) -> Vector3<f32> {
@@ -113,10 +113,8 @@ impl Character {
         rigid_body.set_angvel(Vector3::new(0.0, 0.0, 0.0), true);
     }
 
-    pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) -> bool{
-
+    pub fn update_messages(&mut self, physics_engine: &mut Physics, value: &Value) -> bool {
         if value[0] == "update" {
-
             let move_vec = value[1]["moveVector"].clone();
             self.client_move_vec = Vector2::new(
                 move_vec["x"].as_f64().unwrap() as f32,
@@ -128,10 +126,9 @@ impl Character {
 
             let actions: Value = value[1]["actions"].clone();
 
-            self.actions = CharacterControls{
+            self.actions = CharacterControls {
                 enter_passenger: KeyBinding::new(&actions["enter_passenger"]),
             };
-
         }
 
         if value[0] == "update_move" {
@@ -158,8 +155,6 @@ impl Character {
         }
 
         self.actions.enter_passenger.justPressed
-
-
     }
 
     pub fn update_physics(
@@ -168,7 +163,7 @@ impl Character {
         physics_engine: &mut Physics,
         players: &HashMap<SocketAddr, Player>,
         view_vector: Vector3<f32>,
-        speed: f32
+        speed: f32,
     ) {
         self.just_jumped = false;
 
@@ -309,7 +304,6 @@ impl Character {
 
         // println!("{:?}",self.view_vector);
 
-
         if corrected_movement.grounded {
             self.can_jump = true;
             self.on_ground = true;
@@ -373,30 +367,61 @@ impl Character {
         self.check_attack(players, physics_engine, view_vector);
     }
 
-
-    pub fn enter_vehicle(&mut self, physics_engine: &mut Physics){
+    pub fn check_enter_vehicle(
+        &mut self,
+        physics_engine: &mut Physics,
+        vehicles: &HashMap<String, Blimp>,
+    ) -> Option<String> {
         // when we enter a vehicle we should:
+        // 2) Check if there is a vehicle for us to enter.
+        // Q: are we doing this based on view direction or
         // 1) Remove the physics body
 
-        let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
-        rigid_body.set_enabled(false);
+        let current_translation = physics_engine.get_translation(self.rigid_body_handle);
 
+        let dist = vehicles
+            .iter()
+            .map(|(key, vehicle)| {
+                let target_translation =
+                    physics_engine.get_translation(vehicle.vehicle_data.rigid_body_handle);
+                let dist = (target_translation.x - current_translation.x).abs()
+                    + (target_translation.y - current_translation.y).abs()
+                    + (target_translation.z - current_translation.z).abs();
+                (dist, key.to_owned())
+            })
+            .max_by(|a, b| b.0.partial_cmp(&a.0).unwrap())
+            .unwrap();
+
+        println!("The nearest vehicle is {:?}", dist);
+        if dist.0 < 5.0 {
+            let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
+            rigid_body.set_enabled(false);
+            self.actions.enter_passenger.justPressed = false;
+            Some(dist.1)
+        } else {
+            None
+        }
     }
 
-    pub fn exit_vehicle(&mut self, physics_engine: &mut Physics, vehicle: &Blimp){
+    pub fn exit_vehicle(&mut self, physics_engine: &mut Physics, vehicle: &Blimp) {
         // when we enter a vehicle we should:
         // 1) Remove the physics body
-        let mut target_translation = physics_engine.get_translation(vehicle.vehicle_data.rigid_body_handle);
+        let mut target_translation =
+            physics_engine.get_translation(vehicle.vehicle_data.rigid_body_handle);
         target_translation.y += 1.0;
-        
+
         let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
         rigid_body.set_enabled(true);
         rigid_body.set_translation(target_translation, true);
-        rigid_body.set_linvel(Vector3::new(0.0,0.0,0.0), true);
-
+        rigid_body.set_linvel(Vector3::new(0.0, 0.0, 0.0), true);
     }
 
-    pub fn get_info(&mut self, physics_engine: &mut Physics, name:String, camera_distance: f32) -> PlayerUpdate {
+    pub fn get_info(
+        &mut self,
+        physics_engine: &mut Physics,
+        name: String,
+        camera_distance: f32,
+    ) -> PlayerUpdate {
         let mut pos = physics_engine.get_translation(self.rigid_body_handle);
 
         let mut ragdoll_info: RagdollUpdate = HashMap::new();
@@ -448,9 +473,8 @@ impl Character {
             is_ragdoll: self.is_ragdoll,
             ragdoll_info,
             camera_distance: camera_distance,
-            vehicle:None
+            vehicle: None,
         }
-
     }
 
     pub fn toggle_ragdoll(&mut self, physics_engine: &mut Physics) {
@@ -505,7 +529,7 @@ impl Character {
         &mut self,
         players: &HashMap<SocketAddr, Player>,
         physics_engine: &mut Physics,
-        view_vector: Vector3<f32>
+        view_vector: Vector3<f32>,
     ) {
         let ray = Ray::new(
             Point::from(self.get_translation(physics_engine)),
@@ -538,8 +562,6 @@ impl Character {
 
         // }
     }
-
-    
 
     pub fn remove_self(&mut self, physics_engine: &mut Physics) {
         if let Some(ragdoll) = &mut self.ragdoll {
