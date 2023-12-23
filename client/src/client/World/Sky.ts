@@ -27,8 +27,8 @@ export class Sky extends THREE.Object3D
 	private _theta: number = 145;
 
 	private hemiLight: THREE.HemisphereLight;
-	private maxHemiIntensity: number = 0.9;
-	private minHemiIntensity: number = 0.3;
+	private maxHemiIntensity: number = 0.9*Math.PI;
+	private minHemiIntensity: number = 0.3*Math.PI;
 
 	private skyMesh: THREE.Mesh;
 	private skyMaterial: THREE.ShaderMaterial;
@@ -61,7 +61,7 @@ export class Sky extends THREE.Object3D
 		this.attach(this.skyMesh);
 
 		// Ambient light
-		this.hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1.0 );
+		this.hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1.0*Math.PI );
 		this.refreshHemiIntensity();
 		this.hemiLight.color.setHSL( 0.59, 0.4, 0.6 );
 		this.hemiLight.groundColor.setHSL( 0.095, 0.2, 0.75 );
@@ -69,7 +69,7 @@ export class Sky extends THREE.Object3D
 		
 		this.world.graphicsWorld.add( this.hemiLight );
 
-		const light = new THREE.DirectionalLight( 0xffffff, 1 );
+		const light = new THREE.DirectionalLight( 0xffffff, 1*Math.PI );
 		light.position.set( 100, 100, 100 ); //default; light shining from top
 		light.castShadow = true; // default false
 		this.world.graphicsWorld.add( light );
