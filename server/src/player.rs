@@ -7,7 +7,7 @@ use crate::{
     },
     physics::Physics,
     physics_objects::{
-        ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate},
+        ragdoll::{Ragdoll, RagdollTemplate, RagdollUpdate, self},
         rigid_body_parent::Objects,
     },
     structs::{self, message_prep, Client, Colour, PlayerUpdate, Quat, Vec3},
@@ -43,6 +43,7 @@ pub struct Player {
     pub look_at: Vector3<f32>,
     pub target_look_at: Vector<f32>,
 
+    pub ragdoll_ttl: f32,
     pub is_ragdoll: bool,
     ragdoll: Option<Ragdoll>,
     ragdoll_template: RagdollTemplate,
@@ -112,6 +113,7 @@ impl Player {
             look_at: Vector3::new(1.0, 0.0, 0.0),
             target_look_at: Vector3::new(1.0, 0.0, 0.0),
             id,
+            ragdoll_ttl:0.0,
             is_ragdoll: false,
             ragdoll_template,
             ragdoll: None,
@@ -274,6 +276,13 @@ impl Player {
                 self.toggle_ragdoll(physics_engine);
             }
         }
+
+        if let Some(ragdoll) = &mut self.ragdoll {
+            if !ragdoll.update(physics_engine.get_time_step()){
+                self.toggle_ragdoll(physics_engine);
+            }
+        }
+        
 
         // println!("{:?}",self.view_vector);
 
@@ -502,9 +511,10 @@ impl Player {
         self.is_ragdoll = !self.is_ragdoll;
 
         if self.is_ragdoll {
+
             let mut rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
             rigid_body.set_enabled(false);
-
+            
             self.ragdoll = Some(Ragdoll::new(
                 self.ragdoll_template.clone(),
                 physics_engine.get_translation(self.rigid_body_handle),
@@ -512,6 +522,7 @@ impl Player {
                 physics_engine.get_linvel(self.rigid_body_handle),
                 physics_engine,
             ));
+            self.ragdoll_ttl=10.0;
         } else {
             if let Some(ragdoll) = &mut self.ragdoll {
                 let pos = ragdoll.get_pos(physics_engine);
@@ -524,6 +535,7 @@ impl Player {
                 rigid_body.set_enabled(true);
 
                 self.ragdoll = None;
+                self.ragdoll_ttl=0.0;
             }
         }
     }

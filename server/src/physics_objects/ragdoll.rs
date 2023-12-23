@@ -18,6 +18,7 @@ use super::collision;
 
 #[derive(Clone)]
 pub struct Ragdoll {
+    ttl: f32,
     parts: HashMap<String, RagdollPart>,
     joints: HashMap<String, ImpulseJointHandle>,
 }
@@ -132,7 +133,12 @@ impl Ragdoll {
             }
         }
 
-        Self { parts, joints }
+        Self { parts, joints,ttl:5.0 }
+    }
+
+    pub fn update(&mut self, dt :f32) -> bool{
+        self.ttl = self.ttl - dt;
+        self.ttl > 0.0
     }
 
     pub fn get_pos(&self, physics_engine: &mut Physics) -> Vector3<f32> {
