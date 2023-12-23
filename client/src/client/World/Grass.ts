@@ -133,7 +133,7 @@ export class Grass{
         // mesh.rotateX( - Math.PI / 2);
         // plane.translateZ(10);
         this.object = mesh;
-
+        this.object.frustumCulled = false;
        
 
         // this.object.s

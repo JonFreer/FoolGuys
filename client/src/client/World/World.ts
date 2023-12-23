@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module';
-import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
+import TWEEN from '@tweenjs/tween.js'
 // import { CameraOperator } from './CameraOperator';
 import { InputManager } from './InputManager';
 import { Sky } from './Sky'
@@ -70,7 +70,7 @@ export class World {
         this.renderer.shadowMap.enabled = true;
         // renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-
+        this.renderer.useLegacyLights= true;
 
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
@@ -92,7 +92,7 @@ export class World {
         this.mobileControls = new MobileControls(this);
         this.chatManager = new ChatManager(this.socket);
 
-        this.stats = Stats()
+        this.stats = new Stats()
         document.body.appendChild(this.stats.dom)
 
         this.graphicsWorld = new THREE.Scene();

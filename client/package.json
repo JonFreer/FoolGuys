@@ -15,8 +15,9 @@
   "dependencies": {
     "@gltf-transform/core": "^2.1.4",
     "@gltf-transform/extensions": "^2.1.4",
+    "@tweenjs/tween.js": "^21.0.0",
     "express": "^4.17.3",
-    "three": "^0.150.0"
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@gltf-transform/view": "^0.4.2",

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { AssetLoader } from "./AssetLoader";
 import { World } from "./World";
-import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
+import TWEEN from '@tweenjs/tween.js'
 import { Bone, Euler, Quaternion } from "three";
 import { GUI } from "dat.gui";
 import { PlayerUpdate, Vec3 } from "backend";

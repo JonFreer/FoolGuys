@@ -115,6 +115,7 @@ varying vec3 vViewPosition;
             varying vec2 vUv;
             void main(){
                 // #include <depth_dither>
+                #include <batching_vertex>
                 vec4 diffuseColor = vec4(1.);
                 vec3 diffuseTexel = texture2D(map, vUv * vec2(0.5, 1.)).rgb;
                 diffuseColor.rgb *= diffuseTexel;
@@ -136,7 +137,7 @@ varying vec3 vViewPosition;
                 vec3 totalEmissiveRadiance = diffuseTexel * vData.g;
                 float specularStrength = 0.0;
                 ReflectedLight reflectedLight = ReflectedLight(vec3(.0), vec3(.0), vec3(.0), vec3(.0));
-
+                
                 #include <lights_phong_fragment>
                 #include <lights_fragment_begin>
                 #include <lights_fragment_maps>
@@ -176,7 +177,7 @@ varying vec3 vViewPosition;
                 diffuse: { value: new THREE.Color(10150503).offsetHSL(0, -.3, .02) },
                 emissive: { value: new THREE.Color(0) }, 
                 specular: { value: new THREE.Color(1118481) },
-                shininess: { value: 0 },
+                shininess: { value: 30 },
                 opacity: {value:0},
                 playerPos: { value: new THREE.Vector3() },
                 map : {value:texture_map},

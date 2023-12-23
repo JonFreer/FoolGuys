@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { VehicleUpdate } from "../../../../server/bindings/VehicleUpdate";
-import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
+import TWEEN from '@tweenjs/tween.js'
 import { Asset } from "../World/Asset";
 import { World } from "../World/World";
 

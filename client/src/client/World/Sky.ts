@@ -54,7 +54,7 @@ export class Sky extends THREE.Object3D
 
 		// Mesh
 		this.skyMesh = new THREE.Mesh(
-			new THREE.SphereBufferGeometry(1, 32, 15),
+			new THREE.SphereGeometry(1, 32, 15),
 			this.skyMaterial
 		);
 		this.skyMesh.scale.setScalar(450000)

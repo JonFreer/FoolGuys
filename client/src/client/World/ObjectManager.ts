@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { ObjectUpdate } from "../../../../server/bindings/ObjectUpdate";
 import { Asset } from "./Asset";
 import { World } from "./World";
-import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
+import TWEEN from '@tweenjs/tween.js'
 
 export class ObjectManager{
 
