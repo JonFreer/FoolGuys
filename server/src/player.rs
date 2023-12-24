@@ -168,7 +168,7 @@ impl Player {
             }
         }
 
-        self.perform_camera_ray_cast(physics_engine);
+        self.perform_camera_ray_cast(physics_engine,world);
     }
 
     pub fn get_info(&mut self, physics_engine: &mut Physics) -> PlayerUpdate {
@@ -179,39 +179,59 @@ impl Player {
         update
     }
 
-    pub fn perform_camera_ray_cast(&mut self, physics_engine: &mut Physics) {
+    pub fn perform_camera_ray_cast(&mut self, physics_engine: &mut Physics, world: &mut World) {
+        
         let mut max_toi = 4.0;
+
+        if self.vehicle.is_some(){
+            // println!("is some");
+            max_toi = 30.0;
+        }
+
         let solid = false;
 
         //first check for collision
-        let filter = QueryFilter::default().exclude_rigid_body(self.character.rigid_body_handle);
+        let mut filter = QueryFilter::default().exclude_rigid_body(self.character.rigid_body_handle);
         let origin = Point::from(self.character.get_translation(physics_engine))
             + Vector3::new(0.0, -0.3, 0.0);
 
         let group = InteractionGroups::new(0b0010.into(), 0b0010.into());
 
-        let floor_filter = QueryFilter::new()
+        let mut floor_filter = QueryFilter::new()
             .groups(group)
             .exclude_rigid_body(self.character.rigid_body_handle);
+
+        if let Some(vehicle) = &self.vehicle{
+            println!("exluding filter");
+            filter = filter.exclude_rigid_body(world.vehicles.get(vehicle).unwrap().vehicle_data.rigid_body_handle);
+            floor_filter = floor_filter.exclude_rigid_body(world.vehicles.get(vehicle).unwrap().vehicle_data.rigid_body_handle);
+        }
 
         let ray = Ray::new(origin, -self.view_vector);
 
         if let Some((_handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, floor_filter) {
             max_toi = toi;
+            println!("max toi {:?}",toi);
         }
 
         let point = origin + self.view_vector * -max_toi;
 
         if !physics_engine.intersections_with_point(&point, filter) {
+            println!("A");
             self.camera_distance = max_toi;
         } else {
+            
             let ray = Ray::new(origin, -self.view_vector);
 
             if let Some((_handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
+                println!("C");
                 self.camera_distance = toi;
             } else {
+                println!("D");
                 self.camera_distance = max_toi;
             }
         }
+
+        println!("self.camera_distance {:?}",self.camera_distance);
     }
 }

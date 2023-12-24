@@ -251,7 +251,7 @@ export class Character implements IInputReceiver {
     this.target =
       this.world.playerManager.players[this.world.player_id].get_position();
     this.radius = THREE.MathUtils.lerp(this.radius, this.targetRadius, 0.1);
-
+    console.log(this.radius)
     this.camera.position.x =
       this.target.x +
       this.radius *

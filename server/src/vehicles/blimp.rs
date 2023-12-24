@@ -1,13 +1,13 @@
 use std::{net::SocketAddr, ops::Mul};
 
 use nalgebra::{Vector2, Vector3};
-use rapier3d::prelude::{ColliderBuilder, ColliderHandle, RigidBodyBuilder, RigidBodyHandle};
+use rapier3d::prelude::{ColliderBuilder, ColliderHandle, RigidBodyBuilder, RigidBodyHandle, Collider};
 use serde_json::Value;
 
 use crate::{
     physics::Physics,
     structs::{Quat, Vec3, VehicleUpdate, KeyBinding, BlimpControls},
-    world::World,
+    world::World, physics_objects::asset::AssetBase,
 };
 
 use super::vehicles::{GetInfo, SetOccupant, VehicleData};
@@ -22,14 +22,14 @@ pub struct Blimp {
 }
 
 impl Blimp {
-    pub fn new(name:String,physics_engine: &mut Physics) -> Self {
+    pub fn new(name:String,physics_engine: &mut Physics, mut collider: Collider) -> Self {
         let mut rigid_body = RigidBodyBuilder::dynamic().lock_rotations().build();
 
-        rigid_body.set_translation(Vector3::new(116.59255, 2.4971805, 79.82746), true);
+        rigid_body.set_translation(Vector3::new(116.59255, 10.4971805, 79.82746), true);
         rigid_body.set_angular_damping(1.0);
         let rigid_body_handle = physics_engine.rigid_body_set.insert(rigid_body);
 
-        let collider = ColliderBuilder::capsule_y(0.3, 0.3).build();
+        // let collider = ColliderBuilder::capsule_y(0.3, 0.3).build();
 
         let collider_handle = physics_engine.collider_set.insert_with_parent(
             collider,
@@ -155,7 +155,7 @@ impl GetInfo for Blimp {
             name: self.name.clone(),
             p: pos_vec,
             q: rot_quat,
-            asset_name: "Asset_BoatA".to_string(),
+            asset_name: "Asset_Blimp".to_string(),
         }
     }
 }

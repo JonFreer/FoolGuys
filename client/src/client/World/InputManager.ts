@@ -74,6 +74,7 @@ export class InputManager
 	public setRadius(value: number, instantly: boolean = false): void
 	{
 		this.characterReceiver.setRadius(value,instantly);
+		this.characterReceiver.setRadius(value,instantly);
 	}
 
 	public update(timestep: number, unscaledTimeStep: number,world:World,camera:THREE.Camera): void

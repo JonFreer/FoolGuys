@@ -15,10 +15,11 @@ export class BlimpReciever implements IInputReceiver {
   public camera: THREE.Camera;
   public target: THREE.Vector3 = new THREE.Vector3();
   public socket: WebSocket;
-  public radius: number = 6;
+  public radius: number = 30;
   public theta: number = 0;
   public phi: number = 0;
   public sensitivity: THREE.Vector2;
+  public targetRadius: number = 30;
 
   constructor(
     world: World,
@@ -81,6 +82,13 @@ export class BlimpReciever implements IInputReceiver {
     console.log(this.actions)
 
 
+  }
+
+  public setRadius(value: number, instantly: boolean = false): void {
+    this.targetRadius = Math.max(0.001, value);
+    if (instantly === true) {
+      this.radius = value;
+    }
   }
 
   public move(deltaX: number, deltaY: number): void {
@@ -174,6 +182,7 @@ export class BlimpReciever implements IInputReceiver {
     if (vehicle_name != null) {
       let vehicle = this.world.vehicles.vehicles[vehicle_name.toString()];
       this.target = vehicle.object.position;
+      this.radius = THREE.MathUtils.lerp(this.radius, this.targetRadius, 0.1);
 
       // this.radius = 5.0;
       this.camera.position.x =

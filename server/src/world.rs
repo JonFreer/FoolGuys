@@ -56,8 +56,18 @@ impl World {
 
         self.load_spawn_points(&gltf);
 
-        self.vehicles.insert("Blimp".to_owned(),Blimp::new("Blimp".to_string(),physics_engine));
-        self.vehicles.insert("Blimp2".to_owned(),Blimp::new("Blimp2".to_string(),physics_engine));
+        let asset_name = "Asset_Blimp".to_string();
+
+        if !self.assets.contains_key(&asset_name) {
+            let format = format!("{}{}{}", self.asset_path, asset_name, ".glb").replace('"', "");
+            println!("Loading Asset {}", format);
+            let asset = AssetBase::new(format);
+            self.assets.insert(asset_name.clone(), asset);
+        }
+
+
+        self.vehicles.insert("Blimp".to_owned(),Blimp::new("Blimp".to_string(),physics_engine, self.assets.get("Asset_Blimp").unwrap().get_collider(Vector3::new(1.0,1.0,1.0))));
+        // self.vehicles.insert("Blimp2".to_owned(),Blimp::new("Blimp2".to_string(),physics_engine));
     }
 
     pub fn add_dynamic_asset(
@@ -74,6 +84,7 @@ impl World {
     ) {
         // if (recreate) {}
 
+        // move this code to the asset manager
         if !self.assets.contains_key(&asset_name) {
             let format = format!("{}{}{}", self.asset_path, asset_name, ".glb").replace('"', "");
             println!("Loading Asset {}", format);

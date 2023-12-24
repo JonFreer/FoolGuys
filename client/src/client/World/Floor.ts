@@ -50,7 +50,7 @@ export class Floor {
                 #include <shadowmap_vertex>
                 vec3 bigShadowWorldNormal = inverseTransformDirection(transformedNormal, viewMatrix);
                 vec4 bigShadowWorldPosition = modelMatrix * vec4(transformed, 1.) + vec4(bigShadowWorldNormal * 0.05, 0);
-                vBigShadowDirectionalCoords = bigShadowMatrix * bigShadowWorldPosition;
+                // vBigShadowDirectionalCoords = bigShadowMatrix * bigShadowWorldPosition;
 
                 #include <fog_vertex>
 
@@ -74,7 +74,7 @@ export class Floor {
         #include <conditionals>
         #include <linear_step>
         #include <bg_fog_pars>
-        #include <big_shadow_pars>
+        // #include <big_shadow_pars>
 
         varying vec2 vUv;
         uniform sampler2D splatting_patterns;

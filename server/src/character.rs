@@ -393,7 +393,7 @@ impl Character {
             .unwrap();
 
         println!("The nearest vehicle is {:?}", dist);
-        if dist.0 < 5.0 {
+        if dist.0 < 10.0 {
             let rigid_body = physics_engine.get_rigid_body(self.rigid_body_handle);
             rigid_body.set_enabled(false);
             self.actions.enter_passenger.justPressed = false;
