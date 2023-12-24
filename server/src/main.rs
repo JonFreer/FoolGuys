@@ -32,6 +32,10 @@ mod vehicles{
     pub mod vehicles;
 }
 
+mod nav_mesh{
+    pub mod nav_mesh;
+}
+
 mod character_states {
     pub mod character_base;
     pub mod falling;

@@ -17,6 +17,7 @@ use crate::physics_objects::rigid_body_parent::Objects;
 use crate::physics_objects::spin::SpinObject;
 use crate::player::Player;
 use crate::vehicles::blimp::Blimp;
+use crate::nav_mesh::nav_mesh::NavMesh;
 
 pub struct World {
     pub dynamic_objects: Vec<Objects>,
@@ -25,7 +26,8 @@ pub struct World {
     asset_path: String,
     asset_count: i32,
     pub character_ragdoll_template:RagdollTemplate,
-    pub vehicles: HashMap<String,Blimp>
+    pub vehicles: HashMap<String,Blimp>,
+    pub nav_mesh: NavMesh
 }
 
 impl World {
@@ -42,11 +44,13 @@ impl World {
             asset_path: asset_path.to_string(),
             asset_count:0,
             character_ragdoll_template:RagdollTemplate::new(path.to_string()+"character.glb"),
-            vehicles: HashMap::new()
+            vehicles: HashMap::new(),
+            nav_mesh: NavMesh::new()
         }
     }
 
     pub fn load_world(&mut self, path: &str, physics_engine: &mut Physics) {
+
         let (gltf, buffers, _) = gltf::import(path.to_string()+"collision.glb").unwrap();
         for scene in gltf.scenes() {
             for node in scene.nodes() {
@@ -58,6 +62,8 @@ impl World {
 
         self.vehicles.insert("Blimp".to_owned(),Blimp::new("Blimp".to_string(),physics_engine));
         self.vehicles.insert("Blimp2".to_owned(),Blimp::new("Blimp2".to_string(),physics_engine));
+
+        self.nav_mesh.init(physics_engine);
     }
 
     pub fn add_dynamic_asset(

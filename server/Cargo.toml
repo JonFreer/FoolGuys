@@ -20,6 +20,7 @@ tokio-tungstenite = "*"
 tokio = { version = "1.23.0", features = ["full"] }
 futures-util = "0.3.25"
 futures-channel = "0.3.25"
+oxidized_navigation = "0.8.0"
 
 [dependencies.gltf]
 version = "1.0"
