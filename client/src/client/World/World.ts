@@ -22,25 +22,19 @@ import { Vehicles } from '../vehicles/vehicles';
 import { ObjectManager } from './ObjectManager';
 import { PlayerManager } from './PlayerManager';
 import { FreeCam } from '../InputManagers/FreeCam';
+import { NavMesh } from './NavMesh';
 
 export class World {
 
-    // ShaderChunkLoader.load_shader_chunks();
-    // public this.inputManager
     public assets: AssetLoader = new AssetLoader();
     public renderer: THREE.WebGLRenderer;
     public camera: THREE.PerspectiveCamera;
     public graphicsWorld: THREE.Scene;
     public clientCubes: { [id: string]: THREE.Mesh } = {}
-    // public players: { [id: string]: Character } = {}
     public obstacles: { [id: string]: Asset } = {}
-
     public player_id: string = '';
-    // public controls: OrbitControls;
     private stats;
     public sky: Sky;
-    // public cameraOperator: CameraOperator;
-    // public freeCam: FreeCam;
     public inputManager: InputManager;
     public socket: WebSocket;
     public labels: Labels;
@@ -51,6 +45,7 @@ export class World {
     public floor: Floor | undefined;
     public updatables: Asset[] = [];
     public debug: Debug;
+    public navMesh: NavMesh;
     public vehicles: Vehicles;
     public objectManager: ObjectManager;
     public playerManager: PlayerManager;
@@ -62,16 +57,13 @@ export class World {
 
         ShaderChunkLoader.load_shader_chunks();
         this.loadWorld(path);
-
-
         const scope = this;
         this.socket = socket;
+
+        // set up renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true })
         this.renderer.shadowMap.enabled = true;
-        // renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-        // this.renderer.useLegacyLights= true;
-
         this.renderer.setClearColor(0xa8eeff, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight)
 
@@ -82,7 +74,6 @@ export class World {
             scope.camera.updateProjectionMatrix()
             scope.renderer.setSize(window.innerWidth, window.innerHeight)
             scope.labels.setSize(window.innerWidth, window.innerHeight)
-            // render()
         }
 
         this.labels = new Labels(this)
@@ -117,6 +108,8 @@ export class World {
         this.grass = new Grass(this);
 
         this.debug = new Debug(this);
+
+        this.navMesh = new NavMesh(this);
 
         this.vehicles = new Vehicles(this);
 

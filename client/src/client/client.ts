@@ -32,8 +32,15 @@ if (hostname != "localhost") {
     },
   };
 
+  var object5 = {
+    GetNavMesh: function () {
+      socket.send(JSON.stringify(["get_nav_mesh", {}]));
+    },
+  };
+
   const debugFolder = gui.addFolder("Debug");
   gui.add(object4, "GetDebugState");
+  gui.add(object5, "GetNavMesh");
   debugFolder.open();
 }
 
@@ -71,6 +78,10 @@ socket.onmessage = function (event) {
 
   if (msg.kind == "PhysicsState") {
     world.debug.load_state(msg.data);
+  }
+
+  if (msg.kind == "NavMesh") {
+    world.navMesh.load_nav_mesh(msg.data)
   }
 };
 
