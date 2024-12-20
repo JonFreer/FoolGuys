@@ -10,7 +10,7 @@ use crate::{
     physics_objects::ragdoll::RagdollTemplate,
     structs::{self, message_prep, Client, GeneralActions, KeyBinding, PlayerUpdate},
     vehicles::blimp::Blimp,
-    world::World,
+    world::World, nav_mesh::{self, nav_mesh::NavMesh},
 };
 
 #[derive(Clone)]
@@ -64,6 +64,7 @@ impl Player {
         c: &mut Client,
         physics_engine: &mut Physics,
         vehicles: &mut HashMap<String, Blimp>,
+        nav_mesh: &Option<NavMesh>
     ) {
         loop {
             if let Ok(message) = c.rx.try_next() {
@@ -135,6 +136,21 @@ impl Player {
                             data: physics_engine.get_state(),
                         }))
                         .unwrap();
+                    }
+
+                    if v[0] == "get_nav_mesh" {
+                        println!("Sending Nav Mesh 1 ");
+                        if let Some(nav_mesh) = nav_mesh{
+                            println!("Sending Nav Mesh 2");
+                            if let Some(nav_mesh_state) = nav_mesh.get_state(){
+                                println!("Sending Nav Mesh 3");
+                                c.tx.unbounded_send(message_prep(structs::MessageType::NavMesh {
+                                    data: nav_mesh_state,
+                                }))
+                                .unwrap();
+                            }
+                        }
+                   
                     }
                 } else {
                     println!("Erorr unwrapping message");

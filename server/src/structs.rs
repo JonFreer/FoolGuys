@@ -38,6 +38,9 @@ pub enum MessageType {
     PhysicsState {
         data: PhysicsState,
     },
+    NavMesh {
+        data: oxidized_navigation::tiles::NavMeshTiles,
+    },
     PhysicsUpdate {
         data: PhysicsStateUpdate,
     },

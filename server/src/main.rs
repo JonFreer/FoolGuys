@@ -201,7 +201,7 @@ async fn main() -> Result<(), IoError> {
 
             for (socket, player) in players.iter_mut() {
                 let client = peers.get_mut(&socket).unwrap();
-                player.read_messages(client, &mut physics_engine, &mut world.vehicles);
+                player.read_messages(client, &mut physics_engine, &mut world.vehicles, &world.nav_mesh);
             }
 
             let players_clone = players.clone();
