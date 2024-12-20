@@ -15,8 +15,9 @@
   "dependencies": {
     "@gltf-transform/core": "^2.1.4",
     "@gltf-transform/extensions": "^2.1.4",
+    "@tweenjs/tween.js": "^21.0.0",
     "express": "^4.17.3",
-    "three": "^0.139.2"
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@gltf-transform/view": "^0.4.2",
@@ -24,7 +25,7 @@
     "@types/express": "^4.17.13",
     "@types/node": "^17.0.24",
     "@types/offscreencanvas": "^2019.6.4",
-    "@types/three": "^0.139.0",
+    "@types/three": "^0.150.0",
     "concurrently": "^7.1.0",
     "dat.gui": "^0.7.9",
     "html-loader": "^3.1.0",

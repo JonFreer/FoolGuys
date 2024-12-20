@@ -1,5 +1,4 @@
-use crate::character_states::character_base::CharacterState::JumpIdle;
-use crate::player::Player;
+use crate::{character_states::character_base::CharacterState::JumpIdle, character::Character};
 use ts_rs::TS;
 use super::{character_base::CharacterState, idle::IdleState};
 
@@ -20,7 +19,7 @@ impl JumpIdleState {
         }
     }
 
-    pub fn update(player: &mut Player, time_step: f32) {
+    pub fn update(player: &mut Character, time_step: f32) {
         if let JumpIdle(state) = &mut player.character_state {
             state.timer += time_step;
             // player.can_jump= false;

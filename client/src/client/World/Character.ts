@@ -2,10 +2,10 @@ import * as THREE from "three";
 import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { AssetLoader } from "./AssetLoader";
 import { World } from "./World";
-import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
+import TWEEN from '@tweenjs/tween.js'
 import { Bone, Euler, Quaternion } from "three";
 import { GUI } from "dat.gui";
-import { PlayerUpdate } from "backend";
+import { PlayerUpdate, Vec3 } from "backend";
 
 enum State {
     Idle,
@@ -33,6 +33,9 @@ export class Character {
     // private arrowHelper2 : THREE.ArrowHelper;
 
     private ragdoll = new THREE.Group
+
+    public vehicle : String|null = null;
+
     // private: loaded
     // private action : any;
 
@@ -217,7 +220,7 @@ export class Character {
     }
 
     public updateCharacter(update:PlayerUpdate){
-
+        this.vehicle = update.vehicle;
         this.is_ragdoll = update.is_ragdoll;
 
         this.name = update.name.slice(1, -1);
@@ -233,20 +236,20 @@ export class Character {
    
        
         this.setState(update.state)
-        // console.log(update.state)
         
-
-        if(this.is_ragdoll){
-            this.setRagdoll(update.ragdoll_info)
-            if(this.gltf_scene){
+        if(this.gltf_scene){
+            if(update.vehicle == null ){
+                if(this.is_ragdoll){
+                    this.setRagdoll(update.ragdoll_info);
+                    this.gltf_scene.visible = false;
+                    this.ragdoll.visible = true;
+                }else{
+                    this.gltf_scene.visible = true;
+                    this.ragdoll.visible = false;
+                }
+            }else{
                 this.gltf_scene.visible = false;
             }
-            this.ragdoll.visible = true;
-        }else{
-            if(this.gltf_scene){
-                this.gltf_scene.visible = true;
-            }
-            this.ragdoll.visible = false;
         }
         
     }
@@ -405,6 +408,14 @@ export class Character {
     public update(timeStep: number) {
         if (this.mixer !== undefined) this.mixer.update(timeStep);
         // if (this.action !== undefined) console.log(this.action.isRunning());
+    }
+
+    public get_position(): THREE.Vector3{
+        if (this.gltf_scene != undefined){
+            return this.gltf_scene.position
+        }else{
+            return new THREE.Vector3(0,0,0)
+        }
     }
 }
 

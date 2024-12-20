@@ -9,7 +9,9 @@
             "backend": ["../../../server/bindings/index.ts","../typings/rust/index.ts"],
             
             
-        }
+        },
+        "allowSyntheticDefaultImports": true
     },
+    
     "include": ["**/*.ts"]
 }

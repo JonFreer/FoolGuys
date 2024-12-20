@@ -10,9 +10,9 @@ use structs::{Client, MessageType};
 use std::time::Instant;
 
 mod animation;
-mod client;
-mod physics;
 mod player;
+mod physics;
+mod character;
 mod structs;
 mod world;
 
@@ -27,6 +27,11 @@ mod physics_objects {
     pub mod spin;
 }
 
+mod vehicles{
+    pub mod blimp;
+    pub mod vehicles;
+}
+
 mod character_states {
     pub mod character_base;
     pub mod falling;
@@ -36,9 +41,9 @@ mod character_states {
 }
 
 use crate::{
-    physics::Physics, structs::message_prep, world::World,
+    physics::Physics, structs::{message_prep, VehicleUpdate}, world::World, vehicles::vehicles::GetInfo, player::Player,
 };
-use crate::{player::Player, structs::ObjectUpdate};
+use crate::structs::ObjectUpdate;
 
 use futures_channel::mpsc::unbounded;
 use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
@@ -192,13 +197,17 @@ async fn main() -> Result<(), IoError> {
 
             for (socket, player) in players.iter_mut() {
                 let client = peers.get_mut(&socket).unwrap();
-                player.read_messages(client, &mut physics_engine);
+                player.read_messages(client, &mut physics_engine, &mut world.vehicles);
             }
 
             let players_clone = players.clone();
 
             for (_socket, player) in players.iter_mut() {
                 player.update_physics(&mut world, &mut physics_engine, &players_clone);
+            }
+
+            for (vehicles) in world.vehicles.iter_mut(){
+                vehicles.1.update_physics(&mut physics_engine);
             }
 
             //Send chat messages
@@ -239,11 +248,14 @@ async fn main() -> Result<(), IoError> {
                 .map(|x| (x.name(), x.get_info(&mut physics_engine.rigid_body_set)))
                 .collect();
 
+            let vehicles_info: HashMap<String,VehicleUpdate> = world.vehicles.iter_mut().map(|(_,x)| (x.name.clone(), x.get_info(&mut physics_engine.rigid_body_set))).collect();
+
             // let ragdoll_info = ragdoll.get_info(&mut physics_engine);
 
             let player_update_message = structs::MessageType::WorldUpdate {
                 players: players_info,
                 dynamic_objects: dynamic_objects_info,
+                vehicles: vehicles_info
                 // ragdolls : ragdoll_info
             };
 

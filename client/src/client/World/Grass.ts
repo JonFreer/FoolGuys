@@ -31,6 +31,7 @@ export class Grass{
 
 
         const waterVertexShader = /* glsl */`
+
                 uniform float u_time;
                 varying vec2 v_uv;  
                 varying vec4 world_pos;  
@@ -87,9 +88,13 @@ export class Grass{
                 }
         `
         const waterFragmentShader = /* glsl */`
+
+            #include <big_shadow_pars>
+
             varying vec2 v_uv;  
             varying vec4 world_pos;  
             uniform sampler2D noise_texture;
+
             void main() {
 
                     gl_FragColor = mix(vec4(0.29,0.8,0.16, 1.0),vec4(0.6,1.0,0.6, 1.0),world_pos.y*2.0).rgba;
@@ -133,9 +138,9 @@ export class Grass{
         // mesh.rotateX( - Math.PI / 2);
         // plane.translateZ(10);
         this.object = mesh;
-
-       
-
+        this.object.frustumCulled = false;
+        this.object.receiveShadow = true;
+        this.object.castShadow = true;
         // this.object.s
         world.graphicsWorld.add(this.object);
 

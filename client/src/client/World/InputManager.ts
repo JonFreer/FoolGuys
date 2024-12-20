@@ -1,6 +1,9 @@
 // import { World } from '../world/World';
 import {World} from './World'
 import { IInputReceiver } from '../interfaces/IInputReceiver';
+import { FreeCam } from '../InputManagers/FreeCam';
+import { Character } from '../InputManagers/Character';
+import { BlimpReciever } from '../InputManagers/BlimpReciever';
 // import { EntityType } from '../enums/EntityType';
 // import { IUpdatable } from '../interfaces/IUpdatable';
 
@@ -13,6 +16,10 @@ export class InputManager
 	public pointerLock: any;
 	public isLocked: boolean;
 	public inputReceiver: IInputReceiver | undefined;
+
+	public freeCamReceiver: FreeCam;
+	public characterReceiver: Character;
+	public blimpReceiver: BlimpReciever;
 
 	public boundOnMouseDown: (evt: any) => void;
 	public boundOnMouseMove: (evt: any) => void;
@@ -56,23 +63,37 @@ export class InputManager
 		document.addEventListener('keydown', this.boundOnKeyDown, false);
 		document.addEventListener('keyup', this.boundOnKeyUp, false);
 
+		// this.inputReceiver = new FreeCam
+
+		this.freeCamReceiver = new FreeCam(world,world.camera);
+		this.characterReceiver = new Character(world,world.camera,world.socket);
+		this.blimpReceiver = new BlimpReciever(world,world.camera,world.socket);
 		// world.registerUpdatable(this);
 	}
 
-	public update(timestep: number, unscaledTimeStep: number): void
+	public setRadius(value: number, instantly: boolean = false): void
 	{
-		if (this.inputReceiver === undefined && this.world !== undefined && this.world.cameraOperator !== undefined)
+		this.characterReceiver.setRadius(value,instantly);
+		this.characterReceiver.setRadius(value,instantly);
+	}
+
+	public update(timestep: number, unscaledTimeStep: number,world:World,camera:THREE.Camera): void
+	{
+		if (this.inputReceiver === undefined && this.world !== undefined)
 		{
-			this.setInputReceiver(this.world.cameraOperator);
+			this.setInputReceiver(this.characterReceiver);
 		}
 
 		this.inputReceiver?.inputReceiverUpdate(unscaledTimeStep);
 	}
 
 	public setInputReceiver(receiver: IInputReceiver): void
-	{
-		this.inputReceiver = receiver;
-		this.inputReceiver.inputReceiverInit();
+	{	
+		if(receiver!= this.inputReceiver){
+			this.inputReceiver = receiver;
+			this.inputReceiver.inputReceiverInit();
+		}
+		// this.inputReceiver.inputReceiverInit();
 	}
 
 	public setPointerLock(enabled: boolean): void

@@ -55,7 +55,7 @@ export class ToonSky {
             uniforms:uniforms
         });
 
-        const geometry = new THREE.SphereBufferGeometry(1, 32, 15).scale(-1, 1, 1); //turn shere inside out
+        const geometry = new THREE.SphereGeometry(1, 32, 15).scale(-1, 1, 1); //turn shere inside out
         // const material = new THREE.MeshBasicMaterial();
         this.object = new THREE.Mesh(geometry,material);
         this.object.scale.setScalar(800);

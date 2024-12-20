@@ -6,7 +6,7 @@ use rapier3d::prelude::{Collider, ColliderSet, RigidBodyBuilder, RigidBodySet};
 
 use crate::{
     animation::{Animations, NodesKeyFrame, PlaybackMode},
-    structs::ObjectUpdate, player::Player, physics::Physics,
+    structs::ObjectUpdate, character::Character, physics::Physics, player::Player,
 };
 
 use super::rigid_body_parent::RigidBodyData;
@@ -103,9 +103,9 @@ impl LaunchPad {
 
             if let Some(handle) = handle{
                 for player in players.iter_mut(){
-                    if player.1.collider_handle == handle{
+                    if player.1.character.collider_handle == handle{
                         //player 
-                        player.1.launch(physics_enigne,self.launch_dir);
+                        player.1.character.launch(physics_enigne,self.launch_dir);
                         launched = true;
                     }
                 }
