@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { VehicleUpdate } from "../../../../server/bindings/VehicleUpdate";
+import { VehicleUpdate } from 'backend';
 import TWEEN from '@tweenjs/tween.js'
 import { Asset } from "../World/Asset";
 import { World } from "../World/World";

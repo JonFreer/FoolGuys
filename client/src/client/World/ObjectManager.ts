@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import { ObjectUpdate } from "../../../../server/bindings/ObjectUpdate";
 import { Asset } from "./Asset";
 import { World } from "./World";
 import TWEEN from '@tweenjs/tween.js'
+import { ObjectUpdate } from 'backend';
 
 export class ObjectManager{
 

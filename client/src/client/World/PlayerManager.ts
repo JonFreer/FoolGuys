@@ -1,4 +1,4 @@
-import { PlayerUpdate } from "../../../../server/bindings/PlayerUpdate";
+import { PlayerUpdate } from 'backend';
 import { Asset } from "./Asset";
 import { Character } from "./Character";
 import { World } from "./World";
