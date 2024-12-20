@@ -202,7 +202,7 @@ impl Player {
             .exclude_rigid_body(self.character.rigid_body_handle);
 
         if let Some(vehicle) = &self.vehicle{
-            println!("exluding filter");
+            // println!("exluding filter");
             filter = filter.exclude_rigid_body(world.vehicles.get(vehicle).unwrap().vehicle_data.rigid_body_handle);
             floor_filter = floor_filter.exclude_rigid_body(world.vehicles.get(vehicle).unwrap().vehicle_data.rigid_body_handle);
         }
@@ -211,27 +211,24 @@ impl Player {
 
         if let Some((_handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, floor_filter) {
             max_toi = toi;
-            println!("max toi {:?}",toi);
+            // println!("max toi {:?}",toi);
         }
 
         let point = origin + self.view_vector * -max_toi;
 
         if !physics_engine.intersections_with_point(&point, filter) {
-            println!("A");
             self.camera_distance = max_toi;
         } else {
             
             let ray = Ray::new(origin, -self.view_vector);
 
             if let Some((_handle, toi)) = physics_engine.cast_ray(&ray, max_toi, solid, filter) {
-                println!("C");
                 self.camera_distance = toi;
             } else {
-                println!("D");
                 self.camera_distance = max_toi;
             }
         }
 
-        println!("self.camera_distance {:?}",self.camera_distance);
+        // println!("self.camera_distance {:?}",self.camera_distance);
     }
 }
